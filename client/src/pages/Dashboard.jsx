@@ -1,0 +1,573 @@
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useAuth } from "../context/AuthContext";
+import API_URL from "../api";
+
+export default function Dashboard() {
+  const { seller, token, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const [dashboard, setDashboard] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
+
+  const [productForm, setProductForm] = useState({
+    name: "",
+    price: "",
+    description: "",
+    category: "upper_body",
+    productUrl: "",
+  });
+  const [productImage, setProductImage] = useState(null);
+  const [productLoading, setProductLoading] = useState(false);
+  const [productMsg, setProductMsg] = useState("");
+
+  const [shopSettings, setShopSettings] = useState({
+    whatsapp: "",
+    upiId: "",
+  });
+  const [settingsMsg, setSettingsMsg] = useState("");
+
+  const fetchDashboard = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/seller/dashboard`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDashboard(res.data);
+      setShopSettings({
+        whatsapp: res.data.seller.whatsapp || "",
+        upiId: res.data.seller.upiId || "",
+      });
+    } catch (err) {
+      if (err.response?.status === 401) {
+        logout();
+        navigate("/login");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [token, logout, navigate]);
+
+  const fetchProducts = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/seller/products`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setProducts(res.data.products);
+    } catch (err) {
+      console.log(err);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (!seller || !token) {
+      navigate("/login");
+      return;
+    }
+    fetchDashboard();
+    fetchProducts();
+  }, [seller, token, navigate, fetchDashboard, fetchProducts]);
+
+  const handleAddProduct = async () => {
+    if (!productForm.name || !productImage) {
+      setProductMsg("❌ Naam aur photo zaroori hai!");
+      return;
+    }
+
+    setProductLoading(true);
+    setProductMsg("");
+
+    try {
+      const formData = new FormData();
+      formData.append("productImage", productImage);
+      formData.append("name", productForm.name);
+      formData.append("price", productForm.price);
+      formData.append("description", productForm.description);
+      formData.append("category", productForm.category);
+      formData.append("productUrl", productForm.productUrl);
+
+      await axios.post(`${API_URL}/api/seller/products`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      setProductMsg("✅ Product add ho gaya!");
+      setProductForm({
+        name: "",
+        price: "",
+        description: "",
+        category: "upper_body",
+        productUrl: "",
+      });
+      setProductImage(null);
+      fetchProducts();
+    } catch (err) {
+      setProductMsg("❌ Error found!");
+    } finally {
+      setProductLoading(false);
+    }
+  };
+
+  const saveShopSettings = async () => {
+    try {
+      await axios.post(`${API_URL}/api/seller/settings`, shopSettings, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSettingsMsg("✅ Save ho gaya!");
+    } catch (err) {
+      setSettingsMsg("❌ Error found!");
+    }
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    alert("Copied! ✅");
+  };
+
+  if (loading) {
+    return (
+      <div
+        className="min-h-screen flex items-center
+                      justify-center"
+      >
+        <p className="text-purple-700 text-xl">⏳ Loading...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">
+            👋 Welcome, {seller?.name}!
+          </h1>
+          <p className="text-gray-500 mt-1">Your seller dashboard</p>
+        </div>
+
+        {/* Stats */}
+        <div
+          className="grid grid-cols-1 md:grid-cols-3
+                        gap-6 mb-8"
+        >
+          {[
+            {
+              label: "Try-On Used",
+              value: dashboard?.seller?.tryonCount || 0,
+              sub: `of ${dashboard?.seller?.tryonLimit} limit`,
+            },
+            {
+              label: "Total Products",
+              value: dashboard?.totalProducts || 0,
+              sub: "products",
+            },
+            {
+              label: "Current Plan",
+              value: dashboard?.seller?.plan || "Free",
+              sub: "plan",
+            },
+          ].map((stat, i) => (
+            <div key={i} className="bg-white rounded-2xl p-6 shadow-sm">
+              <p className="text-gray-500 text-sm">{stat.label}</p>
+              <p
+                className="text-3xl font-bold
+                            text-purple-700 mt-1 capitalize"
+              >
+                {stat.value}
+              </p>
+              <p className="text-gray-400 text-xs mt-1">{stat.sub}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-4 mb-6 flex-wrap">
+          {[
+            { key: "overview", label: "📊 Overview" },
+            { key: "products", label: "👗 Products" },
+            { key: "integration", label: "🔌 Integration" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-6 py-2 rounded-full 
+                         font-medium transition
+                         ${
+                           activeTab === tab.key
+                             ? "bg-purple-700 text-white"
+                             : "bg-white text-gray-600 hover:bg-gray-100"
+                         }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Overview Tab */}
+        {activeTab === "overview" && (
+          <div className="bg-white rounded-2xl p-6 shadow-sm">
+            <h2 className="text-xl font-bold mb-4">📊 Account Overview</h2>
+
+            <div className="space-y-3">
+              {[
+                { label: "Email", value: seller?.email },
+                { label: "Seller ID", value: dashboard?.seller?.sellerId },
+                { label: "Plan", value: dashboard?.seller?.plan },
+              ].map((item, i) => (
+                <div key={i} className="flex justify-between py-3 border-b">
+                  <span className="text-gray-500">{item.label}</span>
+                  <span className="font-medium capitalize text-sm">
+                    {item.value}
+                  </span>
+                </div>
+              ))}
+
+              <div className="flex justify-between py-3 border-b">
+                <span className="text-gray-500">Shop Link</span>
+                <div className="flex gap-2 items-center">
+                  <span
+                    className="text-sm text-purple-600 
+                                   max-w-xs truncate"
+                  >
+                    {dashboard?.shopUrl}
+                  </span>
+                  <button
+                    onClick={() => copyToClipboard(dashboard?.shopUrl)}
+                    className="bg-purple-100 text-purple-700
+                               px-3 py-1 rounded-full text-xs"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Shop Settings */}
+            <div className="mt-6 pt-6 border-t">
+              <h3 className="font-bold text-lg mb-4">📱 Shop Settings</h3>
+
+              <div className="space-y-3">
+                <div>
+                  <label
+                    className="text-sm text-gray-600 
+                                    block mb-1"
+                  >
+                    WhatsApp Number
+                    <span className="text-gray-400 ml-1 text-xs">
+                      (orders yahan aayenge)
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="91XXXXXXXXXX"
+                    value={shopSettings.whatsapp}
+                    onChange={(e) =>
+                      setShopSettings({
+                        ...shopSettings,
+                        whatsapp: e.target.value,
+                      })
+                    }
+                    className="w-full border border-gray-300
+                               rounded-lg px-4 py-2.5 text-sm
+                               focus:outline-none
+                               focus:border-purple-500"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    className="text-sm text-gray-600 
+                                    block mb-1"
+                  >
+                    UPI ID
+                    <span className="text-gray-400 ml-1 text-xs">
+                      (payment ke liye)
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="yourname@upi"
+                    value={shopSettings.upiId}
+                    onChange={(e) =>
+                      setShopSettings({
+                        ...shopSettings,
+                        upiId: e.target.value,
+                      })
+                    }
+                    className="w-full border border-gray-300
+                               rounded-lg px-4 py-2.5 text-sm
+                               focus:outline-none
+                               focus:border-purple-500"
+                  />
+                </div>
+
+                {settingsMsg && <p className="text-sm">{settingsMsg}</p>}
+
+                <button
+                  onClick={saveShopSettings}
+                  className="bg-purple-700 text-white
+                             px-6 py-2.5 rounded-full
+                             text-sm font-semibold
+                             hover:bg-purple-800 transition"
+                >
+                  💾 Settings Save Karen
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Products Tab */}
+        {activeTab === "products" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Add Product */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <h2 className="text-xl font-bold mb-4">➕ Product Add Karen</h2>
+
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="Product naam *"
+                  value={productForm.name}
+                  onChange={(e) =>
+                    setProductForm({
+                      ...productForm,
+                      name: e.target.value,
+                    })
+                  }
+                  className="w-full border border-gray-300
+                             rounded-lg px-4 py-2.5 text-sm
+                             focus:outline-none
+                             focus:border-purple-500"
+                />
+
+                <input
+                  type="number"
+                  placeholder="Price (₹)"
+                  value={productForm.price}
+                  onChange={(e) =>
+                    setProductForm({
+                      ...productForm,
+                      price: e.target.value,
+                    })
+                  }
+                  className="w-full border border-gray-300
+                             rounded-lg px-4 py-2.5 text-sm
+                             focus:outline-none
+                             focus:border-purple-500"
+                />
+
+                <select
+                  value={productForm.category}
+                  onChange={(e) =>
+                    setProductForm({
+                      ...productForm,
+                      category: e.target.value,
+                    })
+                  }
+                  className="w-full border border-gray-300
+                             rounded-lg px-4 py-2.5 text-sm
+                             focus:outline-none
+                             focus:border-purple-500"
+                >
+                  <option value="upper_body">👕 Upper Body</option>
+                  <option value="lower_body">👖 Lower Body</option>
+                  <option value="dress">👗 Full Dress</option>
+                </select>
+
+                <input
+                  type="url"
+                  placeholder="Product URL (optional)"
+                  value={productForm.productUrl}
+                  onChange={(e) =>
+                    setProductForm({
+                      ...productForm,
+                      productUrl: e.target.value,
+                    })
+                  }
+                  className="w-full border border-gray-300
+                             rounded-lg px-4 py-2.5 text-sm
+                             focus:outline-none
+                             focus:border-purple-500"
+                />
+
+                <div>
+                  <label
+                    className="text-sm text-gray-600 
+                                    block mb-1"
+                  >
+                    Product Photo *
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setProductImage(e.target.files[0])}
+                    className="w-full text-sm"
+                  />
+                </div>
+
+                {productMsg && <p className="text-sm">{productMsg}</p>}
+
+                <button
+                  onClick={handleAddProduct}
+                  disabled={productLoading}
+                  className="w-full bg-purple-700 text-white
+                             py-3 rounded-full font-semibold
+                             hover:bg-purple-800 transition
+                             disabled:opacity-50 text-sm"
+                >
+                  {productLoading
+                    ? "⏳ Upload ho raha hai..."
+                    : "➕ Product Add Kariye"}
+                </button>
+              </div>
+            </div>
+
+            {/* Products List */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <h2 className="text-xl font-bold mb-4">
+                👗 Mere Products ({products.length})
+              </h2>
+
+              {products.length === 0 ? (
+                <p className="text-gray-400 text-center py-8">
+                  Abhi koi product nahi hai
+                </p>
+              ) : (
+                <div
+                  className="space-y-3 max-h-96
+                                overflow-y-auto"
+                >
+                  {products.map((product) => (
+                    <div
+                      key={product._id}
+                      className="flex gap-3 items-center
+                                 border border-gray-100
+                                 rounded-xl p-3"
+                    >
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className="w-16 h-16 object-cover
+                                   rounded-lg"
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{product.name}</p>
+                        <p className="text-purple-600 text-sm">
+                          ₹{product.price}
+                        </p>
+                        <p className="text-gray-400 text-xs capitalize">
+                          {product.category.replace("_", " ")}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Integration Tab */}
+        {activeTab === "integration" && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <h2 className="text-xl font-bold mb-2">🔑 Apki API Key</h2>
+              <p className="text-gray-500 text-sm mb-4">
+                Keep this key Secret!
+              </p>
+              <div className="flex gap-3 items-center">
+                <code
+                  className="bg-gray-100 px-4 py-2
+                                 rounded-lg text-sm flex-1
+                                 overflow-hidden truncate"
+                >
+                  {dashboard?.seller?.apiKey}
+                </code>
+                <button
+                  onClick={() => copyToClipboard(dashboard?.seller?.apiKey)}
+                  className="bg-purple-700 text-white
+                             px-4 py-2 rounded-lg text-sm
+                             whitespace-nowrap"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <h2 className="text-xl font-bold mb-2">🔌 Website Par Lagaiye</h2>
+
+              <p className="text-gray-500 text-sm mb-4">
+                <big>⚠️ </big> If script is not working, add a class (
+                .tryon-product ) to all your products using JavaScript.
+              </p>
+              <p className="text-gray-500 text-sm mb-4">
+                Apni website ke body tag mein paste karen:
+              </p>
+              <div
+                className="bg-gray-900 rounded-xl p-4
+                              text-green-400 text-xs
+                              font-mono overflow-x-auto"
+              >
+                {dashboard?.widgetCode}
+              </div>
+              <button
+                onClick={() => copyToClipboard(dashboard?.widgetCode)}
+                className="mt-3 bg-purple-700 text-white
+                           px-6 py-2 rounded-full text-sm"
+              >
+                Code Copy Karen
+              </button>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <h2 className="text-xl font-bold mb-2">
+                📱 Agar Website Nahi Hai?
+              </h2>
+              <p className="text-gray-500 text-md mb-4">
+                {" "}
+                ➣ Yeh link customer ko share kariye!
+              </p>
+              <div className="flex gap-3 items-center mb-3">
+                <code
+                  className="bg-gray-100 px-4 py-2
+                                 rounded-lg text-sm flex-1
+                                 truncate"
+                >
+                  {dashboard?.shopUrl}
+                </code>
+                <button
+                  onClick={() => copyToClipboard(dashboard?.shopUrl)}
+                  className="bg-green-600 text-white
+                             px-4 py-2 rounded-lg text-sm
+                             whitespace-nowrap"
+                >
+                  Copy
+                </button>
+              </div>
+
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(
+                  `Mere shop par aao! ${dashboard?.shopUrl}`,
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="bg-green-500 text-white
+                           px-6 py-2 rounded-full text-sm
+                           inline-block hover:bg-green-600"
+              >
+                📱 WhatsApp Par Share Karen
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

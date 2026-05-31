@@ -81,7 +81,15 @@ export default function Dashboard() {
 
     try {
       const formData = new FormData();
-      formData.append("productImage", productImage);
+      // Sari images
+      if (Array.isArray(productImage)) {
+        productImage.forEach((img) => {
+          formData.append("productImages", img);
+        });
+      } else {
+        formData.append("productImages", productImage);
+      }
+
       formData.append("name", productForm.name);
       formData.append("price", productForm.price);
       formData.append("description", productForm.description);
@@ -228,13 +236,14 @@ export default function Dashboard() {
               ))}
 
               <div className="flex justify-between py-3 border-b">
-                <span className="text-gray-500">Shop Link</span>
-                <div className="flex gap-2 items-center">
+                <span className="text-gray-500">Shop Link: </span>
+                <div className="flex flex-row gap-2 flex-1 min-w-0">
                   <span
-                    className="text-sm text-purple-600 
-                                   max-w-xs truncate"
+                    className="pt-0text-sm text-purple-600 
+                   truncate block max-w-xs
+                   md:max-w-sm lg:max-w-md"
                   >
-                    {dashboard?.shopUrl}
+                    &nbsp; {dashboard?.shopUrl}
                   </span>
                   <button
                     onClick={() => copyToClipboard(dashboard?.shopUrl)}
@@ -259,8 +268,11 @@ export default function Dashboard() {
                   >
                     WhatsApp Number
                     <span className="text-gray-400 ml-1 text-xs">
-                      (orders yahan aayenge)
+                      (Aapke orders yahan aayenge)
                     </span>
+                    <p className="text-orange-500 ml-1 mt-0.5 text-xs">
+                      (Enter number with 91)
+                    </p>
                   </label>
                   <input
                     type="text"
@@ -286,7 +298,7 @@ export default function Dashboard() {
                   >
                     UPI ID
                     <span className="text-gray-400 ml-1 text-xs">
-                      (payment ke liye)
+                      (Payment ke liye)
                     </span>
                   </label>
                   <input
@@ -313,7 +325,7 @@ export default function Dashboard() {
                   className="bg-purple-700 text-white
                              px-6 py-2.5 rounded-full
                              text-sm font-semibold
-                             hover:bg-purple-800 transition"
+                             hover:bg-green-600 transition"
                 >
                   💾 Settings Save Karen
                 </button>
@@ -399,16 +411,29 @@ export default function Dashboard() {
                 <div>
                   <label
                     className="text-sm text-gray-600 
-                                    block mb-1"
+                    block mb-1"
                   >
-                    Product Photo *
+                    Product Photos *
+                    <span className="text-gray-400 ml-1">(max 5 photos)</span>
                   </label>
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => setProductImage(e.target.files[0])}
+                    multiple
+                    onChange={(e) =>
+                      setProductImage(Array.from(e.target.files))
+                    }
                     className="w-full text-sm"
                   />
+                  <p className="text-xs text-purple-600 mt-1">
+                    💡 Tip: Pehli photo front view rakhen! AI try-on ke liye
+                    best hai.
+                  </p>
+                  {productImage && productImage.length > 0 && (
+                    <p className="text-xs text-green-600 mt-1">
+                      ✅ {productImage.length} photo(s) selected
+                    </p>
+                  )}
                 </div>
 
                 {productMsg && <p className="text-sm">{productMsg}</p>}
@@ -464,6 +489,25 @@ export default function Dashboard() {
                         <p className="text-gray-400 text-xs capitalize">
                           {product.category.replace("_", " ")}
                         </p>
+
+                        {/* Delete Button */}
+                        <button
+                          onClick={async () => {
+                            if (window.confirm("Delete karna hai?")) {
+                              await axios.delete(
+                                `${API_URL}/api/seller/products/${product._id}`,
+                                {
+                                  headers: { Authorization: `Bearer ${token}` },
+                                },
+                              );
+                              fetchProducts();
+                            }
+                          }}
+                          className="text-red-500 text-xs
+                         hover:text-red-700"
+                        >
+                          <b>Delete</b>❌
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -505,7 +549,7 @@ export default function Dashboard() {
 
               <p className="text-gray-500 text-sm mb-4">
                 <big>⚠️ </big> If script is not working, add a class (
-                .tryon-product ) to all your products using JavaScript.
+                tryon-product ) to all your products using JavaScript.
               </p>
               <p className="text-gray-500 text-sm mb-4">
                 Apni website ke body tag mein paste karen:
@@ -513,7 +557,8 @@ export default function Dashboard() {
               <div
                 className="bg-gray-900 rounded-xl p-4
                               text-green-400 text-xs
-                              font-mono overflow-x-auto"
+                              font-mono overflow-x-auto
+                              max-w-full"
               >
                 {dashboard?.widgetCode}
               </div>
@@ -554,7 +599,7 @@ export default function Dashboard() {
 
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(
-                  `Mere shop par aao! ${dashboard?.shopUrl}`,
+                  `Welcome to my shop! ${dashboard?.shopUrl}`,
                 )}`}
                 target="_blank"
                 rel="noreferrer"

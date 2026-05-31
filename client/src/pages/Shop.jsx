@@ -1,51 +1,338 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-
 import API_URL from "../api";
 
+// ─── Loading Animation ────────────────────
+function TryOnAnimation() {
+  const MESSAGES = [
+    { emoji: "📸", text: "Photo is getting uploaded..." },
+    { emoji: "🤖", text: "AI is working..." },
+    { emoji: "👗", text: "Cloth is getting fitted..." },
+    { emoji: "✨", text: "Style advice is generating..." },
+    { emoji: "🎨", text: "Result is getting ready..." },
+  ];
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => {
+      setIndex((p) => (p === MESSAGES.length - 1 ? 0 : p + 1));
+    }, 1800);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-export default function Shop() {
-  const { sellerId } = useParams();
-  const [shop, setShop] = useState(null);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-70
+                    z-50 flex items-center justify-center
+                    backdrop-blur-sm"
+    >
+      <div
+        className="bg-white rounded-3xl p-10 text-center
+                      shadow-2xl max-w-sm w-full mx-4"
+      >
+        <div className="relative w-28 h-28 mx-auto mb-6">
+          <div
+            className="absolute inset-0 rounded-full
+                          border-4 border-purple-100"
+          />
+          <div
+            className="absolute inset-0 rounded-full
+                          border-4 border-purple-600
+                          border-t-transparent
+                          border-r-transparent animate-spin"
+          />
+          <div
+            className="absolute inset-3 rounded-full
+                          bg-purple-50 animate-pulse
+                          flex items-center justify-center text-4xl"
+          >
+            {MESSAGES[index].emoji}
+          </div>
+        </div>
+        <h3 className="text-xl font-bold text-gray-800 mb-2">
+          AI Magic is Working!
+        </h3>
+        <p className="text-purple-600 font-medium animate-pulse">
+          {MESSAGES[index].text}
+        </p>
+        <div className="flex justify-center gap-2 mt-6">
+          {MESSAGES.map((_, i) => (
+            <div
+              key={i}
+              className={`h-1.5 rounded-full transition-all duration-500
+                         ${
+                           i === index
+                             ? "w-6 bg-purple-600"
+                             : "w-1.5 bg-gray-200"
+                         }`}
+            />
+          ))}
+        </div>
+        <p className="text-gray-400 text-xs mt-4">
+          It will take 20-30 seconds 😊
+        </p>
+      </div>
+    </div>
+  );
+}
 
-  const [selectedProduct, setSelectedProduct] = useState(null);
+// ─── Image Slider ─────────────────────────
+function ImageSlider({ images }) {
+  const [current, setCurrent] = useState(0);
+  if (!images || images.length === 0) return null;
+
+  const prev = (e) => {
+    e.stopPropagation();
+    setCurrent((c) => (c === 0 ? images.length - 1 : c - 1));
+  };
+  const next = (e) => {
+    e.stopPropagation();
+    setCurrent((c) => (c === images.length - 1 ? 0 : c + 1));
+  };
+
+  return (
+    <div
+      className="relative w-full h-64 overflow-hidden
+                    bg-gray-50 rounded-t-2xl"
+    >
+      <img
+        src={images[current]}
+        alt="product"
+        className="w-full h-64 object-contain p-3
+                   transition-all duration-300"
+      />
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={prev}
+            className="absolute left-2 top-1/2 -translate-y-1/2
+                       bg-white shadow-md rounded-full
+                       w-8 h-8 flex items-center justify-center
+                       text-gray-600 hover:bg-gray-50 transition"
+          >
+            ‹
+          </button>
+          <button
+            onClick={next}
+            className="absolute right-2 top-1/2 -translate-y-1/2
+                       bg-white shadow-md rounded-full
+                       w-8 h-8 flex items-center justify-center
+                       text-gray-600 hover:bg-gray-50 transition"
+          >
+            ›
+          </button>
+          <div
+            className="absolute bottom-2 left-1/2
+                          -translate-x-1/2 flex gap-1.5"
+          >
+            {images.map((_, i) => (
+              <button
+                key={i}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrent(i);
+                }}
+                className={`h-1.5 rounded-full transition-all
+                           ${
+                             i === current
+                               ? "w-4 bg-purple-600"
+                               : "w-1.5 bg-gray-300"
+                           }`}
+              />
+            ))}
+          </div>
+          <div
+            className="absolute top-2 right-2
+                          bg-black bg-opacity-50 text-white
+                          text-xs px-2 py-1 rounded-full"
+          >
+            {current + 1}/{images.length}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── Product Detail Modal ─────────────────
+function ProductModal({ product, shop, onClose, onTryOn }) {
+  const [selectedImage, setSelectedImage] = useState(0);
+  const images =
+    product.images?.length > 0 ? product.images : [product.imageUrl];
+
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-70
+                    z-40 flex items-end md:items-center
+                    justify-center p-0 md:p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white w-full md:max-w-2xl
+                      rounded-t-3xl md:rounded-3xl
+                      max-h-screen overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          className="flex justify-between items-center
+                        p-5 border-b sticky top-0 bg-white
+                        z-10 rounded-t-3xl"
+        >
+          <h2 className="text-lg font-bold text-gray-800">{product.name}</h2>
+          <button
+            onClick={onClose}
+            className="w-9 h-9 rounded-full bg-gray-100
+                       flex items-center justify-center
+                       text-gray-500 hover:bg-gray-200
+                       transition text-lg"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="p-5">
+          {/* Main Image */}
+          <div
+            className="bg-white rounded-2xl mb-4
+            relative overflow-hidden
+            border border-gray-100"
+          >
+            <img
+              src={images[selectedImage]}
+              alt={product.name}
+              className="w-full h-96 object-contain p-2"
+            />
+          </div>
+
+          {/* Thumbnail Strip */}
+          {images.length > 1 && (
+            <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
+              {images.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSelectedImage(i)}
+                  className={`flex-shrink-0 w-16 h-16
+                             rounded-xl overflow-hidden
+                             border-2 transition
+                             ${
+                               i === selectedImage
+                                 ? "border-purple-500"
+                                 : "border-transparent"
+                             }`}
+                >
+                  <img
+                    src={img}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Product Info */}
+          <div className="mb-5">
+            <h3 className="text-2xl font-bold text-gray-800 mb-1">
+              {product.name}
+            </h3>
+            <p className="text-3xl font-black text-purple-600 mb-2">
+              ₹{product.price}
+            </p>
+            <span
+              className="bg-purple-100 text-purple-700
+                             px-3 py-1 rounded-full text-sm
+                             font-medium capitalize"
+            >
+              {product.category?.replace("_", " ")}
+            </span>
+            {product.description && (
+              <p className="text-gray-500 mt-3 leading-relaxed text-sm">
+                {product.description}
+              </p>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-3">
+            <button
+              onClick={() => onTryOn(product)}
+              className="w-full bg-gradient-to-r from-purple-600
+                         to-indigo-600 text-white py-4 rounded-2xl
+                         font-bold text-lg hover:opacity-90
+                         transition flex items-center
+                         justify-center gap-2 shadow-lg
+                         shadow-purple-200"
+            >
+              👗 Virtual Try On Karen!
+            </button>
+
+            {shop?.whatsapp && (
+              <a
+                href={`https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(
+                  `Hi! Mujhe yeh chahiye:\n👗 ${product.name}\n💰 ₹${product.price}\n\nKya available hai?`,
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full bg-green-500 text-white
+                           py-4 rounded-2xl font-bold text-base
+                           hover:bg-green-600 transition
+                           flex items-center justify-center gap-2"
+              >
+                📱 WhatsApp Par Order Karen
+              </a>
+            )}
+
+            {shop?.upiId && (
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(shop.upiId);
+                  alert(
+                    `UPI ID copied!\n${shop.upiId}\nAmount: ₹${product.price}`,
+                  );
+                }}
+                className="w-full border-2 border-green-500
+                           text-green-600 py-3.5 rounded-2xl
+                           font-semibold hover:bg-green-50
+                           transition flex items-center
+                           justify-center gap-2"
+              >
+                💳 UPI Se Pay Karen
+              </button>
+            )}
+          </div>
+
+          {/* Trust badges */}
+          <div className="flex flex-wrap gap-2 mt-5 pt-5 border-t">
+            {["🔒 Secure", "📦 Fast Delivery", "↩️ Easy Returns"].map(
+              (b, i) => (
+                <span
+                  key={i}
+                  className="bg-gray-100 text-gray-600
+                           px-3 py-1.5 rounded-full text-xs
+                           font-medium"
+                >
+                  {b}
+                </span>
+              ),
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Try-On Modal ─────────────────────────
+function TryOnModal({ product, shop, onClose }) {
   const [humanImage, setHumanImage] = useState(null);
   const [humanPreview, setHumanPreview] = useState(null);
   const [tryonLoading, setTryonLoading] = useState(false);
   const [tryonResult, setTryonResult] = useState(null);
   const [styleAdvice, setStyleAdvice] = useState(null);
-  const [showModal, setShowModal] = useState(false);
 
-  const fetchShop = useCallback(async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/seller/shop/${sellerId}`);
-      setShop(res.data.shop);
-      setProducts(res.data.products);
-    } catch (err) {
-      setError("Shop nahi mila!");
-    } finally {
-      setLoading(false);
-    }
-  }, [sellerId]);
-
-  useEffect(() => {
-    fetchShop();
-  }, [fetchShop]);
-
-  const openTryOn = (product) => {
-    setSelectedProduct(product);
-    setHumanImage(null);
-    setHumanPreview(null);
-    setTryonResult(null);
-    setStyleAdvice(null);
-    setShowModal(true);
-  };
-
-  const handleHumanImage = (e) => {
+  const handleImage = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setHumanImage(file);
@@ -54,19 +341,17 @@ export default function Shop() {
 
   const handleTryOn = async () => {
     if (!humanImage) {
-      alert("Pehle apni photo upload karen!");
+      alert("Pehle apni photo upload karo!");
       return;
     }
-
     setTryonLoading(true);
     setTryonResult(null);
     setStyleAdvice(null);
-
     try {
       const formData = new FormData();
       formData.append("humanImage", humanImage);
-      formData.append("garmentUrl", selectedProduct.imageUrl);
-      formData.append("description", selectedProduct.category);
+      formData.append("garmentUrl", product.imageUrl);
+      formData.append("description", product.category);
 
       const res = await axios.post(`${API_URL}/api/tryon`, formData, {
         headers: {
@@ -74,25 +359,275 @@ export default function Shop() {
           "Content-Type": "multipart/form-data",
         },
       });
-
       if (res.data.success) {
         setTryonResult(res.data.resultImage);
         setStyleAdvice(res.data.styleAdvice);
       }
-    } catch (err) {
-      alert("Failed ! Please try again.");
+    } catch {
+      alert("Found an error! Please try again.");
     } finally {
       setTryonLoading(false);
     }
+  };
+
+  return (
+    <>
+      {tryonLoading && <TryOnAnimation />}
+
+      <div
+        className="fixed inset-0 bg-black bg-opacity-70
+                      z-40 flex items-end md:items-center
+                      justify-center p-0 md:p-4"
+        onClick={onClose}
+      >
+        <div
+          className="bg-white w-full md:max-w-lg
+                        rounded-t-3xl md:rounded-3xl
+                        max-h-screen overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div
+            className="flex justify-between items-center
+                          p-5 border-b sticky top-0 bg-white z-10
+                          rounded-t-3xl"
+          >
+            <div>
+              <h2 className="text-lg font-bold text-gray-800">
+                👗 Virtual Try-On
+              </h2>
+              <p className="text-xs text-gray-400">{product.name}</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-9 h-9 rounded-full bg-gray-100
+                         flex items-center justify-center
+                         text-gray-500 hover:bg-gray-200 transition"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="p-5 space-y-4">
+            {/* Preview Row */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="text-center">
+                <p className="text-xs text-gray-400 mb-2 font-medium">
+                  👕 Cloth's Photo
+                </p>
+                <div
+                  className="bg-gray-50 rounded-2xl
+                                aspect-square overflow-hidden"
+                >
+                  <img
+                    src={product.imageUrl}
+                    alt="product"
+                    className="w-full h-full object-contain p-2"
+                  />
+                </div>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-gray-400 mb-2 font-medium">
+                  📸 Your Photo
+                </p>
+                <div
+                  className="bg-gray-50 rounded-2xl
+                                aspect-square overflow-hidden
+                                flex items-center justify-center"
+                >
+                  {humanPreview ? (
+                    <img
+                      src={humanPreview}
+                      alt="you"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-center p-3">
+                      <div className="text-3xl mb-1">📷</div>
+                      <p className="text-gray-300 text-xs">Upload karen</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Upload */}
+            <div>
+              <label
+                className="block text-sm font-semibold
+                                text-gray-700 mb-2"
+              >
+                Apni Photo Upload Karen
+              </label>
+              <label
+                className="flex flex-col items-center
+                                justify-center w-full h-24
+                                border-2 border-dashed
+                                border-purple-200 rounded-2xl
+                                cursor-pointer hover:border-purple-400
+                                hover:bg-purple-50 transition bg-gray-50"
+              >
+                <div className="text-center">
+                  <div className="text-2xl mb-1">📸</div>
+                  <p className="text-sm text-gray-400">
+                    {humanImage
+                      ? `✅ ${humanImage.name}`
+                      : "Click karke photo select karen"}
+                  </p>
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImage}
+                  className="hidden"
+                />
+              </label>
+              <p className="text-xs text-purple-500 mt-1.5">
+                💡 Seedhi khadi photo best result deti hai!
+              </p>
+            </div>
+
+            {/* Try On Button */}
+            <button
+              onClick={handleTryOn}
+              disabled={tryonLoading || !humanImage}
+              className="w-full bg-gradient-to-r from-purple-600
+                         to-indigo-600 text-white py-4 rounded-2xl
+                         font-bold text-lg hover:opacity-90
+                         transition disabled:opacity-40
+                         flex items-center justify-center gap-2
+                         shadow-lg shadow-purple-200"
+            >
+              ✨ Try On Karen!
+            </button>
+
+            {/* Result */}
+            {tryonResult && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex-1 h-px bg-gray-100" />
+                  <span className="text-sm font-bold text-gray-600">
+                    🎉 Result!
+                  </span>
+                  <div className="flex-1 h-px bg-gray-100" />
+                </div>
+
+                <img
+                  src={tryonResult}
+                  alt="result"
+                  className="w-full rounded-2xl mb-4"
+                />
+
+                {styleAdvice && (
+                  <div
+                    className="bg-gradient-to-br from-purple-50
+                                  to-indigo-50 rounded-2xl p-4 mb-4"
+                  >
+                    <p className="text-sm font-bold text-purple-700 mb-2">
+                      ✨ AI Style Advice
+                    </p>
+                    <p
+                      className="text-sm text-gray-600
+                                  whitespace-pre-line leading-relaxed"
+                    >
+                      {styleAdvice}
+                    </p>
+                  </div>
+                )}
+
+                {/* Order Buttons After Result */}
+                <div className="space-y-2">
+                  {shop?.whatsapp && (
+                    <a
+                      href={`https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(
+                        `Hi! Maine try on kiya aur mujhe pasand aaya!\n👗 ${product.name}\n💰 ₹${product.price}\n\nOrder karna hai!`,
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block w-full bg-green-500
+                                 text-white py-3.5 rounded-2xl
+                                 font-bold text-center
+                                 hover:bg-green-600 transition"
+                    >
+                      📱 Pasand Aaya! Order Karen
+                    </a>
+                  )}
+                  {shop?.upiId && (
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(shop.upiId);
+                        alert(`UPI: ${shop.upiId}\nAmount: ₹${product.price}`);
+                      }}
+                      className="w-full border-2 border-green-500
+                                 text-green-600 py-3 rounded-2xl
+                                 font-semibold hover:bg-green-50
+                                 transition"
+                    >
+                      💳 UPI Se Pay Karen (₹{product.price})
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Main Shop Page ───────────────────────
+export default function Shop() {
+  const { sellerId } = useParams();
+  const [shop, setShop] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showTryOn, setShowTryOn] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
+
+  useEffect(() => {
+    fetchShop();
+    // eslint-disable-next-line
+  }, [sellerId]);
+
+  const fetchShop = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/seller/shop/${sellerId}`);
+      setShop(res.data.shop);
+      setProducts(res.data.products);
+    } catch {
+      setError("Shop nahi mili!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openDetail = (product) => {
+    setSelectedProduct(product);
+    setShowDetail(true);
+    setShowTryOn(false);
+  };
+
+  const openTryOn = (product) => {
+    setSelectedProduct(product);
+    setShowTryOn(true);
+    setShowDetail(false);
   };
 
   if (loading) {
     return (
       <div
         className="min-h-screen flex items-center
-                      justify-center"
+                      justify-center bg-gray-50"
       >
-        <p className="text-purple-700 text-xl">⏳ Loading...</p>
+        <div className="text-center">
+          <div className="text-5xl mb-4 animate-bounce">👗</div>
+          <p className="text-purple-600 font-medium animate-pulse">
+            Shop load ho rahi hai...
+          </p>
+        </div>
       </div>
     );
   }
@@ -101,268 +636,200 @@ export default function Shop() {
     return (
       <div
         className="min-h-screen flex items-center
-                      justify-center"
+                      justify-center bg-gray-50"
       >
-        <p className="text-red-500 text-xl">{error}</p>
+        <div className="text-center">
+          <div className="text-5xl mb-4">😕</div>
+          <p className="text-red-500 font-medium">{error}</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Shop Header */}
       <div
-        className="bg-purple-700 text-white
-                      text-center py-12"
+        className="bg-gradient-to-r from-purple-600
+                      via-purple-700 to-indigo-700
+                      text-white relative overflow-hidden"
       >
-        <h1 className="text-4xl font-bold mb-2">👗 {shop?.name}'s Shopping Site</h1>
-        <p className="text-purple-200">Try on clothes at home!</p>
-      </div>
+        {/* Background pattern */}
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: "30px 30px",
+          }}
+        ></div>
 
-      {/* Products */}
-      <div className="max-w-6xl mx-auto px-6 py-10">
-        {products.length === 0 ? (
-          <p
-            className="text-center text-gray-400 
-                        text-xl py-20"
-          >
-            Abhi koi product nahi hai 😕
-          </p>
-        ) : (
+        <div className="relative z-10 text-center py-10 px-4">
           <div
-            className="grid grid-cols-2 md:grid-cols-3
-                          lg:grid-cols-4 gap-6"
+            className="w-16 h-16 bg-white bg-opacity-20
+                          rounded-2xl flex items-center
+                          justify-center text-3xl mx-auto mb-4"
           >
-            {products.map((product) => (
+            👗
+          </div>
+          <h1 className="text-2xl md:text-4xl font-bold mb-2">{shop?.name}</h1>
+          <p className="text-purple-200 text-sm md:text-base">
+            Ghar baithe kapde try karen! ✨
+          </p>
+
+          {/* Stats */}
+          <div className="flex justify-center gap-6 mt-5">
+            {[
+              { label: "Products", value: products.length },
+              { label: "Try-On", value: "🤖 AI" },
+              { label: "Order", value: "📱 WA" },
+            ].map((s, i) => (
               <div
-                key={product._id}
-                className="bg-white rounded-2xl shadow-sm
-                           overflow-hidden hover:shadow-md
-                           transition"
+                key={i}
+                className="bg-white bg-opacity-15
+                           backdrop-blur-sm rounded-xl
+                           px-4 py-2 text-center"
               >
-                <img
-                  src={product.imageUrl}
-                  alt={product.name}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-800">
-                    {product.name}
-                  </h3>
-                  <p className="text-purple-600 font-bold mt-1">
-                    ₹{product.price}
-                  </p>
-                  <p
-                    className="text-gray-400 text-xs 
-                                mt-1 capitalize"
-                  >
-                    {product.category.replace("_", " ")}
-                  </p>
-
-                  <button
-                    onClick={() => openTryOn(product)}
-                    className="w-full mt-3 bg-purple-700
-                               text-white py-2 rounded-full
-                               text-sm font-semibold
-                               hover:bg-purple-800 transition"
-                  >
-                    👗 Try On Karen
-                  </button>
-
-                  {shop?.whatsapp && (
-                    <a
-                      href={`https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(
-                        `Hi! Mujhe chahiye:\nProduct: ${product.name}\nPrice: ₹${product.price}`,
-                      )}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="w-full mt-2 bg-green-500
-                                 text-white py-2 rounded-full
-                                 text-sm font-semibold
-                                 text-center block
-                                 hover:bg-green-600 transition"
-                    >
-                      📱 Order Karen
-                    </a>
-                  )}
-
-                  {shop?.upiId && (
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(shop.upiId);
-                        alert(`UPI: ${shop.upiId}\nAmount: ₹${product.price}`);
-                      }}
-                      className="w-full mt-2 border-2
-                                 border-green-500 text-green-600
-                                 py-2 rounded-full text-sm
-                                 font-semibold
-                                 hover:bg-green-50 transition"
-                    >
-                      💳 UPI Pay
-                    </button>
-                  )}
-                </div>
+                <p className="font-bold text-base">{s.value}</p>
+                <p className="text-purple-200 text-xs">{s.label}</p>
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Products Grid */}
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {products.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="text-6xl mb-4">🛍️</div>
+            <p className="text-gray-400 text-xl">Abhi koi product nahi hai</p>
+          </div>
+        ) : (
+          <>
+            <h2 className="text-lg font-bold text-gray-700 mb-5">
+              {products.length} Products Available
+            </h2>
+
+            <div
+              className="grid grid-cols-2 md:grid-cols-3
+                            lg:grid-cols-4 gap-4"
+            >
+              {products.map((product) => {
+                const images =
+                  product.images?.length > 0
+                    ? product.images
+                    : [product.imageUrl];
+
+                return (
+                  <div
+                    key={product._id}
+                    className="bg-white rounded-2xl shadow-sm
+                               hover:shadow-lg transition-all
+                               duration-300 overflow-hidden
+                               group cursor-pointer
+                               hover:-translate-y-1"
+                    onClick={() => openDetail(product)}
+                  >
+                    {/* Image with slider */}
+                    <div className="relative">
+                      <ImageSlider images={images} />
+
+                      {/* Try-On Quick Button */}
+                      <div
+                        className="absolute bottom-2 right-2
+                                      opacity-0 group-hover:opacity-100
+                                      transition-all duration-300"
+                      >
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openTryOn(product);
+                          }}
+                          className="bg-purple-600 text-white
+                                     text-xs px-3 py-1.5
+                                     rounded-full font-medium
+                                     shadow-lg hover:bg-purple-700"
+                        >
+                          👗 Try On
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Product Info */}
+                    <div className="p-4">
+                      <h3
+                        className="font-semibold text-gray-800
+                                     text-sm mb-1 truncate capitalize"
+                      >
+                        {product.name}
+                      </h3>
+
+                      <div
+                        className="flex items-center
+                                      justify-between mb-3"
+                      >
+                        <p
+                          className="text-purple-600 font-bold
+                                      text-base"
+                        >
+                          ₹{product.price}
+                        </p>
+                        <span
+                          className="text-xs text-gray-400
+                                         bg-gray-100 px-2 py-0.5
+                                         rounded-full capitalize"
+                        >
+                          {product.category?.replace("_", " ")}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openTryOn(product);
+                        }}
+                        className="w-full bg-gradient-to-r
+                                   from-purple-600 to-indigo-600
+                                   text-white py-2.5 rounded-xl
+                                   text-sm font-semibold
+                                   hover:opacity-90 transition
+                                   flex items-center
+                                   justify-center gap-1.5"
+                      >
+                        👗 Try On Now
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 
-      {/* Modal */}
-      {showModal && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-80
-                        z-50 flex items-center justify-center p-4"
-        >
-          <div
-            className="bg-white rounded-2xl w-full
-                          max-w-lg max-h-screen overflow-y-auto"
-          >
-            <div
-              className="flex justify-between items-center
-                            p-6 border-b"
-            >
-              <h2 className="text-xl font-bold">👗 {selectedProduct?.name}</h2>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600
-                           text-2xl font-bold"
-              >
-                ✕
-              </button>
-            </div>
+      {/* Product Detail Modal */}
+      {showDetail && selectedProduct && (
+        <ProductModal
+          product={selectedProduct}
+          shop={shop}
+          onClose={() => setShowDetail(false)}
+          onTryOn={(p) => {
+            setShowDetail(false);
+            openTryOn(p);
+          }}
+        />
+      )}
 
-            <div className="p-6 space-y-4">
-              <div className="flex gap-4">
-                <div className="flex-1 text-center">
-                  <p className="text-sm text-gray-500 mb-2">👕 Cloth</p>
-                  <img
-                    src={selectedProduct?.imageUrl}
-                    alt="Product"
-                    className="w-full h-32 object-contain
-                               rounded-xl border"
-                  />
-                </div>
-                <div className="flex-1 text-center">
-                  <p className="text-sm text-gray-500 mb-2">📸 Your Photo</p>
-                  {humanPreview ? (
-                    <img
-                      src={humanPreview}
-                      alt="Preview"
-                      className="w-full h-32 object-cover
-                                 rounded-xl border"
-                    />
-                  ) : (
-                    <div
-                      className="w-full h-32 border-2
-                                    border-dashed border-gray-300
-                                    rounded-xl flex items-center
-                                    justify-center text-gray-400
-                                    text-sm"
-                    >
-                      Upload karen
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label
-                  className="block text-sm font-medium
-                                  text-gray-700 mb-2"
-                >
-                  📸 Apni Photo Upload Karen
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleHumanImage}
-                  className="w-full text-sm border
-                             border-gray-300 rounded-lg p-2"
-                />
-                <p className="text-xs text-gray-400 mt-1">
-                  💡 Seedhi khadi photo best result deti hai!
-                </p>
-              </div>
-
-              <button
-                onClick={handleTryOn}
-                disabled={tryonLoading || !humanImage}
-                className="w-full bg-purple-700 text-white
-                           py-3 rounded-full font-semibold
-                           hover:bg-purple-800 transition
-                           disabled:opacity-50"
-              >
-                {tryonLoading
-                  ? "⏳ AI kaam kar raha hai... (30 sec)"
-                  : "✨ Try On Karen!"}
-              </button>
-
-              {tryonResult && (
-                <div>
-                  <p className="font-semibold text-center mb-3">🎉 Result!</p>
-                  <img
-                    src={tryonResult}
-                    alt="Result"
-                    className="w-full rounded-xl"
-                  />
-
-                  {styleAdvice && (
-                    <div
-                      className="mt-4 bg-purple-50
-                                    rounded-xl p-4"
-                    >
-                      <p className="font-semibold text-purple-700 mb-2">
-                        ✨ AI Style Advice
-                      </p>
-                      <p
-                        className="text-sm text-gray-700
-                                    whitespace-pre-line"
-                      >
-                        {styleAdvice}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="mt-4 space-y-2">
-                    {shop?.whatsapp && (
-                      <a
-                        href={`https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(
-                          `Hi! Maine try on kiya!\nProduct: ${selectedProduct?.name}\nPrice: ₹${selectedProduct?.price}\nMujhe chahiye!`,
-                        )}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="block bg-green-500
-                                   text-white text-center
-                                   py-3 rounded-full font-semibold
-                                   hover:bg-green-600 transition"
-                      >
-                        📱 WhatsApp Par Order Karen
-                      </a>
-                    )}
-
-                    {shop?.upiId && (
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(shop.upiId);
-                          alert(
-                            `UPI copy ho gaya!\n${shop.upiId}\nAmount: ₹${selectedProduct?.price}`,
-                          );
-                        }}
-                        className="w-full border-2 border-green-500
-                                   text-green-600 py-3 rounded-full
-                                   font-semibold hover:bg-green-50
-                                   transition"
-                      >
-                        💳 UPI Se Pay Karen
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+      {/* Try-On Modal */}
+      {showTryOn && selectedProduct && (
+        <TryOnModal
+          product={selectedProduct}
+          shop={shop}
+          onClose={() => setShowTryOn(false)}
+        />
       )}
     </div>
   );

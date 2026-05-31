@@ -10,6 +10,7 @@ const productSchema = new mongoose.Schema({
   description: String,
   price: Number,
   imageUrl: String,
+  images: [String],
   category: {
     type: String,
     enum: ['upper_body', 'lower_body', 'dress'],

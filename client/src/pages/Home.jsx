@@ -1,196 +1,765 @@
-import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-
+import { Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 export default function Home() {
-  const { token } = useAuth();
+  const { token } = useAuth()
+
   return (
-    <div
-      className="min-h-screen bg-gradient-to-br
-                    from-purple-50 to-pink-50"
-    >
-      {/* Hero */}
-      <div className="text-center py-20 px-6">
-        <h1
-          className="text-5xl font-bold 
-                       text-purple-700 mb-4"
-        >
-          👗 Virtual Try-On
-        </h1>
-        <p
-          className="text-xl text-gray-600 mb-8 
-                      max-w-2xl mx-auto"
-        >
-          Apne customers ko kapde try karne den ghar baithe! AI se sales
-          badhayen! 🚀
-        </p>
+    <div className="min-h-screen">
 
-        <div
-          className="flex gap-4 justify-center 
-                        flex-wrap"
-        >
-          {token ? (
-            <Link
-              to="/dashboard"
-              className="bg-purple-700 text-white px-8 py-4 rounded-full text-lg font-semibold hover:big-purple-800 transition shadow-md "
-            >
-              Go to Dashboard 📊
-            </Link>
-          ) : (
-            <>
-              <Link
-                to="/register"
-                className="bg-purple-700 text-white
-                       px-8 py-4 rounded-full
-                       text-lg font-semibold
-                       hover:bg-purple-800 transition"
-              >
-                Start Using in Free! ✨
-              </Link>
-              <Link
-                to="/login"
-                className="bg-white text-purple-700
-                       border-2 border-purple-700
-                       px-8 py-4 rounded-full
-                       text-lg font-semibold
-                       hover:bg-purple-50 transition"
-              >
-                Login Now
-              </Link>
-            </>
-          )}
+      {/* ─── HERO SECTION ─────────────────── */}
+      <div className="relative overflow-hidden
+                      bg-gradient-to-br from-slate-900
+                      via-purple-900 to-indigo-900
+                      min-h-screen flex items-center">
+
+        {/* Background Effects */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Gradient Orbs */}
+          <div className="absolute top-1/4 left-1/4
+                          w-96 h-96 bg-purple-500
+                          opacity-20 rounded-full
+                          blur-3xl animate-pulse">
+          </div>
+          <div className="absolute bottom-1/4 right-1/4
+                          w-80 h-80 bg-indigo-500
+                          opacity-20 rounded-full
+                          blur-3xl animate-pulse"
+            style={{ animationDelay: '1s' }}>
+          </div>
+          <div className="absolute top-1/2 left-1/2
+                          w-64 h-64 bg-pink-500
+                          opacity-10 rounded-full
+                          blur-3xl animate-pulse"
+            style={{ animationDelay: '2s' }}>
+          </div>
+
+          {/* Grid Pattern */}
+          <div className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage: `
+                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+              `,
+              backgroundSize: '50px 50px'
+            }}>
+          </div>
         </div>
-      </div>
 
-      {/* Features */}
-      <div className="max-w-5xl mx-auto px-6 pb-20">
-        <h2
-          className="text-3xl font-bold text-center
-                       text-gray-800 mb-12"
-        >
-          Why Choose Us? 🤔
-        </h2>
+        {/* Hero Content */}
+        <div className="relative z-10 max-w-7xl mx-auto
+                        px-6 py-20 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-2
+                          gap-12 items-center">
 
-        <div
-          className="grid grid-cols-1 md:grid-cols-3 
-                        gap-8"
-        >
-          {[
-            {
-              icon: "🤖",
-              title: "AI Powered",
-              desc: " Realistic Try-on By Advanced AI",
-            },
-            {
-              icon: "🔌",
-              title: "Easy Integration",
-              desc: "Just add one Script tag in your Website!",
-            },
-            {
-              icon: "🛍️",
-              title: "Sales Badhao",
-              desc: "Low Returns, More sales!",
-            },
-            {
-              icon: "👗",
-              title: "Fashion Advice",
-              desc: "AI stylist will also give you pro tips",
-            },
-            {
-              icon: "📱",
-              title: "Mobile Friendly",
-              desc: "Works Perfectly Also On Smartphones",
-            },
-            {
-              icon: "💰",
-              title: "Affordable",
-              desc: "Also Affordable For Small Sellers",
-            },
-          ].map((f, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-2xl p-6
-                         shadow-sm text-center
-                         hover:shadow-md transition"
-            >
-              <div className="text-4xl mb-4">{f.icon}</div>
-              <h3 className="font-bold text-lg mb-2">{f.title}</h3>
-              <p className="text-gray-500 text-sm">{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Pricing */}
-      <div className="bg-white py-20 px-6">
-        <h2
-          className="text-3xl font-bold text-center
-                       text-gray-800 mb-12"
-        >
-          Plans 💰
-        </h2>
-
-        <div
-          className="max-w-4xl mx-auto grid
-                        grid-cols-1 md:grid-cols-3 gap-8"
-        >
-          {[
-            {
-              name: "Free",
-              price: "₹0",
-              limit: "50 try-ons/month",
-              color: "border-gray-200",
-              btn: "bg-gray-700",
-            },
-            {
-              name: "Starter",
-              price: "₹1,999",
-              limit: "500 try-ons/month",
-              color: "border-purple-500",
-              btn: "bg-purple-700",
-              popular: true,
-            },
-            {
-              name: "Pro",
-              price: "₹4,999",
-              limit: "Unlimited try-ons",
-              color: "border-pink-500",
-              btn: "bg-pink-600",
-            },
-          ].map((plan, i) => (
-            <div
-              key={i}
-              className={`border-2 ${plan.color} 
-                         rounded-2xl p-8 text-center 
-                         relative`}
-            >
-              {plan.popular && (
-                <span
-                  className="absolute -top-3
-                                 left-1/2 -translate-x-1/2
-                                 bg-purple-700 text-white
-                                 px-4 py-1 rounded-full 
-                                 text-sm"
-                >
-                  Popular ⭐
+            {/* Left Content */}
+            <div>
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2
+                              bg-white bg-opacity-10
+                              backdrop-blur-sm
+                              border border-white border-opacity-20
+                              rounded-full px-4 py-2 mb-6">
+                <span className="w-2 h-2 bg-green-400
+                                 rounded-full animate-pulse">
                 </span>
-              )}
-              <h3 className="font-bold text-xl mb-2">{plan.name}</h3>
-              <p className="text-3xl font-bold mb-2">{plan.price}</p>
-              <p className="text-gray-500 mb-6">{plan.limit}</p>
-              <Link
-                to="/register"
-                className={`${plan.btn} text-white
-                            px-6 py-3 rounded-full
-                            font-semibold block
-                            hover:opacity-90 transition`}
-              >
-                Start Now
-              </Link>
+                <span className="text-white text-sm font-medium">
+                  🇮🇳 India's #1 Virtual Try-On Platform
+                </span>
+              </div>
+
+              <h1 className="text-4xl md:text-5xl lg:text-6xl
+                             font-bold text-white mb-6
+                             leading-tight">
+                Kapde Try Karen
+                <span className="block bg-gradient-to-r
+                                 from-purple-400 to-pink-400
+                                 bg-clip-text text-transparent">
+                  Ghar Baithe! ✨
+                </span>
+              </h1>
+
+              <p className="text-purple-200 text-lg mb-8
+                            max-w-xl leading-relaxed">
+                AI-powered virtual try-on apni website par lagayen.
+                Customers try karein, returns kam hon,
+                aur sales badhe! 🚀
+              </p>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-wrap gap-4 mb-12">
+                {token ? (
+                  <Link to="/dashboard"
+                    className="bg-gradient-to-r from-purple-500
+                               to-pink-500 text-white
+                               px-8 py-4 rounded-2xl
+                               text-lg font-semibold
+                               hover:from-purple-600
+                               hover:to-pink-600
+                               transition-all duration-300
+                               shadow-lg shadow-purple-500/30
+                               hover:shadow-purple-500/50
+                               hover:-translate-y-1
+                               flex items-center gap-2">
+                    📊 Open Dashboard
+                  </Link>
+                ) : (
+                  <>
+                    <Link to="/register"
+                      className="bg-gradient-to-r from-purple-500
+                                 to-pink-500 text-white
+                                 px-8 py-4 rounded-2xl
+                                 text-lg font-semibold
+                                 hover:from-purple-600
+                                 hover:to-pink-600
+                                 transition-all duration-300
+                                 shadow-lg shadow-purple-500/30
+                                 hover:shadow-purple-500/50
+                                 hover:-translate-y-1
+                                 flex items-center gap-2">
+                      🚀 Start in Free
+                    </Link>
+                    <Link to="/login"
+                      className="bg-white bg-opacity-10
+                                 backdrop-blur-sm
+                                 border border-white border-opacity-30
+                                 text-white px-8 py-4 rounded-2xl
+                                 text-lg font-semibold
+                                 hover:bg-opacity-20
+                                 transition-all duration-300
+                                 flex items-center gap-2">
+                      Login Now →
+                    </Link>
+                  </>
+                )}
+              </div>
+
+              {/* Social Proof */}
+              <div className="flex flex-wrap items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <div className="flex -space-x-2">
+                    {['👨', '👩', '👨‍💼', '👩‍💼'].map((e, i) => (
+                      <div key={i}
+                        className="w-9 h-9 rounded-full
+                                   bg-gradient-to-br from-purple-400
+                                   to-pink-400 border-2 border-purple-900
+                                   flex items-center justify-center
+                                   text-sm">
+                        {e}
+                      </div>
+                    ))}
+                  </div>
+                  <span className="text-purple-200 text-sm">
+                    500+ sellers
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {[1,2,3,4,5].map(i => (
+                    <span key={i} className="text-yellow-400 text-sm">
+                      ⭐
+                    </span>
+                  ))}
+                  <span className="text-purple-200 text-sm ml-1">
+                    4.9/5
+                  </span>
+                </div>
+              </div>
             </div>
-          ))}
+
+            {/* Right - 3D Card Preview */}
+            <div className="relative hidden lg:block">
+              <div className="relative"
+                style={{ perspective: '1000px' }}>
+
+                {/* Main Card */}
+                <div className="bg-white bg-opacity-10
+                                backdrop-blur-md
+                                border border-white border-opacity-20
+                                rounded-3xl p-6
+                                transform rotate-y-6"
+                  style={{
+                    transform: 'rotateY(-5deg) rotateX(5deg)',
+                    boxShadow: '0 25px 50px rgba(0,0,0,0.5)'
+                  }}>
+
+                  {/* Mock Try-On UI */}
+                  <div className="flex gap-4 mb-4">
+                    <div className="flex-1 bg-white bg-opacity-10
+                                    rounded-2xl aspect-square
+                                    flex items-center justify-center
+                                    text-5xl">
+                      👔
+                    </div>
+                    <div className="flex-1 bg-white bg-opacity-10
+                                    rounded-2xl aspect-square
+                                    flex items-center justify-center
+                                    text-5xl">
+                      🧍
+                    </div>
+                  </div>
+
+                  {/* Arrow */}
+                  <div className="text-center text-white
+                                  text-2xl my-3 animate-bounce">
+                    ✨ AI Magic ✨
+                  </div>
+
+                  {/* Result */}
+                  <div className="bg-gradient-to-br
+                                  from-purple-500 to-pink-500
+                                  rounded-2xl p-4 text-center">
+                    <div className="text-5xl mb-2">🧍‍♂️</div>
+                    <p className="text-white font-semibold text-sm">
+                      Virtual Try-On Result!
+                    </p>
+                    <div className="flex justify-center gap-1 mt-2">
+                      {[1,2,3,4,5].map(i => (
+                        <span key={i} className="text-yellow-300 text-xs">
+                          ⭐
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* AI Advice */}
+                  <div className="mt-4 bg-white bg-opacity-10
+                                  rounded-xl p-3">
+                    <p className="text-white text-xs font-medium mb-1">
+                      🤖 AI Style Advice:
+                    </p>
+                    <p className="text-purple-200 text-xs">
+                      "Color rating: 9/10 — Black pant ke
+                      saath perfect match! 🎯"
+                    </p>
+                  </div>
+                </div>
+
+                {/* Floating badges */}
+                <div className="absolute -top-4 -right-4
+                                bg-green-500 text-white
+                                rounded-2xl px-4 py-2
+                                text-sm font-bold
+                                shadow-lg animate-bounce">
+                  ✅ Result Ready!
+                </div>
+                <div className="absolute -bottom-4 -left-4
+                                bg-purple-600 text-white
+                                rounded-2xl px-4 py-2
+                                text-sm font-bold shadow-lg">
+                  ⚡ In 20 sec
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2
+                        -translate-x-1/2 text-white
+                        opacity-50 animate-bounce">
+          <div className="w-6 h-10 border-2 border-white
+                          rounded-full flex justify-center pt-2">
+            <div className="w-1 h-3 bg-white rounded-full
+                            animate-bounce">
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* ─── STATS SECTION ────────────────── */}
+      <div className="bg-gradient-to-r from-purple-600
+                      to-indigo-600 py-12">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {[
+              { num: '500+', label: 'Active Sellers', icon: '🏪' },
+              { num: '10K+', label: 'Try-Ons Done', icon: '👗' },
+              { num: '40%', label: 'Low Returns', icon: '📉' },
+              { num: '4.8⭐', label: 'Seller Rating', icon: '🌟' }
+            ].map((stat, i) => (
+              <div key={i}
+                className="text-center text-white">
+                <div className="text-3xl mb-2">{stat.icon}</div>
+                <div className="text-3xl font-bold mb-1">
+                  {stat.num}
+                </div>
+                <div className="text-purple-200 text-sm">
+                  {stat.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ─── HOW IT WORKS ─────────────────── */}
+      <div className="py-20 px-6 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="bg-purple-100 text-purple-700
+                             px-4 py-2 rounded-full text-sm
+                             font-semibold">
+              How does it work?
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold
+                           text-gray-800 mt-4 mb-4">
+              Ready in just 3 steps!⚡
+            </h2>
+            <p className="text-gray-500 max-w-xl mx-auto">
+              No technical knowledge required.
+              Just register and get started!
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3
+                          gap-8 relative">
+
+            {/* Connecting Line */}
+            <div className="hidden md:block absolute top-16
+                            left-1/3 right-1/3 h-0.5
+                            bg-gradient-to-r from-purple-300
+                            to-indigo-300">
+            </div>
+
+            {[
+              {
+                step: '01',
+                icon: '📝',
+                title: 'Register Now',
+                desc: 'Create a free account, upload products and get a shop link in 2 minutes!',
+                color: 'from-purple-500 to-purple-600'
+              },
+              {
+                step: '02',
+                icon: '🔌',
+                title: 'Add on your Website',
+                desc: 'Paste a script tag into the HTML body tag on your website or Share our shop link!',
+                color: 'from-indigo-500 to-indigo-600'
+              },
+              {
+                step: '03',
+                icon: '🚀',
+                title: 'Increase Sales',
+                desc: 'Customers choose, get style advice, and order on WhatsApp!',
+                color: 'from-pink-500 to-pink-600'
+              }
+            ].map((step, i) => (
+              <div key={i}
+                className="relative bg-white rounded-3xl p-8
+                           shadow-sm hover:shadow-lg
+                           transition-all duration-300
+                           hover:-translate-y-2
+                           border border-gray-100">
+                <div className={`w-16 h-16 rounded-2xl
+                                bg-gradient-to-br ${step.color}
+                                flex items-center justify-center
+                                text-3xl mb-6 shadow-lg`}>
+                  {step.icon}
+                </div>
+                <div className="absolute top-6 right-6
+                                text-5xl font-black
+                                text-gray-100">
+                  {step.step}
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-3">
+                  {step.title}
+                </h3>
+                <p className="text-gray-500 leading-relaxed">
+                  {step.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ─── FEATURES ─────────────────────── */}
+      <div className="py-20 px-6 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="bg-purple-100 text-purple-700
+                             px-4 py-2 rounded-full text-sm
+                             font-semibold">
+              Features
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold
+                           text-gray-800 mt-4">
+              Everything In One Place! 🎯
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2
+                          lg:grid-cols-3 gap-6">
+            {[
+              {
+                icon: '🤖',
+                title: 'AI-Powered Try-On',
+                desc: "Realistic virtual try-ons from advanced AI models. Perfectly fit customer's face and body!",
+                color: 'bg-purple-50',
+                iconBg: 'bg-purple-100'
+              },
+              {
+                icon: '✨',
+                title: 'AI Style Advisor',
+                desc: 'Instant fashion advice from Advance AI. Color combination, occasion suggestion, and rating!',
+                color: 'bg-pink-50',
+                iconBg: 'bg-pink-100'
+              },
+              {
+                icon: '🔌',
+                title: 'Easy Widget',
+                desc: 'Paste a script tag in your html <body>. Works on any website – Shopify, WordPress, custom!',
+                color: 'bg-blue-50',
+                iconBg: 'bg-blue-100'
+              },
+              {
+                icon: '🏪',
+                title: 'Free Shop Page',
+                desc: "Don't have a website? No problem! Get your shop URL and add it to your Instagram bio or Anywhere!",
+                color: 'bg-green-50',
+                iconBg: 'bg-green-100'
+              },
+              {
+                icon: '📱',
+                title: 'WhatsApp Orders',
+                desc: 'Customers can choose and place their order directly on WhatsApp. Message ready in one click.!',
+                color: 'bg-emerald-50',
+                iconBg: 'bg-emerald-100'
+              },
+              {
+                icon: '📊',
+                title: 'Analytics Dashboard',
+                desc: 'See how many try-ons have taken place, which products are popular, and grow your business!',
+                color: 'bg-orange-50',
+                iconBg: 'bg-orange-100'
+              }
+            ].map((f, i) => (
+              <div key={i}
+                className={`${f.color} rounded-3xl p-7
+                            hover:shadow-lg transition-all
+                            duration-300 hover:-translate-y-1
+                            border border-transparent
+                            hover:border-gray-100`}>
+                <div className={`${f.iconBg} w-14 h-14
+                                rounded-2xl flex items-center
+                                justify-center text-2xl mb-5`}>
+                  {f.icon}
+                </div>
+                <h3 className="text-lg font-bold text-gray-800 mb-2">
+                  {f.title}
+                </h3>
+                <p className="text-gray-500 text-sm leading-relaxed">
+                  {f.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ─── PRICING ──────────────────────── */}
+      <div className="py-20 px-6 bg-gray-50">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="bg-purple-100 text-purple-700
+                             px-4 py-2 rounded-full text-sm
+                             font-semibold">
+              Pricing
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold
+                           text-gray-800 mt-4 mb-4">
+              Simple Plans 💰
+            </h2>
+            <p className="text-gray-500">
+              Free trial available!
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                name: 'Free',
+                price: '₹0',
+                period: 'forever',
+                features: [
+                  '50 try-ons/month',
+                  'Basic shop page',
+                  'WhatsApp orders',
+                  'AI style advice'
+                ],
+                cta: 'Start in Free',
+                link: '/register',
+                style: 'border border-gray-200 bg-white'
+              },
+              {
+                name: 'Starter',
+                price: '₹1,999',
+                period: '/month',
+                features: [
+                  '500 try-ons/month',
+                  'Custom shop page',
+                  'Website widget',
+                  'AI style advice',
+                  'Priority support'
+                ],
+                cta: 'Buy Starter',
+                link: '/pricing',
+                style: 'bg-gradient-to-br from-purple-600 to-indigo-600',
+                popular: true
+              },
+              {
+                name: 'Pro',
+                price: '₹4,999',
+                period: '/month',
+                features: [
+                  'Unlimited try-ons',
+                  'Custom shop page',
+                  'Website widget',
+                  'AI style advice',
+                  'Analytics dashboard',
+                  'Priority support'
+                ],
+                cta: 'Buy Pro!',
+                link: '/pricing',
+                style: 'border border-gray-200 bg-white'
+              }
+            ].map((plan, i) => (
+              <div key={i}
+                className={`${plan.style} rounded-3xl p-8
+                            relative hover:shadow-xl
+                            transition-all duration-300
+                            hover:-translate-y-2`}>
+
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2
+                                  -translate-x-1/2
+                                  bg-gradient-to-r from-yellow-400
+                                  to-orange-400 text-white
+                                  px-6 py-1.5 rounded-full
+                                  text-sm font-bold shadow-lg">
+                    ⭐ Most Popular
+                  </div>
+                )}
+
+                <h3 className={`font-bold text-xl mb-1
+                                ${plan.popular
+                                  ? 'text-white'
+                                  : 'text-gray-800'
+                                }`}>
+                  {plan.name}
+                </h3>
+                <div className="flex items-end gap-1 mb-6">
+                  <span className={`text-4xl font-black
+                                   ${plan.popular
+                                     ? 'text-white'
+                                     : 'text-gray-800'
+                                   }`}>
+                    {plan.price}
+                  </span>
+                  <span className={`text-sm mb-1
+                                   ${plan.popular
+                                     ? 'text-purple-200'
+                                     : 'text-gray-400'
+                                   }`}>
+                    {plan.period}
+                  </span>
+                </div>
+
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((f, fi) => (
+                    <li key={fi}
+                      className={`flex items-center gap-2 text-sm
+                                 ${plan.popular
+                                   ? 'text-purple-100'
+                                   : 'text-gray-600'
+                                 }`}>
+                      <span className={
+                        plan.popular ? 'text-green-300' : 'text-green-500'
+                      }>
+                        ✓
+                      </span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+
+                <Link to={plan.link}
+                  className={`block text-center py-3 rounded-2xl
+                             font-semibold transition-all duration-300
+                             ${plan.popular
+                               ? 'bg-white text-purple-700 hover:bg-purple-50'
+                               : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90'
+                             }`}>
+                  {plan.cta}
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ─── TESTIMONIALS ─────────────────── */}
+      <div className="py-20 px-6 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="bg-purple-100 text-purple-700
+                             px-4 py-2 rounded-full text-sm
+                             font-semibold">
+              Reviews
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold
+                           text-gray-800 mt-4">
+              Sellers Kya Kehte Hain? 💬
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                name: 'Priya Sharma',
+                role: 'Fashion Boutique Owner, Mumbai',
+                review: 'Mere returns 40% kam ho gaye! Customers try karke hi order karte hain ab. Amazing product!',
+                avatar: '👩‍💼',
+                rating: 5
+              },
+              {
+                name: 'Rahul Gupta',
+                role: 'Instagram Fashion Seller, Delhi',
+                review: 'Website nahi thi meri, par ab shop URL se bohot orders aa rahe hain WhatsApp par. Best!',
+                avatar: '👨‍💼',
+                rating: 5
+              },
+              {
+                name: 'Meena Patel',
+                role: 'Saree Shop Owner, Surat',
+                review: 'AI style advice feature sabse best hai! Customers ko perfect combination suggest ho jata hai.',
+                avatar: '👩',
+                rating: 5
+              }
+            ].map((t, i) => (
+              <div key={i}
+                className="bg-gray-50 rounded-3xl p-7
+                           hover:shadow-lg transition-all
+                           duration-300 border border-gray-100">
+                <div className="flex gap-1 mb-4">
+                  {Array(t.rating).fill(0).map((_, si) => (
+                    <span key={si} className="text-yellow-400">⭐</span>
+                  ))}
+                </div>
+                <p className="text-gray-600 leading-relaxed mb-6 italic">
+                  "{t.review}"
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-full
+                                  bg-purple-100 flex items-center
+                                  justify-center text-2xl">
+                    {t.avatar}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-800 text-sm">
+                      {t.name}
+                    </p>
+                    <p className="text-gray-400 text-xs">
+                      {t.role}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ─── FINAL CTA ────────────────────── */}
+      <div className="py-20 px-6 bg-gradient-to-br
+                      from-slate-900 via-purple-900
+                      to-indigo-900 relative overflow-hidden">
+
+        {/* Background effect */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-1/2
+                          w-96 h-96 bg-purple-500
+                          opacity-20 rounded-full
+                          blur-3xl -translate-x-1/2">
+          </div>
+        </div>
+
+        <div className="relative z-10 max-w-3xl
+                        mx-auto text-center">
+          <div className="text-6xl mb-6">🚀</div>
+          <h2 className="text-3xl md:text-5xl font-bold
+                         text-white mb-6">
+            Start today now!
+          </h2>
+          <p className="text-purple-200 text-lg mb-10
+                        max-w-xl mx-auto">
+            Start with free 50-try-ons.
+            No need any credit card !
+          </p>
+
+          <div className="flex flex-wrap gap-4 justify-center">
+            {token ? (
+              <Link to="/dashboard"
+                className="bg-gradient-to-r from-purple-500
+                           to-pink-500 text-white
+                           px-10 py-4 rounded-2xl
+                           text-lg font-bold
+                           hover:from-purple-600
+                           hover:to-pink-600
+                           transition-all duration-300
+                           shadow-lg hover:-translate-y-1">
+                📊 Open Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link to="/register"
+                  className="bg-gradient-to-r from-purple-500
+                             to-pink-500 text-white
+                             px-10 py-4 rounded-2xl
+                             text-lg font-bold
+                             hover:from-purple-600
+                             hover:to-pink-600
+                             transition-all duration-300
+                             shadow-lg hover:-translate-y-1">
+                  🎉 Make Free Account
+                </Link>
+                <Link to="/pricing"
+                  className="bg-white bg-opacity-10
+                             backdrop-blur-sm
+                             border border-white border-opacity-30
+                             text-white px-10 py-4 rounded-2xl
+                             text-lg font-semibold
+                             hover:bg-opacity-20
+                             transition-all duration-300">
+                  View Plans →
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Trust badges */}
+          <div className="flex flex-wrap justify-center
+                          gap-6 mt-12">
+            {[
+              '🔒 100% Secure',
+              '✅ No Credit Card',
+              '⚡ 2 Min Setup',
+              '🇮🇳 Made in India'
+            ].map((badge, i) => (
+              <div key={i}
+                className="bg-white bg-opacity-10
+                           backdrop-blur-sm
+                           border border-white border-opacity-20
+                           rounded-full px-4 py-2
+                           text-white text-sm">
+                {badge}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
     </div>
-  );
+  )
 }

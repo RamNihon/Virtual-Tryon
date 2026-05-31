@@ -13,6 +13,7 @@ app.use(express.json());
 // Routes
 app.use("/api/tryon", require("./routes/tryon"));
 app.use("/api/seller", require("./routes/seller").router);
+app.use("/api/payment", require("./routes/payment"));
 app.use("/widget.js", express.static("./widget/widget.js"));
 
 // Test route

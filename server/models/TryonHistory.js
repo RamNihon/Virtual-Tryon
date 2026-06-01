@@ -10,7 +10,5 @@ const tryonHistorySchema = new mongoose.Schema({
   humanImage: String
 }, { timestamps: true })
 
-module.exports = mongoose.model(
-  'TryonHistory',
-  tryonHistorySchema
-)
+module.exports = mongoose.models.TryonHistory || 
+  mongoose.model('TryonHistory', tryonHistorySchema)

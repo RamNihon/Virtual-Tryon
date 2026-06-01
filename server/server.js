@@ -1,18 +1,32 @@
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const dns = require("dns");
 const path = require("path");
+const dns = require("dns");
 require("dotenv").config({ path: path.resolve(__dirname, ".env") });
+const passport = require("./config/passport");
+
+const session = require("express-session");
 
 const app = express();
 
 app.use(cors());
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+  }),
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(express.json());
 
 // Routes
 app.use("/api/tryon", require("./routes/tryon"));
 app.use("/api/seller", require("./routes/seller").router);
+app.use("/api/auth", require("./routes/auth"));
 app.use("/api/payment", require("./routes/payment"));
 app.use("/widget.js", express.static("./widget/widget.js"));
 

@@ -312,8 +312,94 @@ const sendLimitWarningEmail = async (seller) => {
   }
 };
 
+// ─── Reset Password Email ──────────────────
+const sendResetPasswordEmail = async (seller, resetUrl) => {
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM,
+      to: seller.email,
+      subject: '🔐 Password Reset - VirtualTryOn',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <body style="font-family: Arial, sans-serif;
+                     max-width: 600px; margin: 0 auto;
+                     padding: 20px; background: #f9f9f9;">
+
+          <div style="background: #7C3AED;
+                      padding: 30px;
+                      border-radius: 16px 16px 0 0;
+                      text-align: center;">
+            <h1 style="color: white; margin: 0;">
+              👗 VirtualTryOn
+            </h1>
+          </div>
+
+          <div style="background: white;
+                      padding: 30px;
+                      border-radius: 0 0 16px 16px;">
+
+            <div style="text-align: center; margin-bottom: 24px;">
+              <div style="font-size: 50px;">🔐</div>
+              <h2 style="color: #1f2937;">
+                Password Reset Request
+              </h2>
+            </div>
+
+            <p style="color: #6b7280;">
+              Hi ${seller.name},
+              <br><br>
+              Aapne password reset request ki hai.
+              Neeche button dabao:
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetUrl}"
+                 style="background: #7C3AED;
+                        color: white;
+                        padding: 14px 32px;
+                        border-radius: 50px;
+                        text-decoration: none;
+                        font-weight: bold;
+                        font-size: 16px;
+                        display: inline-block;">
+                🔑 Password Reset Karo
+              </a>
+            </div>
+
+            <div style="background: #fef3c7;
+                        border-radius: 12px;
+                        padding: 16px; margin: 20px 0;">
+              <p style="color: #92400e; margin: 0;
+                         font-size: 14px;">
+                ⚠️ Yeh link sirf 
+                <strong>1 ghante</strong> 
+                tak valid hai!
+                <br>
+                Agar aapne request nahi ki to
+                ignore kar dijiye.
+              </p>
+            </div>
+
+            <p style="color: #9ca3af; font-size: 12px;
+                       text-align: center; margin-top: 30px;">
+              © 2025 VirtualTryOn
+            </p>
+          </div>
+        </body>
+        </html>
+      `
+    })
+    console.log('✅ Reset email sent!')
+  } catch (error) {
+    console.log('❌ Reset email error:', error.message)
+  }
+}
+
+
 module.exports = {
   sendWelcomeEmail,
   sendPaymentSuccessEmail,
   sendLimitWarningEmail,
+  sendResetPasswordEmail,
 };

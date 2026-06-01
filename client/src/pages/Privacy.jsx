@@ -109,7 +109,7 @@ export default function Privacy() {
             <p className="text-sm">
               For privacy concerns, contact us at:
               <br />
-              <a href="mailto:privacy@virtualtryon.com"
+              <a href="mailto:virtualtryon.service@gmail.com"
                 className="text-purple-600 
                            hover:underline">
                 privacy@virtualtryon.com

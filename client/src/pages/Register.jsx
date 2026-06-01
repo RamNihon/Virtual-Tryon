@@ -523,6 +523,31 @@ export default function Register() {
                 >
                   🚀 Register Now for Free!
                 </button>
+
+                {/* Divider */}
+                <div className="flex items-center gap-3 my-2">
+                  <div className="flex-1 h-px bg-gray-100" />
+                  <span className="text-gray-500 text-xs">OR</span>
+                  <div className="flex-1 h-px bg-gray-100" />
+                </div>
+
+                {/* Google Register */}
+
+                <a
+                  href={`${API_URL}/api/auth/google`}
+                  className="w-full flex items-center justify-center
+             gap-3 border-2 border-gray-200
+             rounded-xl py-3 font-semibold
+             text-gray-700 hover:bg-gray-50
+             transition text-sm"
+                >
+                  <img
+                    src="https://www.google.com/favicon.ico"
+                    alt="Google"
+                    className="w-5 h-5"
+                  />
+                  Signup with Google
+                </a>
               </div>
 
               <p

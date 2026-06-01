@@ -116,7 +116,7 @@ export default function Terms() {
             <p className="text-sm">
               Questions about terms?
               <br />
-              <a href="mailto:legal@virtualtryon.com"
+              <a href="mailto:virtualtryon.service+legal@gmail.com"
                 className="text-purple-600 hover:underline">
                 legal@virtualtryon.com
               </a>

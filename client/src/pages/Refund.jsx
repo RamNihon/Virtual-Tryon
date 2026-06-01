@@ -86,20 +86,20 @@ export default function Refund() {
             </h2>
             <p className="text-sm">
               Email:
-              <a href="mailto:refund@virtualtryon.com"
+              <a href="mailto:virtualtryon.service+refund@gmail.com"
                 className="text-purple-600 
                            hover:underline ml-1">
                 refund@virtualtryon.com
               </a>
               <br />
-              WhatsApp:
+              {/* WhatsApp:
               <a href="https://wa.me/91XXXXXXXXXX"
                 target="_blank"
                 rel="noreferrer"
                 className="text-purple-600 
                            hover:underline ml-1">
                 +91 XXXXXXXXXX
-              </a>
+              </a> */}
             </p>
           </section>
 

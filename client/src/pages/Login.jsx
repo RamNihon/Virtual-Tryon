@@ -183,7 +183,7 @@ export default function Login() {
                 Login Now! 👋
               </h2>
               <p className="text-gray-400 text-sm mb-6">
-                Access your Dashboard 
+                Access your Dashboard
               </p>
 
               {error && (
@@ -297,11 +297,29 @@ export default function Login() {
               </div>
 
               {/* Divider */}
-              <div className="flex items-center gap-3 my-6">
+
+              {/* Google Login */}
+
+              <div className="flex items-center gap-3 my-4">
                 <div className="flex-1 h-px bg-gray-100"></div>
-                <span className="text-gray-300 text-xs">ya</span>
+                <span className="text-gray-500 text-xs">OR</span>
                 <div className="flex-1 h-px bg-gray-100"></div>
               </div>
+              <a
+                href={`${API_URL}/api/auth/google`}
+                className="w-full flex items-center justify-center
+             gap-3 border-2 border-gray-200
+             rounded-xl py-3 font-semibold
+             text-gray-700 hover:bg-gray-50
+             hover:border-gray-300 transition text-sm"
+              >
+                <img
+                  src="https://www.google.com/favicon.ico"
+                  alt="Google"
+                  className="w-5 h-5"
+                />
+                Login with Google
+              </a>
 
               <p className="text-center text-sm text-gray-400">
                 Don't have a account?{" "}

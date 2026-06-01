@@ -504,68 +504,121 @@ function TryOnModal({ product, shop, onClose }) {
             {/* Result */}
             {tryonResult && (
               <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="flex-1 h-px bg-gray-100" />
-                  <span className="text-sm font-bold text-gray-600">
-                    🎉 Result!
-                  </span>
-                  <div className="flex-1 h-px bg-gray-100" />
-                </div>
-
-                <img
-                  src={tryonResult}
-                  alt="result"
-                  className="w-full rounded-2xl mb-4"
-                />
-
-                {styleAdvice && (
+                {/* Fullscreen Result */}
+                <div
+                  className="fixed inset-0 bg-black z-50
+                    flex flex-col"
+                >
+                  {/* Header */}
                   <div
-                    className="bg-gradient-to-br from-purple-50
-                                  to-indigo-50 rounded-2xl p-4 mb-4"
+                    className="flex justify-between items-center
+                      px-4 py-3 bg-black bg-opacity-80"
                   >
-                    <p className="text-sm font-bold text-purple-700 mb-2">
-                      ✨ AI Style Advice
-                    </p>
-                    <p
-                      className="text-sm text-gray-600
-                                  whitespace-pre-line leading-relaxed"
-                    >
-                      {styleAdvice}
-                    </p>
-                  </div>
-                )}
-
-                {/* Order Buttons After Result */}
-                <div className="space-y-2">
-                  {shop?.whatsapp && (
-                    <a
-                      href={`https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(
-                        `Hi! Maine try on kiya aur mujhe pasand aaya!\n👗 ${product.name}\n💰 ₹${product.price}\n\nOrder karna hai!`,
-                      )}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="block w-full bg-green-500
-                                 text-white py-3.5 rounded-2xl
-                                 font-bold text-center
-                                 hover:bg-green-600 transition"
-                    >
-                      📱 Pasand Aaya! Order Karen
-                    </a>
-                  )}
-                  {shop?.upiId && (
+                    <div>
+                      <p className="text-white font-bold">🎉 Try-On Result!</p>
+                      <p className="text-gray-400 text-xs">{product?.name}</p>
+                    </div>
                     <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(shop.upiId);
-                        alert(`UPI: ${shop.upiId}\nAmount: ₹${product.price}`);
-                      }}
-                      className="w-full border-2 border-green-500
-                                 text-green-600 py-3 rounded-2xl
-                                 font-semibold hover:bg-green-50
-                                 transition"
+                      onClick={() => setTryonResult(null)}
+                      className="w-9 h-9 rounded-full bg-white
+                     bg-opacity-20 flex items-center
+                     justify-center text-white
+                     hover:bg-opacity-30 transition"
                     >
-                      💳 UPI Se Pay Karen (₹{product.price})
+                      ✕
                     </button>
+                  </div>
+
+                  {/* Result Image - Fullscreen */}
+                  <div
+                    className="flex-1 flex items-center
+                      justify-center p-4 overflow-hidden"
+                  >
+                    <img
+                      src={tryonResult}
+                      alt="Try-on result"
+                      className="max-w-full max-h-full
+                     object-contain rounded-2xl
+                     shadow-2xl"
+                    />
+                  </div>
+
+                  {/* Style Advice */}
+                  {styleAdvice && (
+                    <div
+                      className="bg-gradient-to-t from-black
+                        to-transparent px-4 pb-2"
+                    >
+                      <div
+                        className="bg-white bg-opacity-10
+                          backdrop-blur-sm rounded-2xl
+                          p-4 mb-3"
+                      >
+                        <p
+                          className="text-purple-300 font-bold
+                          text-sm mb-2"
+                        >
+                          ✨ AI Style Advice
+                        </p>
+                        <p
+                          className="text-white text-xs
+                          leading-relaxed
+                          whitespace-pre-line
+                          max-h-24 overflow-y-auto"
+                        >
+                          {styleAdvice}
+                        </p>
+                      </div>
+                    </div>
                   )}
+
+                  {/* Action Buttons */}
+                  <div
+                    className="bg-black bg-opacity-80
+                      px-4 pb-6 pt-2 space-y-2"
+                  >
+                    {shop?.whatsapp && (
+                      <a
+                        href={`https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(
+                          `Hi! Maine try on kiya!\n👗 ${product?.name}\n💰 ₹${product?.price}\n\n Yah order karna hai!`,
+                        )}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block w-full bg-green-500
+                       text-white py-4 rounded-2xl
+                       font-bold text-center text-base
+                       hover:bg-green-600 transition"
+                      >
+                        📱 Like it ! Order Now
+                      </a>
+                    )}
+
+                    {shop?.upiId && (
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(shop.upiId);
+                          alert(
+                            `UPI: ${shop.upiId}\nAmount: ₹${product?.price}`,
+                          );
+                        }}
+                        className="w-full border-2 border-white
+                       border-opacity-30 text-white
+                       py-3 rounded-2xl font-semibold
+                       hover:bg-white hover:bg-opacity-10
+                       transition"
+                      >
+                        💳 UPI Se Pay Karen
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => setTryonResult(null)}
+                      className="w-full text-gray-400 text-sm
+                     py-2 hover:text-white transition"
+                    >
+                      ← Try again
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -586,6 +639,14 @@ export default function Shop() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showTryOn, setShowTryOn] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
+
+  const filteredProducts = products.filter((p) => {
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const matchFilter = filter === "all" || p.category === filter;
+    return matchSearch && matchFilter;
+  });
 
   useEffect(() => {
     fetchShop();
@@ -701,116 +762,184 @@ export default function Shop() {
       </div>
 
       {/* Products Grid */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {products.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-6xl mb-4">🛍️</div>
-            <p className="text-gray-400 text-xl">Abhi koi product nahi hai</p>
-          </div>
-        ) : (
-          <>
-            <h2 className="text-lg font-bold text-gray-700 mb-5">
-              {products.length} Products Available
-            </h2>
-
-            <div
-              className="grid grid-cols-2 md:grid-cols-3
-                            lg:grid-cols-4 gap-4"
+      <div className="mb-6 space-y-3">
+        {/* Search Bar */}
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="🔍 Search products..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-white border border-gray-200
+                 rounded-2xl px-5 py-3 pl-12
+                 focus:outline-none focus:border-purple-400
+                 focus:ring-2 focus:ring-purple-100
+                 transition text-sm shadow-sm"
+          />
+          <span
+            className="absolute left-4 top-1/2
+                     -translate-y-1/2 text-gray-400"
+          >
+            🔍
+          </span>
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-4 top-1/2
+                   -translate-y-1/2 text-gray-400
+                   hover:text-gray-600 transition"
             >
-              {products.map((product) => {
-                const images =
-                  product.images?.length > 0
-                    ? product.images
-                    : [product.imageUrl];
+              ✕
+            </button>
+          )}
+        </div>
 
-                return (
-                  <div
-                    key={product._id}
-                    className="bg-white rounded-2xl shadow-sm
+        {/* Category Filter */}
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {[
+            { key: "all", label: "🛍️ All" },
+            { key: "upper_body", label: "👕 Shirt" },
+            { key: "lower_body", label: "👖 Pant" },
+            { key: "dress", label: "👗 Dress" },
+          ].map((cat) => (
+            <button
+              key={cat.key}
+              onClick={() => setFilter(cat.key)}
+              className={`flex-shrink-0 px-4 py-2
+                   rounded-full text-sm font-medium
+                   transition whitespace-nowrap
+                   ${
+                     filter === cat.key
+                       ? "bg-purple-600 text-white shadow-md"
+                       : "bg-white text-gray-600 border border-gray-200 hover:border-purple-300"
+                   }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Results count */}
+        {(search || filter !== "all") && (
+          <p className="text-sm text-gray-400">
+            &nbsp;🔍︎ {filteredProducts.length} products found for
+            {search && ` "${search}" →`}
+          </p>
+        )}
+      </div>
+
+      {/* Grid mein filteredProducts use karo */}
+      {filteredProducts.length === 0 ? (
+        <div className="text-center py-16">
+          <div className="text-5xl mb-3">😕</div>
+          <p className="text-gray-400">No any product found!</p>
+          <button
+            onClick={() => {
+              setSearch("");
+              setFilter("all");
+            }}
+            className="mt-3 text-purple-600 text-sm
+                 hover:underline"
+          >
+            View all products
+          </button>
+        </div>
+      ) : (
+        <div
+          className="grid grid-cols-2 md:grid-cols-3
+                            lg:grid-cols-4 gap-4"
+        >
+          {filteredProducts.map((product) => {
+            const images =
+              product.images?.length > 0 ? product.images : [product.imageUrl];
+
+            return (
+              <div
+                key={product._id}
+                className="bg-white rounded-2xl shadow-sm
                                hover:shadow-lg transition-all
                                duration-300 overflow-hidden
                                group cursor-pointer
                                hover:-translate-y-1"
-                    onClick={() => openDetail(product)}
-                  >
-                    {/* Image with slider */}
-                    <div className="relative">
-                      <ImageSlider images={images} />
+                onClick={() => openDetail(product)}
+              >
+                {/* Image with slider */}
+                <div className="relative">
+                  <ImageSlider images={images} />
 
-                      {/* Try-On Quick Button */}
-                      <div
-                        className="absolute bottom-2 right-2
+                  {/* Try-On Quick Button */}
+                  <div
+                    className="absolute bottom-2 right-2
                                       opacity-0 group-hover:opacity-100
                                       transition-all duration-300"
-                      >
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openTryOn(product);
-                          }}
-                          className="bg-purple-600 text-white
+                  >
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openTryOn(product);
+                      }}
+                      className="bg-purple-600 text-white
                                      text-xs px-3 py-1.5
                                      rounded-full font-medium
                                      shadow-lg hover:bg-purple-700"
-                        >
-                          👗 Try On
-                        </button>
-                      </div>
-                    </div>
+                    >
+                      👗 Try On
+                    </button>
+                  </div>
+                </div>
 
-                    {/* Product Info */}
-                    <div className="p-4">
-                      <h3
-                        className="font-semibold text-gray-800
+                {/* Product Info */}
+                <div className="p-4">
+                  <h3
+                    className="font-semibold text-gray-800
                                      text-sm mb-1 truncate capitalize"
-                      >
-                        {product.name}
-                      </h3>
+                  >
+                    {product.name}
+                  </h3>
 
-                      <div
-                        className="flex items-center
+                  <div
+                    className="flex items-center
                                       justify-between mb-3"
-                      >
-                        <p
-                          className="text-purple-600 font-bold
+                  >
+                    <p
+                      className="text-purple-600 font-bold
                                       text-base"
-                        >
-                          ₹{product.price}
-                        </p>
-                        <span
-                          className="text-xs text-gray-400
+                    >
+                      ₹{product.price}
+                    </p>
+                    <span
+                      className="text-xs text-gray-400
                                          bg-gray-100 px-2 py-0.5
                                          rounded-full capitalize"
-                        >
-                          {product.category?.replace("_", " ")}
-                        </span>
-                      </div>
+                    >
+                      {product.category?.replace("_", " ")}
+                    </span>
+                  </div>
 
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openTryOn(product);
-                        }}
-                        className="w-full bg-gradient-to-r
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openTryOn(product);
+                    }}
+                    className="w-full bg-gradient-to-r
                                    from-purple-600 to-indigo-600
                                    text-white py-2.5 rounded-xl
                                    text-sm font-semibold
                                    hover:opacity-90 transition
                                    flex items-center
                                    justify-center gap-1.5"
-                      >
-                        👗 Try On Now
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </div>
+                  >
+                    👗 Try On Now
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Product Detail Modal */}
+
       {showDetail && selectedProduct && (
         <ProductModal
           product={selectedProduct}

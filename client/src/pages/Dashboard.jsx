@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from 'react-router-dom'
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../api";
@@ -546,6 +546,16 @@ export default function Dashboard() {
 
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h2 className="text-xl font-bold mb-2">🔌 Website Par Lagaiye</h2>
+              <Link
+                to="/widget-guide"
+                className="inline-flex items-center gap-2
+             bg-purple-100 text-purple-700
+             px-4 py-2 rounded-xl text-sm
+             font-semibold hover:bg-purple-200
+             transition mb-4"
+              >
+                📖 Read full Guide →
+              </Link>
 
               <p className="text-gray-500 text-sm mb-4">
                 <big>⚠️ </big> If script is not working, add a class (

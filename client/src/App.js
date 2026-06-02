@@ -17,6 +17,8 @@ import Contact from "./pages/Contact";
 import GoogleSuccess from "./pages/GoogleSuccess";
 import Navbar from "./components/Navbar";
 import { useAuth } from "./context/AuthContext";
+import ScrollToTop from './components/ScrollToTop';
+import WidgetGuide from './pages/WidgetGuide'
 
 const RedirectIfLogin = ({ children }) => {
   const { token } = useAuth();
@@ -33,6 +35,7 @@ function AppContent() {
 
   return (
     <div className="flex flex-col min-h-screen">
+       <ScrollToTop />
       <Navbar />
       <main className="flex-1">
         <Routes>
@@ -71,6 +74,7 @@ function AppContent() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/auth/google/success" element={<GoogleSuccess />} />
+          <Route path="/widget-guide" element={<WidgetGuide />} />
         </Routes>
       </main>
 
@@ -83,6 +87,7 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
+
       <AppContent />
     </BrowserRouter>
   );

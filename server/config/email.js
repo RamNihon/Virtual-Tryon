@@ -318,7 +318,7 @@ const sendResetPasswordEmail = async (seller, resetUrl) => {
     await transporter.sendMail({
       from: process.env.EMAIL_FROM,
       to: seller.email,
-      subject: '🔐 Password Reset - VirtualTryOn',
+      subject: "🔐 Password Reset - VirtualTryOn",
       html: `
         <!DOCTYPE html>
         <html>
@@ -349,8 +349,8 @@ const sendResetPasswordEmail = async (seller, resetUrl) => {
             <p style="color: #6b7280;">
               Hi ${seller.name},
               <br><br>
-              Aapne password reset request ki hai.
-              Neeche button dabao:
+              You have requested a password reset.
+Click the button below to proceed:
             </p>
 
             <div style="text-align: center; margin: 30px 0;">
@@ -363,7 +363,7 @@ const sendResetPasswordEmail = async (seller, resetUrl) => {
                         font-weight: bold;
                         font-size: 16px;
                         display: inline-block;">
-                🔑 Password Reset Karo
+                🔑 Password Reset Now
               </a>
             </div>
 
@@ -372,12 +372,14 @@ const sendResetPasswordEmail = async (seller, resetUrl) => {
                         padding: 16px; margin: 20px 0;">
               <p style="color: #92400e; margin: 0;
                          font-size: 14px;">
-                ⚠️ Yeh link sirf 
-                <strong>1 ghante</strong> 
-                tak valid hai!
+                ⚠️ This link will only valid for 
+                <strong>1 hour</strong> 
+                .Reset your password in time!
                 <br>
-                Agar aapne request nahi ki to
-                ignore kar dijiye.
+                If you didn't request it, please ignore it.
+                <br>
+                <br>
+                Thanks & Regards
               </p>
             </div>
 
@@ -388,14 +390,13 @@ const sendResetPasswordEmail = async (seller, resetUrl) => {
           </div>
         </body>
         </html>
-      `
-    })
-    console.log('✅ Reset email sent!')
+      `,
+    });
+    console.log("✅ Reset email sent!");
   } catch (error) {
-    console.log('❌ Reset email error:', error.message)
+    console.log("❌ Reset email error:", error.message);
   }
-}
-
+};
 
 module.exports = {
   sendWelcomeEmail,

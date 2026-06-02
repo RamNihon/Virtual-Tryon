@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
@@ -62,23 +62,33 @@ const validateEmail = (email) => {
 };
 
 // ─── Loading Animation ────────────────────
-function RegisteringAnimation() {
-  const messages = [
-    { emoji: "📝", text: "Account is being created..." },
-    { emoji: "🔐", text: "Password is getting secured..." },
-    { emoji: "🏪", text: "Shop is getting ready..." },
-    { emoji: "✨", text: "Almost done 😊..." },
-  ];
+function RegisteringAnimation({ serverWaking }) {
+  const messages = useMemo(
+    () =>
+      serverWaking
+        ? [
+            { emoji: "🌅", text: "Server is starting..." },
+            { emoji: "⏳", text: "It takes a little time the first time..." },
+            { emoji: "🚀", text: "Almost ready..." },
+          ]
+        : [
+            { emoji: "📝", text: "Account is being created..." },
+            { emoji: "🔐", text: "Password is getting secured..." },
+            { emoji: "🏪", text: "Shop is getting ready..." },
+            { emoji: "✨", text: "Almost done 😊..." },
+          ],
+    [serverWaking],
+  );
 
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
+    setIndex(0);
     const interval = setInterval(() => {
       setIndex((prev) => (prev === messages.length - 1 ? 0 : prev + 1));
     }, 1500);
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [messages.length]);
 
   return (
     <div
@@ -164,10 +174,11 @@ export default function Register() {
   const strengthInfo = getStrengthInfo(strengthScore);
   const isEmailValid = validateEmail(form.email);
   const isPasswordValid = strengthScore === 5;
+  const [serverWaking, setServerWaking] = useState(false);
 
   const handleSubmit = async () => {
     if (!form.name || !form.email || !form.password) {
-      setError("Sab fields bharo!");
+      setError("All fields are required!");
       return;
     }
     if (!isEmailValid) {
@@ -180,9 +191,12 @@ export default function Register() {
     }
 
     setLoading(true);
+    setServerWaking(true);
     setError("");
 
     try {
+      await fetch(`${API_URL}/`);
+      setServerWaking(false);
       const res = await axios.post(`${API_URL}/api/seller/register`, form);
       if (res.data.success) {
         const loginRes = await axios.post(`${API_URL}/api/seller/login`, {
@@ -194,6 +208,7 @@ export default function Register() {
       }
     } catch (err) {
       setError(err.response?.data?.message || "Failed to connect with server!");
+      setServerWaking(false);
       setLoading(false);
     }
   };
@@ -201,7 +216,7 @@ export default function Register() {
   return (
     <>
       {/* Loading Animation */}
-      {loading && <RegisteringAnimation />}
+      {loading && <RegisteringAnimation serverWaking={serverWaking} />}
 
       <div className="min-h-screen flex">
         {/* Left Side - Decorative */}

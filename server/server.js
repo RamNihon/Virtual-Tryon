@@ -99,8 +99,22 @@ const startServer = async () => {
     process.exit(1);
   }
 
+  const keepAlive = () => {
+  const url = process.env.BACKEND_URL
+  if (url && process.env.NODE_ENV === 'production') {
+    setInterval(async () => {
+      try {
+        await fetch(`${url}/`)
+        console.log('✅ Keep alive ping sent!')
+      } catch (error) {
+        console.log('Keep alive error:', error.message)
+      }
+    }, 14 * 60 * 1000) // Har 14 minute
+  }
+}
   app.listen(PORT, () => {
     console.log(`🚀 Server ready: http://localhost:${PORT}`);
+    keepAlive();
   });
 };
 

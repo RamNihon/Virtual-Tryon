@@ -1,8 +1,23 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useEffect } from 'react'
+import API_URL from '../api'
 
 export default function Home() {
   const { token } = useAuth();
+
+  useEffect(() => {
+    async function wakeServer() {
+      try {
+        await fetch(`${API_URL}/`);
+        console.log('Server awake!');
+      } catch (e) {
+        console.log('Waking server...');
+      }
+    }
+
+    wakeServer();
+  }, []);
 
   return (
     <div className="min-h-screen">

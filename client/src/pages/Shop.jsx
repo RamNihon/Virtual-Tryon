@@ -341,7 +341,7 @@ function TryOnModal({ product, shop, onClose }) {
 
   const handleTryOn = async () => {
     if (!humanImage) {
-      alert("Pehle apni photo upload karo!");
+      alert("Pehle apni photo upload karen!");
       return;
     }
     setTryonLoading(true);
@@ -457,7 +457,7 @@ function TryOnModal({ product, shop, onClose }) {
                 className="block text-sm font-semibold
                                 text-gray-700 mb-2"
               >
-                Apni Photo Upload Karen
+                Upload your photo
               </label>
               <label
                 className="flex flex-col items-center
@@ -472,7 +472,7 @@ function TryOnModal({ product, shop, onClose }) {
                   <p className="text-sm text-gray-400">
                     {humanImage
                       ? `✅ ${humanImage.name}`
-                      : "Click karke photo select karen"}
+                      : "Apni photo yahan upload karen"}
                   </p>
                 </div>
                 <input
@@ -686,7 +686,7 @@ export default function Shop() {
         <div className="text-center">
           <div className="text-5xl mb-4 animate-bounce">👗</div>
           <p className="text-purple-600 font-medium animate-pulse">
-            Shop load ho rahi hai...
+            Loading shop...
           </p>
         </div>
       </div>
@@ -745,7 +745,7 @@ export default function Shop() {
             {[
               { label: "Products", value: products.length },
               { label: "Try-On", value: "🤖 AI" },
-              { label: "Order", value: "📱 WA" },
+              { label: "Order", value: "📞 WhatsApp" },
             ].map((s, i) => (
               <div
                 key={i}
@@ -767,7 +767,7 @@ export default function Shop() {
         <div className="relative">
           <input
             type="text"
-            placeholder="🔍 Search products..."
+            placeholder="Search products..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-white border border-gray-200

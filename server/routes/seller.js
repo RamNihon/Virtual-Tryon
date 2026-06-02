@@ -7,7 +7,7 @@ const Product = require("../models/Product");
 const cloudinary = require("../config/cloudinary");
 const upload = require("../middleware/upload");
 const TryonHistory = require("../models/TryonHistory");
-const { sendWelcomeEmail, sendLimitWarningEmail } = require("../config/email");
+const { sendWelcomeEmail, sendLimitWarningEmail, sendLoginAlertEmail } = require("../config/email");
 
 // ─── AUTH MIDDLEWARE ─────────────────────
 const authMiddleware = (req, res, next) => {

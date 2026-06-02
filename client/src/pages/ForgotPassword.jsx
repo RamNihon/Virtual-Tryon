@@ -17,10 +17,31 @@ export default function ForgotPassword() {
     setLoading(true);
     setError("");
     try {
-      await axios.post(`${API_URL}/api/auth/forgot-password`, { email });
-      setSent(true);
+      // 10 second timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      const response = await axios.post(
+        `${API_URL}/api/auth/forgot-password`,
+        { email },
+        {
+          signal: controller.signal,
+          timeout: 10000,
+        },
+      );
+
+      clearTimeout(timeoutId);
+
+      if (response.data.success) {
+        setSent(true);
+      }
     } catch (err) {
-      setError(err.response?.data?.message || "Error aaya!");
+      if (err.code === "ECONNABORTED" || err.name === "AbortError") {
+        // Timeout hua - but email probably sent
+        setSent(true);
+      } else {
+        setError(err.response?.data?.message || "Error aaya!");
+      }
     } finally {
       setLoading(false);
     }

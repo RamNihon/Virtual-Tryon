@@ -15,7 +15,7 @@ router.post("/forgot-password", async (req, res) => {
 
     if (!email) {
       return res.status(400).json({
-        message: "Email daalo!",
+        message: "Enter email!",
       });
     }
 
@@ -49,17 +49,22 @@ router.post("/forgot-password", async (req, res) => {
       resetPasswordExpiry: expiry,
     });
 
+     res.json({
+      success: true,
+      message: "Reset link has been sent to your gmail!",
+    });
+
     // Reset URL banao
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
     // Email bhejo
-    await sendResetPasswordEmail(seller, resetUrl);
+    await sendResetPasswordEmail(seller, resetUrl).catch(err => {
+      console.log('Email send error:', err.message)
+    })
 
-    res.json({
-      success: true,
-      message: "Reset link has been sent to your gmail!",
-    });
-  } catch (error) {
+   
+  }
+   catch (error) {
     console.error("Forgot password error:", error);
     res.status(500).json({ message: error.message });
   }

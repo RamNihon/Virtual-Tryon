@@ -19,7 +19,7 @@ const createTransporter = async () => {
     const accessToken = accessTokenResponse.token;
 
     return nodemailer.createTransport({
-      host: "://gmail.com",
+      host: "smtp.gmail.com",
       port: 587,
       secure: false,
       auth: {

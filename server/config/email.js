@@ -1,54 +1,26 @@
-const { google } = require("googleapis");
-const nodemailer = require("nodemailer");
+const { BrevoClient } = require("@getbrevo/brevo");
 
-// ─── OAuth2 Setup ──────────────────────────
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  "https://developers.google.com/oauthplayground",
-);
-
-oauth2Client.setCredentials({
-  refresh_token: process.env.GMAIL_REFRESH_TOKEN,
+// Initialize Brevo client with API key
+const brevoClient = new BrevoClient({
+  apiKey: process.env.BREVO_API_KEY,
 });
-
-// ─── Create Transporter ────────────────────
-const createTransporter = async () => {
-  try {
-    const accessTokenResponse = await oauth2Client.getAccessToken();
-    const accessToken = accessTokenResponse.token;
-
-    return nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: process.env.EMAIL_USER,
-        clientId: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-        accessToken: accessToken,
-      },
-    });
-  } catch (error) {
-    console.log("❌ Transporter error:", error.message);
-    throw error;
-  }
-};
 
 // ─── Send Email Helper ─────────────────────
 const sendEmail = async (to, subject, html) => {
   try {
-    const transporter = await createTransporter();
-    await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
-      to,
-      subject,
-      html,
+    const response = await brevoClient.transactionalEmails.sendTransacEmail({
+      sender: {
+        name: "VirtualTryOn",
+        email: process.env.ADMIN_EMAIL,
+      },
+      to: [{ email: to }],
+      subject: subject,
+      htmlContent: html,
     });
     console.log("✅ Email sent to:", to);
     return true;
   } catch (error) {
-    console.log("❌ Email send error:", error.message);
+    console.log("❌ Email error:", error.message);
     return false;
   }
 };
@@ -62,13 +34,19 @@ const sendWelcomeEmail = async (seller) => {
                  max-width: 600px; margin: 0 auto;
                  padding: 20px; background: #f9f9f9;">
 
-      <div style="background: #7C3AED; padding: 30px;
-                  border-radius: 16px 16px 0 0;
-                  text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 28px;">
-          👗 VirtualTryOn
-        </h1>
-      </div>
+      <div style="background:#7C3AED;padding:24px 30px;
+            border-radius:16px 16px 0 0;text-align:center;">
+  <img 
+    src="${process.env.LOGO_URL}"
+    alt="VirtualTryOn"
+    style="height:50px;width:auto;margin-bottom:8px;
+           display:block;margin-left:auto;
+           margin-right:auto;"
+  />
+  <h1 style="color:white;margin:0;font-size:22px;">
+    VirtualTryOn
+  </h1>
+</div>
 
       <div style="background: white; padding: 30px;
                   border-radius: 0 0 16px 16px;
@@ -140,13 +118,19 @@ const sendResetPasswordEmail = async (seller, resetUrl) => {
                  max-width: 600px; margin: 0 auto;
                  padding: 20px; background: #f9f9f9;">
 
-      <div style="background: #7C3AED; padding: 30px;
-                  border-radius: 16px 16px 0 0;
-                  text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 28px;">
-          👗 VirtualTryOn
-        </h1>
-      </div>
+      <div style="background:#7C3AED;padding:24px 30px;
+            border-radius:16px 16px 0 0;text-align:center;">
+  <img 
+    src="${process.env.LOGO_URL}"
+    alt="VirtualTryOn"
+    style="height:50px;width:auto;margin-bottom:8px;
+           display:block;margin-left:auto;
+           margin-right:auto;"
+  />
+  <h1 style="color:white;margin:0;font-size:22px;">
+    VirtualTryOn
+  </h1>
+</div>
 
       <div style="background: white; padding: 30px;
                   border-radius: 0 0 16px 16px;
@@ -236,13 +220,19 @@ const sendPaymentSuccessEmail = async (seller, plan) => {
                  max-width: 600px; margin: 0 auto;
                  padding: 20px; background: #f9f9f9;">
 
-      <div style="background: #7C3AED; padding: 30px;
-                  border-radius: 16px 16px 0 0;
-                  text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 28px;">
-          👗 VirtualTryOn
-        </h1>
-      </div>
+      <div style="background:#7C3AED;padding:24px 30px;
+            border-radius:16px 16px 0 0;text-align:center;">
+  <img 
+    src="${process.env.LOGO_URL}"
+    alt="VirtualTryOn"
+    style="height:50px;width:auto;margin-bottom:8px;
+           display:block;margin-left:auto;
+           margin-right:auto;"
+  />
+  <h1 style="color:white;margin:0;font-size:22px;">
+    VirtualTryOn
+  </h1>
+</div>
 
       <div style="background: white; padding: 30px;
                   border-radius: 0 0 16px 16px;
@@ -327,13 +317,19 @@ const sendLimitWarningEmail = async (seller) => {
                  max-width: 600px; margin: 0 auto;
                  padding: 20px; background: #f9f9f9;">
 
-      <div style="background: #7C3AED; padding: 30px;
-                  border-radius: 16px 16px 0 0;
-                  text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 28px;">
-          👗 VirtualTryOn
-        </h1>
-      </div>
+      <div style="background:#7C3AED;padding:24px 30px;
+            border-radius:16px 16px 0 0;text-align:center;">
+  <img 
+    src="${process.env.LOGO_URL}"
+    alt="VirtualTryOn"
+    style="height:50px;width:auto;margin-bottom:8px;
+           display:block;margin-left:auto;
+           margin-right:auto;"
+  />
+  <h1 style="color:white;margin:0;font-size:22px;">
+    VirtualTryOn
+  </h1>
+</div>
 
       <div style="background: white; padding: 30px;
                   border-radius: 0 0 16px 16px;
@@ -408,13 +404,19 @@ const sendLoginAlertEmail = async (seller, loginInfo) => {
                  max-width: 600px; margin: 0 auto;
                  padding: 20px; background: #f9f9f9;">
 
-      <div style="background: #7C3AED; padding: 30px;
-                  border-radius: 16px 16px 0 0;
-                  text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 28px;">
-          👗 VirtualTryOn
-        </h1>
-      </div>
+      <div style="background:#7C3AED;padding:24px 30px;
+            border-radius:16px 16px 0 0;text-align:center;">
+  <img 
+    src="${process.env.LOGO_URL}"
+    alt="VirtualTryOn"
+    style="height:50px;width:auto;margin-bottom:8px;
+           display:block;margin-left:auto;
+           margin-right:auto;"
+  />
+  <h1 style="color:white;margin:0;font-size:22px;">
+    VirtualTryOn
+  </h1>
+</div>
 
       <div style="background: white; padding: 30px;
                   border-radius: 0 0 16px 16px;

@@ -43,7 +43,7 @@ router.post("/register", async (req, res) => {
       email,
       password: hashedPassword,
     });
-    await sendWelcomeEmail(seller);
+     sendWelcomeEmail(seller);
     res.json({
       success: true,
       message: "Registration successful!",
@@ -105,7 +105,7 @@ router.post(
     try {
       if (!req.files || req.files.length === 0) {
         return res.status(400).json({
-          message: "Kam se kam ek photo zaroori hai!",
+          message: "At least one photo is required!",
         });
       }
 

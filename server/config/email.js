@@ -588,7 +588,6 @@ const sendContactEmail = async (data) => {
     html,
   );
 };
-
 module.exports = {
   sendWelcomeEmail,
   sendResetPasswordEmail,

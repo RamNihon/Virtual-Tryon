@@ -11,7 +11,10 @@ const sendEmail = async (to, subject, html) => {
     const response = await brevoClient.transactionalEmails.sendTransacEmail({
       sender: {
         name: "VirtualTryOn",
-        email: process.env.ADMIN_EMAIL,
+        email: process.env.EMAIL_USER,
+      },
+      replyTo:{
+         email: process.env.EMAIL_USER
       },
       to: [{ email: to }],
       subject: subject,

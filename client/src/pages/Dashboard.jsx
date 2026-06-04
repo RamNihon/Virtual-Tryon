@@ -273,6 +273,7 @@ export default function Dashboard() {
               value: dashboard?.seller?.tryonCount || 0,
               sub: `of ${dashboard?.seller?.tryonLimit} limit`,
             },
+
             {
               label: "Total Products",
               value: dashboard?.totalProducts || 0,
@@ -295,6 +296,46 @@ export default function Dashboard() {
               <p className="text-gray-400 text-xs mt-1">{stat.sub}</p>
             </div>
           ))}
+
+          {/* Analytics Link - Starter/Pro only */}
+          {seller?.plan === "free" && (
+            <Link
+              to="/analytics"
+              className="col-span-1 md:col-span-3
+               bg-gradient-to-r from-purple-600
+               to-indigo-600 rounded-2xl p-4
+               text-white flex items-center
+               justify-between hover:opacity-90
+               transition shadow-lg shadow-purple-100"
+            >
+              <div>
+                <p className="font-bold">📊 Analytics Dashboard</p>
+                <p className="font-bold text-orange-400 text-sm">
+                  Buy Starter or Pro Plan to get analytics
+                </p>
+              </div>
+              <span className="text-2xl">→</span>
+            </Link>
+          )}
+           {seller?.plan !== "free" && (
+            <Link
+              to="/analytics"
+              className="col-span-1 md:col-span-3
+               bg-gradient-to-r from-purple-600
+               to-indigo-600 rounded-2xl p-4
+               text-white flex items-center
+               justify-between hover:opacity-90
+               transition shadow-lg shadow-purple-100"
+            >
+              <div>
+                <p className="font-bold">📊 Analytics Dashboard</p>
+                <p className="text-green-400 text-sm">
+                  See detailed graphs and insights
+                </p>
+              </div>
+              <span className="text-2xl">→</span>
+            </Link>
+          )}
         </div>
 
         {/* Tabs */}

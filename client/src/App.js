@@ -1,5 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useLocation } from "react-router-dom";
+import {BrowserRouter,Routes, Route, Navigate, useLocation,} from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -14,16 +13,18 @@ import Refund from "./pages/Refund";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Contact from "./pages/Contact";
+import Analytics from "./pages/Analytics";
 import GoogleSuccess from "./pages/GoogleSuccess";
 import Navbar from "./components/Navbar";
 import { useAuth } from "./context/AuthContext";
-import ScrollToTop from './components/ScrollToTop';
-import WidgetGuide from './pages/WidgetGuide'
+import ScrollToTop from "./components/ScrollToTop";
+import WidgetGuide from "./pages/WidgetGuide";
 
 const RedirectIfLogin = ({ children }) => {
   const { token } = useAuth();
   return token ? <Navigate to="/dashboard" replace /> : children;
 };
+
 const ProtectedRoute = ({ children }) => {
   const { token } = useAuth();
   return token ? children : <Navigate to="/login" replace />;
@@ -35,7 +36,7 @@ function AppContent() {
 
   return (
     <div className="flex flex-col min-h-screen">
-       <ScrollToTop />
+      <ScrollToTop />
       <Navbar />
       <main className="flex-1">
         <Routes>
@@ -73,6 +74,7 @@ function AppContent() {
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/analytics" element={<Analytics />} />
           <Route path="/auth/google/success" element={<GoogleSuccess />} />
           <Route path="/widget-guide" element={<WidgetGuide />} />
         </Routes>
@@ -87,7 +89,6 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-
       <AppContent />
     </BrowserRouter>
   );

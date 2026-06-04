@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import API_URL from "../api";
@@ -19,6 +19,95 @@ const trackOrder = async (product, orderType, shop) => {
     console.log("Track error:", e.message);
   }
 };
+
+// ─── Star Rating Display ──────────────────
+function StarRating({ rating, size = "sm", showNumber = true }) {
+  const stars = [1, 2, 3, 4, 5];
+  const sizeClass =
+    size === "lg" ? "text-2xl" : size === "md" ? "text-lg" : "text-sm";
+
+  const getColor = (r) => {
+    if (r >= 4) return "text-green-500";
+    if (r >= 2) return "text-orange-400";
+    return "text-red-500";
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      <div className="flex">
+        {stars.map((star) => (
+          <span
+            key={star}
+            className={`${sizeClass} ${
+              star <= Math.round(rating) ? getColor(rating) : "text-gray-200"
+            }`}
+          >
+            ★
+          </span>
+        ))}
+      </div>
+      {showNumber && rating > 0 && (
+        <span
+          className={`font-bold ${getColor(rating)}
+                         ${size === "lg" ? "text-lg" : "text-xs"}`}
+        >
+          {rating.toFixed(1)}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ─── Interactive Star Selector ────────────
+function StarSelector({ value, onChange }) {
+  const [hover, setHover] = useState(0);
+
+  const getColor = (star) => {
+    const active = hover || value;
+    if (star <= active) {
+      if (active >= 4) return "text-green-500";
+      if (active >= 2) return "text-orange-400";
+      return "text-red-500";
+    }
+    return "text-gray-200";
+  };
+
+  const labels = {
+    1: "Terrible 😡",
+    2: "Poor 😞",
+    3: "Average 🙂",
+    4: "Good 😊",
+    5: "Excellent! 🤩",
+  };
+
+  return (
+    <div>
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onChange(star)}
+            onMouseEnter={() => setHover(star)}
+            onMouseLeave={() => setHover(0)}
+            className={`text-4xl transition-all duration-150
+                       hover:scale-125 ${getColor(star)}`}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+      {(hover || value) > 0 && (
+        <p
+          className="text-sm font-medium mt-1
+                      text-gray-600"
+        >
+          {labels[hover || value]}
+        </p>
+      )}
+    </div>
+  );
+}
 // ─── Loading Animation ────────────────────
 function TryOnAnimation() {
   const MESSAGES = [
@@ -195,6 +284,429 @@ function ImageSlider({ images, onClick }) {
   );
 }
 
+// ─── Reviews Section ──────────────────────
+function ReviewsSection({ product, shop }) {
+  const [reviews, setReviews] = useState([]);
+  const [avgRating, setAvgRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [breakdown, setBreakdown] = useState({});
+  const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const [form, setForm] = useState({
+    customerName: "",
+    rating: 0,
+    review: "",
+  });
+  const [reviewImages, setReviewImages] = useState([]);
+  const [previews, setPreviews] = useState([]);
+
+  const fetchReviews = useCallback(async () => {
+    try {
+      const res = await axios.get(
+        `${API_URL}/api/reviews/product/${product._id}`,
+      );
+      setReviews(res.data.reviews);
+      setAvgRating(res.data.avgRating);
+      setTotalReviews(res.data.totalReviews);
+      setBreakdown(res.data.breakdown);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setLoading(false);
+    }
+  }, [product._id]);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
+
+  const handleImages = (e) => {
+    const files = Array.from(e.target.files);
+    setReviewImages(files);
+    setPreviews(files.map((f) => URL.createObjectURL(f)));
+  };
+
+  const handleSubmit = async () => {
+    if (!form.customerName || form.rating === 0) {
+      alert("Naam aur rating zaroori hai!");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("productId", product._id);
+      formData.append("sellerId", shop.sellerId);
+      formData.append("customerName", form.customerName);
+      formData.append("rating", form.rating);
+      formData.append("review", form.review);
+      reviewImages.forEach((img) => {
+        formData.append("reviewImages", img);
+      });
+
+      await axios.post(`${API_URL}/api/reviews`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      setSubmitted(true);
+      setShowForm(false);
+      fetchReviews();
+    } catch (e) {
+      alert("An error occurred! Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const getRatingColor = (r) => {
+    if (r >= 4) return "text-green-600 bg-green-50";
+    if (r >= 2) return "text-orange-500 bg-orange-50";
+    return "text-red-500 bg-red-50";
+  };
+
+  const getBarColor = (r) => {
+    if (r >= 4) return "bg-green-500";
+    if (r >= 2) return "bg-orange-400";
+    return "bg-red-500";
+  };
+
+  return (
+    <div className="mt-6 border-t pt-6">
+      {/* Rating Summary */}
+      <div className="flex items-start gap-6 mb-6">
+        {/* Big Rating */}
+        <div className="text-center flex-shrink-0">
+          <div
+            className={`text-5xl font-black mb-1
+                          ${
+                            avgRating >= 4
+                              ? "text-green-500"
+                              : avgRating >= 2
+                                ? "text-orange-400"
+                                : avgRating > 0
+                                  ? "text-red-500"
+                                  : "text-gray-300"
+                          }`}
+          >
+            {avgRating > 0 ? avgRating.toFixed(1) : "—"}
+          </div>
+          <StarRating rating={avgRating} size="md" showNumber={false} />
+          <p className="text-gray-400 text-xs mt-1">{totalReviews} reviews</p>
+        </div>
+
+        {/* Breakdown Bars */}
+        <div className="flex-1 space-y-1.5">
+          {[5, 4, 3, 2, 1].map((star) => (
+            <div key={star} className="flex items-center gap-2">
+              <span
+                className="text-xs text-gray-500
+                               w-4 text-right flex-shrink-0"
+              >
+                {star}
+              </span>
+              <span
+                className={`text-xs flex-shrink-0
+                               ${
+                                 star >= 4
+                                   ? "text-green-500"
+                                   : star >= 2
+                                     ? "text-orange-400"
+                                     : "text-red-500"
+                               }`}
+              >
+                ★
+              </span>
+              <div
+                className="flex-1 bg-gray-100
+                              rounded-full h-2 overflow-hidden"
+              >
+                <div
+                  className={`h-full rounded-full
+                             transition-all duration-700
+                             ${getBarColor(star)}`}
+                  style={{
+                    width:
+                      totalReviews > 0
+                        ? `${((breakdown[star] || 0) / totalReviews) * 100}%`
+                        : "0%",
+                  }}
+                ></div>
+              </div>
+              <span
+                className="text-xs text-gray-400
+                               w-4 flex-shrink-0"
+              >
+                {breakdown[star] || 0}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Write Review Button */}
+      {!submitted ? (
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="w-full bg-gradient-to-r
+                     from-purple-600 to-indigo-600
+                     text-white py-3 rounded-2xl
+                     font-semibold mb-4 hover:opacity-90
+                     transition flex items-center
+                     justify-center gap-2"
+        >
+          ✏️Write Review
+        </button>
+      ) : (
+        <div
+          className="bg-green-50 border border-green-100
+                        rounded-2xl p-3 mb-4 text-center"
+        >
+          <p className="text-green-700 font-medium text-sm">
+            ✅ Your review has been submitted! Thank you for the review.🙏
+          </p>
+        </div>
+      )}
+
+      {/* Review Form */}
+      {showForm && (
+        <div
+          className="bg-gradient-to-br from-purple-50
+                        to-indigo-50 rounded-2xl p-5 mb-6
+                        border border-purple-100"
+        >
+          <h3 className="font-bold text-gray-800 mb-4">⭐ Give your review</h3>
+
+          <div className="space-y-4">
+            {/* Name */}
+            <div>
+              <label
+                className="text-sm font-medium
+                                text-gray-700 block mb-1.5"
+              >
+                Your Name *
+              </label>
+              <input
+                type="text"
+                placeholder="Jaise: Priya S."
+                value={form.customerName}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    customerName: e.target.value,
+                  })
+                }
+                className="w-full border border-purple-200
+                           bg-white rounded-xl px-4 py-2.5
+                           text-sm focus:outline-none
+                           focus:border-purple-500"
+              />
+            </div>
+
+            {/* Star Rating */}
+            <div>
+              <label
+                className="text-sm font-medium
+                                text-gray-700 block mb-2"
+              >
+                Rating Do *
+              </label>
+              <StarSelector
+                value={form.rating}
+                onChange={(r) =>
+                  setForm({
+                    ...form,
+                    rating: r,
+                  })
+                }
+              />
+            </div>
+
+            {/* Review Text */}
+            <div>
+              <label
+                className="text-sm font-medium
+                                text-gray-700 block mb-1.5"
+              >
+                Write a Review (Optional)
+              </label>
+              <textarea
+                rows={3}
+                placeholder="How was the product? Regarding its quality and fitting..."
+                value={form.review}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    review: e.target.value,
+                  })
+                }
+                className="w-full border border-purple-200
+                           bg-white rounded-xl px-4 py-2.5
+                           text-sm focus:outline-none
+                           focus:border-purple-500 resize-none"
+              />
+            </div>
+
+            {/* Photo Upload */}
+            <div>
+              <label
+                className="text-sm font-medium
+                                text-gray-700 block mb-1.5"
+              >
+                📸 Add photos (Optional, maximum 3))
+              </label>
+              <label
+                className="flex items-center gap-2
+                                border-2 border-dashed
+                                border-purple-200 rounded-xl
+                                p-3 cursor-pointer
+                                hover:border-purple-400 transition
+                                bg-white"
+              >
+                <span className="text-2xl">📷</span>
+                <span className="text-sm text-gray-500">
+                  {reviewImages.length > 0
+                    ? `${reviewImages.length} photo(s) selected`
+                    : "Select photos"}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImages}
+                  className="hidden"
+                />
+              </label>
+
+              {/* Image Previews */}
+              {previews.length > 0 && (
+                <div className="flex gap-2 mt-2">
+                  {previews.map((p, i) => (
+                    <img
+                      key={i}
+                      src={p}
+                      alt=""
+                      className="w-16 h-16 object-cover
+                                 rounded-lg border-2
+                                 border-purple-200"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={handleSubmit}
+              disabled={submitting || form.rating === 0}
+              className="w-full bg-gradient-to-r
+                         from-purple-600 to-indigo-600
+                         text-white py-3 rounded-xl
+                         font-bold hover:opacity-90
+                         transition disabled:opacity-40
+                         flex items-center justify-center gap-2"
+            >
+              {submitting
+                ? "⏳ It is being submitted.."
+                : "✅ Submit the review"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Reviews List */}
+      {loading ? (
+        <p className="text-center text-gray-400 py-4">
+          The reviews are loading
+        </p>
+      ) : reviews.length === 0 ? (
+        <div
+          className="text-center py-8 bg-gray-50
+                        rounded-2xl"
+        >
+          <div className="text-4xl mb-2">⭐</div>
+          <p className="text-gray-400 text-sm">
+            There are no reviews yet.
+            <br />
+            Be the first to review!
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <h3 className="font-bold text-gray-800">Reviews ({totalReviews})</h3>
+          {reviews.map((review) => (
+            <div
+              key={review._id}
+              className="bg-white rounded-2xl p-4
+                         border border-gray-100
+                         shadow-sm"
+            >
+              {/* Review Header */}
+              <div
+                className="flex items-start
+                              justify-between mb-2"
+              >
+                <div>
+                  <p
+                    className="font-semibold text-gray-800
+                                text-sm"
+                  >
+                    {review.customerName}
+                  </p>
+                  <StarRating
+                    rating={review.rating}
+                    size="sm"
+                    showNumber={false}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-xs px-2 py-1
+                                   rounded-full font-bold
+                                   ${getRatingColor(review.rating)}`}
+                  >
+                    {review.rating}/5
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {new Date(review.createdAt).toLocaleDateString("en-IN")}
+                  </span>
+                </div>
+              </div>
+
+              {/* Review Text */}
+              {review.review && (
+                <p
+                  className="text-gray-600 text-sm
+                              leading-relaxed mt-2"
+                >
+                  {review.review}
+                </p>
+              )}
+
+              {/* Review Images */}
+              {review.images && review.images.length > 0 && (
+                <div className="flex gap-2 mt-3">
+                  {review.images.map((img, i) => (
+                    <img
+                      key={i}
+                      src={img}
+                      alt=""
+                      className="w-16 h-16 object-cover
+                                 rounded-xl border
+                                 border-gray-100
+                                 cursor-pointer
+                                 hover:opacity-80"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 function ZoomModal({ images, initialIndex, onClose }) {
   const [current, setCurrent] = useState(initialIndex || 0);
   const [scale, setScale] = useState(1);
@@ -513,6 +1025,8 @@ function ProductModal({ product, shop, onClose, onTryOn }) {
                 </button>
               )}
             </div>
+            {/* Reviews Section */}
+            <ReviewsSection product={product} shop={shop} />
 
             {/* Trust badges */}
             <div className="flex flex-wrap gap-2 mt-5 pt-5 border-t">
@@ -1143,17 +1657,45 @@ export default function Shop() {
                   >
                     <p
                       className="text-purple-600 font-bold
-                                      text-base"
+              text-base"
                     >
                       ₹{product.price}
                     </p>
-                    <span
-                      className="text-xs text-gray-400
-                                         bg-gray-100 px-2 py-0.5
-                                         rounded-full capitalize"
+
+                    <div
+                      className="flex items-center
+                justify-between"
                     >
-                      {product.category?.replace("_", " ")}
-                    </span>
+                      <span
+                        className="text-xs text-gray-400
+                   bg-gray-100 px-2 py-0.5
+                   rounded-full capitalize"
+                      >
+                        {product.category?.replace("_", " ")}
+                      </span>
+
+                      {/* Rating Badge */}
+                      {product.reviewCount > 0 && (
+                        <div
+                          className={`flex items-center gap-1
+                    px-2 py-0.5 rounded-full
+                    text-xs font-bold
+                    ${
+                      product.avgRating >= 4
+                        ? "bg-green-100 text-green-700"
+                        : product.avgRating >= 2
+                          ? "bg-orange-100 text-orange-600"
+                          : "bg-red-100 text-red-600"
+                    }`}
+                        >
+                          <span>★</span>
+                          <span>{product.avgRating?.toFixed(1)}</span>
+                          <span className="text-gray-400 font-normal">
+                            ({product.reviewCount})
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <button

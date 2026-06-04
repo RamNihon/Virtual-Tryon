@@ -28,6 +28,7 @@ app.use("/api/tryon", require("./routes/tryon"));
 app.use("/api/seller", require("./routes/seller").router);
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/payment", require("./routes/payment"));
+app.use('/api/reviews', require('./routes/reviews'))
 app.use("/widget.js", express.static("./widget/widget.js"));
 
 // Test route

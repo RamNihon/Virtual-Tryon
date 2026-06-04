@@ -41,11 +41,11 @@ export default function Pricing() {
       popular: true,
       features: [
         { text: "500 try-ons/month", available: true },
-        { text: "Custom shop page", available: true },
+        { text: "Custom shop page", available: false },
         { text: "WhatsApp orders", available: true },
         { text: "AI style advice", available: true },
         { text: "Website widget", available: true },
-        { text: "Analytics dashboard", available: false },
+        { text: "Analytics dashboard", available: true },
         { text: "Priority support", available: true },
       ],
     },
@@ -160,11 +160,11 @@ export default function Pricing() {
                              from-purple-400 to-pink-400
                              bg-clip-text text-transparent"
             >
-            Choose the right plan!
+              Choose the right plan!
             </span>
           </h1>
           <p className="text-purple-200 text-lg max-w-xl mx-auto mb-8">
-           No hidden charges. No contracts. Cancel anytime!
+            No hidden charges. No contracts. Cancel anytime!
           </p>
 
           {/* Trust */}
@@ -380,7 +380,7 @@ export default function Pricing() {
           <div className="relative z-10">
             <div className="text-5xl mb-4">🎉</div>
             <h3 className="text-2xl md:text-3xl font-black mb-3">
-             Get started now - for free!
+              Get started now - for free!
             </h3>
             <p className="text-purple-200 mb-6 max-w-md mx-auto">
               Test with 50 free trials. Upgrade if you like it!

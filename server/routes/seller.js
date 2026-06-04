@@ -7,6 +7,7 @@ const Product = require("../models/Product");
 const cloudinary = require("../config/cloudinary");
 const upload = require("../middleware/upload");
 const TryonHistory = require("../models/TryonHistory");
+const Order = require("../models/Order");
 const OrderRequest = require("../models/OrderRequest");
 const {
   sendWelcomeEmail,
@@ -443,6 +444,45 @@ router.patch("/products/:productId/stock", authMiddleware, async (req, res) => {
         : "❌ Product out of stock marked!",
       product,
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+// Seller ke orders
+router.get("/orders", authMiddleware, async (req, res) => {
+  try {
+    const orders = await Order.find({
+      seller: req.sellerId,
+    })
+      .sort({ createdAt: -1 })
+      .populate("customer", "name email mobile");
+
+    res.json({ success: true, orders });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Order status update
+router.patch("/orders/:orderId/status", authMiddleware, async (req, res) => {
+  try {
+    const { status, message, trackingId } = req.body;
+    const updateData = {
+      orderStatus: status,
+      $push: {
+        trackingUpdates: {
+          status,
+          message: message || `Order ${status}`,
+        },
+      },
+    };
+    if (trackingId) updateData.trackingId = trackingId;
+
+    await Order.findOneAndUpdate(
+      { _id: req.params.orderId, seller: req.sellerId },
+      updateData,
+    );
+    res.json({ success: true });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

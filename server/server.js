@@ -28,7 +28,8 @@ app.use("/api/tryon", require("./routes/tryon"));
 app.use("/api/seller", require("./routes/seller").router);
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/payment", require("./routes/payment"));
-app.use('/api/reviews', require('./routes/reviews'))
+app.use("/api/reviews", require("./routes/reviews"));
+app.use("/api/customer", require("./routes/customer").router);
 app.use("/widget.js", express.static("./widget/widget.js"));
 
 // Test route
@@ -101,18 +102,21 @@ const startServer = async () => {
   }
 
   const keepAlive = () => {
-  const url = process.env.BACKEND_URL
-  if (url && process.env.NODE_ENV === 'production') {
-    setInterval(async () => {
-      try {
-        await fetch(`${url}/`)
-        console.log('✅ Keep alive ping sent!')
-      } catch (error) {
-        console.log('Keep alive error:', error.message)
-      }
-    }, 14 * 60 * 1000) // Har 14 minute
-  }
-}
+    const url = process.env.BACKEND_URL;
+    if (url && process.env.NODE_ENV === "production") {
+      setInterval(
+        async () => {
+          try {
+            await fetch(`${url}/`);
+            console.log("✅ Keep alive ping sent!");
+          } catch (error) {
+            console.log("Keep alive error:", error.message);
+          }
+        },
+        14 * 60 * 1000,
+      ); // Har 14 minute
+    }
+  };
   app.listen(PORT, () => {
     console.log(`🚀 Server ready: http://localhost:${PORT}`);
     keepAlive();

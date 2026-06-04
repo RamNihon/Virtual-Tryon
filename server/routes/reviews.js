@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const Review = require('../models/Review')
 const Product = require('../models/Product')
-const Seller = require('../models/Seller')
+const Seller = require('../models/seller')
 const cloudinary = require('../config/cloudinary')
 const upload = require('../middleware/upload')
 

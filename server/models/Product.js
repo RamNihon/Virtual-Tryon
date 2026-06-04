@@ -17,7 +17,9 @@ const productSchema = new mongoose.Schema({
     default: 'upper_body'
   },
   productUrl: String,
-  isActive: { type: Boolean, default: true }
+  isActive: { type: Boolean, default: true },
+inStock: { type: Boolean, default: true },
+stockNote: { type: String, default: '' }
 }, { timestamps: true })
 
 module.exports = mongoose.models.Product || 

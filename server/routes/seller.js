@@ -7,6 +7,7 @@ const Product = require("../models/Product");
 const cloudinary = require("../config/cloudinary");
 const upload = require("../middleware/upload");
 const TryonHistory = require("../models/TryonHistory");
+const OrderRequest = require('../models/OrderRequest')
 const { sendWelcomeEmail, sendLimitWarningEmail, sendLoginAlertEmail } = require("../config/email");
 
 // ─── AUTH MIDDLEWARE ─────────────────────
@@ -98,50 +99,68 @@ router.post("/login", async (req, res) => {
 
 // ─── PRODUCT ADD ─────────────────────────
 router.post(
-  "/products",
+  '/products',
   authMiddleware,
-  upload.array("productImages", 5), // Max 5 photos
+  upload.array('productImages', 5),
   async (req, res) => {
     try {
-      if (!req.files || req.files.length === 0) {
-        return res.status(400).json({
-          message: "At least one photo is required!",
-        });
-      }
+      let imageUrls = []
 
-      // Sari images Cloudinary par upload karo
-      const uploadPromises = req.files.map(
-        (file) =>
+      // File uploads handle karo
+      if (req.files && req.files.length > 0) {
+        const uploadPromises = req.files.map(file =>
           new Promise((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream(
-              { folder: "products" },
+              { folder: 'products' },
               (error, result) => {
-                if (error) reject(error);
-                else resolve(result.secure_url);
-              },
-            );
-            stream.end(file.buffer);
-          }),
-      );
+                if (error) reject(error)
+                else resolve(result.secure_url)
+              }
+            )
+            stream.end(file.buffer)
+          })
+        )
+        const uploadedUrls = await Promise.all(uploadPromises)
+        imageUrls = [...imageUrls, ...uploadedUrls]
+      }
 
-      const imageUrls = await Promise.all(uploadPromises);
+      // URL wali images handle karo
+      if (req.body.imageUrls) {
+        const urlArray = Array.isArray(req.body.imageUrls)
+          ? req.body.imageUrls
+          : [req.body.imageUrls]
+
+        // Valid URLs filter karo
+        const validUrls = urlArray.filter(url =>
+          url && url.startsWith('https')
+        )
+        imageUrls = [...imageUrls, ...validUrls]
+      }
+
+      // Agar koi bhi image nahi
+      if (imageUrls.length === 0) {
+        return res.status(400).json({
+          message: 'Kam se kam ek photo ya URL zaroori hai!'
+        })
+      }
 
       const product = await Product.create({
         seller: req.sellerId,
         name: req.body.name,
         description: req.body.description,
         price: req.body.price,
-        category: req.body.category || "upper_body",
+        category: req.body.category || 'upper_body',
         productUrl: req.body.productUrl,
-        imageUrl: imageUrls[0], // Pehli photo main
-        images: imageUrls, // Sari photos
-      });
+        imageUrl: imageUrls[0],
+        images: imageUrls
+      })
 
-      res.json({ success: true, product });
+      res.json({ success: true, product })
+
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: error.message })
     }
-  },
+  }
 );
 
 // ─── PRODUCTS LIST ───────────────────────
@@ -183,33 +202,130 @@ router.get("/dashboard", authMiddleware, async (req, res) => {
 });
 
 // Analytics route - dashboard route ke baad add karo
-router.get("/analytics", authMiddleware, async (req, res) => {
+router.get('/analytics', authMiddleware, async (req, res) => {
   try {
-    const seller = await Seller.findById(req.sellerId);
+    const seller = await Seller.findById(req.sellerId)
     const products = await Product.find({
-      seller: req.sellerId,
-    });
+      seller: req.sellerId
+    })
 
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    // Last 7 din
+    const sevenDaysAgo = new Date()
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
+    // Last 30 din
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+    // Try-on history
     const recentTryons = await TryonHistory.find({
       seller: req.sellerId,
-      createdAt: { $gte: sevenDaysAgo },
-    });
+      createdAt: { $gte: sevenDaysAgo }
+    })
+
+    // Monthly try-ons (graph ke liye)
+    const monthlyTryons = await TryonHistory.find({
+      seller: req.sellerId,
+      createdAt: { $gte: thirtyDaysAgo }
+    })
+
+    // Order requests
+    const totalOrders = await OrderRequest.countDocuments({
+      seller: req.sellerId
+    })
+
+    const recentOrders = await OrderRequest.find({
+      seller: req.sellerId,
+      createdAt: { $gte: sevenDaysAgo }
+    })
+
+    // Daily data for graph (last 7 days)
+    const dailyData = []
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date()
+      date.setDate(date.getDate() - i)
+      date.setHours(0, 0, 0, 0)
+      const nextDate = new Date(date)
+      nextDate.setDate(nextDate.getDate() + 1)
+
+      const tryons = await TryonHistory.countDocuments({
+        seller: req.sellerId,
+        createdAt: { $gte: date, $lt: nextDate }
+      })
+
+      const orders = await OrderRequest.countDocuments({
+        seller: req.sellerId,
+        createdAt: { $gte: date, $lt: nextDate }
+      })
+
+      dailyData.push({
+        date: date.toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'short'
+        }),
+        tryons,
+        orders
+      })
+    }
+
+    // Top products
+    const productTryons = await TryonHistory.aggregate([
+      { $match: { seller: req.sellerId } },
+      { $group: { _id: '$product', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 5 }
+    ])
 
     res.json({
       success: true,
-      totalTryons: seller.tryonCount,
-      totalProducts: products.length,
-      recentTryons: recentTryons.length,
-      plan: seller.plan,
-      tryonLimit: seller.tryonLimit,
-    });
+      stats: {
+        totalTryons: seller.tryonCount,
+        totalProducts: products.length,
+        recentTryons: recentTryons.length,
+        totalOrders,
+        recentOrders: recentOrders.length,
+        plan: seller.plan,
+        tryonLimit: seller.tryonLimit
+      },
+      dailyData,
+      productTryons
+    })
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message })
   }
 });
+
+// Public route - koi bhi call kar sakta hai
+router.post('/track-order', async (req, res) => {
+  try {
+    const { sellerId, productId,
+            productName, productPrice,
+            orderType } = req.body
+
+    const seller = await Seller.findOne({ sellerId })
+    if (!seller) {
+      return res.status(404).json({
+        message: 'Seller nahi mila'
+      })
+    }
+
+    await OrderRequest.create({
+      seller: seller._id,
+      product: productId || null,
+      productName: productName || 'Unknown',
+      productPrice: productPrice || 0,
+      orderType: orderType || 'whatsapp',
+      customerInfo: {
+        sessionId: Date.now().toString()
+      }
+    })
+
+    res.json({ success: true })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+})
 
 // Product delete route add karo
 router.delete("/products/:productId", authMiddleware, async (req, res) => {
@@ -229,6 +345,44 @@ router.delete("/products/:productId", authMiddleware, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+// Settings route ke baad add karo:
+router.put('/update-profile',
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const { name } = req.body
+
+      if (!name || name.trim().length < 2) {
+        return res.status(400).json({
+          message: 'Name kam se kam 2 characters ka hona chahiye!'
+        })
+      }
+
+      const seller = await Seller.findByIdAndUpdate(
+        req.sellerId,
+        { name: name.trim() },
+        { new: true }
+      )
+
+      res.json({
+        success: true,
+        message: 'Name update ho gaya!',
+        seller: {
+          name: seller.name,
+          email: seller.email,
+          sellerId: seller.sellerId,
+          apiKey: seller.apiKey,
+          plan: seller.plan,
+          tryonCount: seller.tryonCount,
+          tryonLimit: seller.tryonLimit
+        }
+      })
+    } catch (error) {
+      res.status(500).json({ message: error.message })
+    }
+  }
+);
 
 // ─── PUBLIC SHOP ─────────────────────────
 // Seller ki website nahi hai to
@@ -262,5 +416,40 @@ router.get("/shop/:sellerId", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+router.patch(
+  '/products/:productId/stock',
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const { inStock, stockNote } = req.body
+
+      const product = await Product.findOneAndUpdate(
+        {
+          _id: req.params.productId,
+          seller: req.sellerId
+        },
+        { inStock, stockNote: stockNote || '' },
+        { new: true }
+      )
+
+      if (!product) {
+        return res.status(404).json({
+          message: 'Product nahi mila!'
+        })
+      }
+
+      res.json({
+        success: true,
+        message: inStock
+          ? '✅ Product in stock!'
+          : '❌ Product out of stock marked!',
+        product
+      })
+    } catch (error) {
+      res.status(500).json({ message: error.message })
+    }
+  }
+)
 
 module.exports = { router, authMiddleware };

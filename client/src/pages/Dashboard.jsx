@@ -1,18 +1,106 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../api";
 
-export default function Dashboard() {
-  const { seller, token, logout } = useAuth();
-  const navigate = useNavigate();
+function DashboardImageSlider({ images, className = "" }) {
+  const [current, setCurrent] = useState(0);
 
+  if (!images || images.length === 0) return null;
+
+  return (
+    <div className={`relative w-16 h-16 flex-shrink-0 ${className}`.trim()}>
+      <img
+        src={images[current]}
+        alt="product"
+        className="w-16 h-16 object-cover rounded-lg"
+      />
+      {images.length > 1 && (
+        <div
+          className="absolute inset-0 flex
+                        items-center justify-between
+                        px-0.5"
+        >
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrent((c) => (c === 0 ? images.length - 1 : c - 1));
+            }}
+            className="w-5 h-5 bg-black bg-opacity-50
+                       text-white rounded-full text-xs
+                       flex items-center justify-center"
+          >
+            ‹
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrent((c) => (c === images.length - 1 ? 0 : c + 1));
+            }}
+            className="w-5 h-5 bg-black bg-opacity-50
+                       text-white rounded-full text-xs
+                       flex items-center justify-center"
+          >
+            ›
+          </button>
+        </div>
+      )}
+      {images.length > 1 && (
+        <div
+          className="absolute bottom-0.5 left-1/2
+                        -translate-x-1/2 flex gap-0.5"
+        >
+          {images.map((_, i) => (
+            <div
+              key={i}
+              className={`rounded-full transition-all
+                         ${
+                           i === current
+                             ? "w-2 h-1 bg-white"
+                             : "w-1 h-1 bg-white opacity-50"
+                         }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+export default function Dashboard() {
+  const { seller, token, login, logout } = useAuth();
+  const navigate = useNavigate();
+  const [editingName, setEditingName] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [nameLoading, setNameLoading] = useState(false);
+  const [nameMsg, setNameMsg] = useState("");
   const [dashboard, setDashboard] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
 
+  const updateName = async () => {
+    if (!newName.trim()) return;
+    setNameLoading(true);
+    try {
+      const res = await axios.put(
+        `${API_URL}/api/seller/update-profile`,
+        { name: newName },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      login(res.data.seller, token);
+      setDashboard((prev) =>
+        prev ? { ...prev, seller: res.data.seller } : prev,
+      );
+      setEditingName(false);
+      setNameMsg("✅ Name update ho gaya!");
+      setTimeout(() => setNameMsg(""), 3000);
+    } catch (err) {
+      setNameMsg("❌ Error aaya!");
+    } finally {
+      setNameLoading(false);
+    }
+  };
   const [productForm, setProductForm] = useState({
     name: "",
     price: "",
@@ -23,7 +111,7 @@ export default function Dashboard() {
   const [productImage, setProductImage] = useState(null);
   const [productLoading, setProductLoading] = useState(false);
   const [productMsg, setProductMsg] = useState("");
-
+  const [imageUrls, setImageUrls] = useState([""]);
   const [shopSettings, setShopSettings] = useState({
     whatsapp: "",
     upiId: "",
@@ -71,8 +159,19 @@ export default function Dashboard() {
   }, [seller, token, navigate, fetchDashboard, fetchProducts]);
 
   const handleAddProduct = async () => {
-    if (!productForm.name || !productImage) {
-      setProductMsg("❌ Naam aur photo zaroori hai!");
+    const validUrls = imageUrls.filter(
+      (url) => url && url.trim().startsWith("http"),
+    );
+
+    if (
+      !productForm.name ||
+      ((!productImage ||
+        (Array.isArray(productImage) && productImage.length === 0)) &&
+        validUrls.length === 0)
+    ) {
+      setProductMsg(
+        "❌ Name is necessary and Either→ Add product Urls or  Select images!",
+      );
       return;
     }
 
@@ -81,14 +180,18 @@ export default function Dashboard() {
 
     try {
       const formData = new FormData();
-      // Sari images
-      if (Array.isArray(productImage)) {
+
+      if (productImage && Array.isArray(productImage)) {
         productImage.forEach((img) => {
           formData.append("productImages", img);
         });
-      } else {
+      } else if (productImage) {
         formData.append("productImages", productImage);
       }
+
+      validUrls.forEach((url) => {
+        formData.append("imageUrls", url);
+      });
 
       formData.append("name", productForm.name);
       formData.append("price", productForm.price);
@@ -103,7 +206,7 @@ export default function Dashboard() {
         },
       });
 
-      setProductMsg("✅ Product add ho gaya!");
+      setProductMsg("✅ Product added successfully!");
       setProductForm({
         name: "",
         price: "",
@@ -112,6 +215,7 @@ export default function Dashboard() {
         productUrl: "",
       });
       setProductImage(null);
+      setImageUrls([""]);
       fetchProducts();
     } catch (err) {
       setProductMsg("❌ Error found!");
@@ -125,7 +229,7 @@ export default function Dashboard() {
       await axios.post(`${API_URL}/api/seller/settings`, shopSettings, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setSettingsMsg("✅ Save ho gaya!");
+      setSettingsMsg("✅ It is saved!");
     } catch (err) {
       setSettingsMsg("❌ Error found!");
     }
@@ -235,6 +339,61 @@ export default function Dashboard() {
                 </div>
               ))}
 
+              {/* Name Edit */}
+              <div className="flex justify-between py-3 border-b">
+                <span className="text-gray-500">Shop Name</span>
+                <div className="flex items-center gap-2">
+                  {editingName ? (
+                    <>
+                      <input
+                        type="text"
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        className="border border-purple-300 rounded-lg
+                     px-3 py-1 text-sm focus:outline-none
+                     focus:border-purple-500 w-32"
+                        placeholder="Enter new name"
+                        autoFocus
+                      />
+                      <button
+                        onClick={updateName}
+                        disabled={nameLoading}
+                        className="bg-gray-100 text-white px-3 py-1
+                     rounded-lg text-xs hover:bg-green-300 
+                     transition disabled:opacity-50"
+                      >
+                        <big>{nameLoading ? "..." : "✔️"}</big>
+                      </button>
+                      <button
+                        onClick={() => setEditingName(false)}
+                        className="bg-gray-100 text-gray-600 px-3 py-1
+                     rounded-lg text-xs hover:bg-red-200"
+                      >
+                        ❌
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-medium text-sm">
+                        {seller?.name}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setNewName(seller?.name || "");
+                          setEditingName(true);
+                        }}
+                        className="text-purple-600 text-xs
+                     hover:text-purple-700 bg-purple-50
+                     px-2 py-1 rounded-lg transition"
+                      >
+                        ✏️ Edit
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+              {nameMsg && <p className="text-sm text-center py-1">{nameMsg}</p>}
+
               <div className="flex justify-between py-3 border-b">
                 <span className="text-gray-500">Shop Link: </span>
                 <div className="flex flex-row gap-2 flex-1 min-w-0">
@@ -327,7 +486,7 @@ export default function Dashboard() {
                              text-sm font-semibold
                              hover:bg-green-600 transition"
                 >
-                  💾 Settings Save Karen
+                  💾 Save Settings
                 </button>
               </div>
             </div>
@@ -339,7 +498,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Add Product */}
             <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h2 className="text-xl font-bold mb-4">➕ Product Add Karen</h2>
+              <h2 className="text-xl font-bold mb-4">➕ Add New Product</h2>
 
               <div className="space-y-3">
                 <input
@@ -392,7 +551,7 @@ export default function Dashboard() {
                   <option value="dress">👗 Full Dress</option>
                 </select>
 
-                <input
+                {/* <input
                   type="url"
                   placeholder="Product URL (optional)"
                   value={productForm.productUrl}
@@ -406,7 +565,7 @@ export default function Dashboard() {
                              rounded-lg px-4 py-2.5 text-sm
                              focus:outline-none
                              focus:border-purple-500"
-                />
+                /> */}
 
                 <div>
                   <label
@@ -436,6 +595,62 @@ export default function Dashboard() {
                   )}
                 </div>
 
+                <div className="flex items-center gap-3 my-4">
+                  <div className="flex-1 h-px bg-gray-300"></div>
+                  <span className="text-gray-600 text-xs">OR</span>
+                  <div className="flex-1 h-px bg-gray-300"></div>
+                </div>
+                <div className="mt-4 bg-gray-50 rounded-xl p-4 border border-gray-200">
+                  <label className="text-sm text-gray-600 block mb-1">
+                    <br />
+                    Enter Product Image URLs
+                    <span className="text-gray-400 text-xs ml-1">(❄️)</span>
+                  </label>
+
+                  {imageUrls.map((url, index) => (
+                    <div key={index} className="flex gap-2 mb-2">
+                      <input
+                        type="url"
+                        placeholder="https://example.com/image.jpg"
+                        value={url}
+                        onChange={(e) => {
+                          const updated = [...imageUrls];
+                          updated[index] = e.target.value;
+                          setImageUrls(updated);
+                        }}
+                        className="flex-1 border border-gray-300
+                           rounded-lg px-3 py-2 text-sm
+                           focus:outline-none
+                           focus:border-purple-500"
+                      />
+                      {imageUrls.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setImageUrls(
+                              imageUrls.filter((_, i) => i !== index),
+                            )
+                          }
+                          className="text-red-400 hover:text-red-600
+                             text-lg px-2"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))}
+
+                  {imageUrls.length < 5 && (
+                    <button
+                      type="button"
+                      onClick={() => setImageUrls([...imageUrls, ""])}
+                      className="text-purple-600 text-xs hover:text-purple-700"
+                    >
+                      + Add more URLs
+                    </button>
+                  )}
+                </div>
+
                 {productMsg && <p className="text-sm">{productMsg}</p>}
 
                 <button
@@ -447,8 +662,8 @@ export default function Dashboard() {
                              disabled:opacity-50 text-sm"
                 >
                   {productLoading
-                    ? "⏳ Upload ho raha hai..."
-                    : "➕ Product Add Kariye"}
+                    ? "⏳ Please wait, the item is uploading..."
+                    : "➕ Add the item"}
                 </button>
               </div>
             </div>
@@ -456,12 +671,12 @@ export default function Dashboard() {
             {/* Products List */}
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h2 className="text-xl font-bold mb-4">
-                👗 Mere Products ({products.length})
+                👗 My Products ({products.length})
               </h2>
 
               {products.length === 0 ? (
                 <p className="text-gray-400 text-center py-8">
-                  Abhi koi product nahi hai
+                  There are no any products to show right now.
                 </p>
               ) : (
                 <div
@@ -475,20 +690,71 @@ export default function Dashboard() {
                                  border border-gray-100
                                  rounded-xl p-3"
                     >
-                      <img
-                        src={product.imageUrl}
-                        alt={product.name}
-                        className="w-16 h-16 object-cover
-                                   rounded-lg"
+                      <DashboardImageSlider
+                        images={
+                          product.images?.length > 0
+                            ? product.images
+                            : [product.imageUrl]
+                        }
+                        className="w-16 h-16 object-cover rounded-lg"
                       />
                       <div className="flex-1">
                         <p className="font-medium text-sm">{product.name}</p>
                         <p className="text-purple-600 text-sm">
                           ₹{product.price}
                         </p>
-                        <p className="text-gray-400 text-xs capitalize">
-                          {product.category.replace("_", " ")}
-                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-gray-400 text-xs capitalize">
+                            {product.category.replace("_", " ")}
+                          </p>
+                          {/* Stock Badge */}
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full
+                     font-medium
+                     ${
+                       product.inStock !== false
+                         ? "bg-green-100 text-green-700"
+                         : "bg-red-100 text-red-600"
+                     }`}
+                          >
+                            {product.inStock !== false
+                              ? "✅ In Stock"
+                              : "❌ Out of Stock"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Stock Toggle */}
+                      <div className="flex flex-col gap-1 items-end">
+                        <button
+                          onClick={async () => {
+                            const newStock =
+                              product.inStock === false ? true : false;
+                            try {
+                              await axios.patch(
+                                `${API_URL}/api/seller/products/${product._id}/stock`,
+                                { inStock: newStock },
+                                {
+                                  headers: { Authorization: `Bearer ${token}` },
+                                },
+                              );
+                              fetchProducts();
+                            } catch (e) {
+                              alert("Error aaya!");
+                            }
+                          }}
+                          className={`text-xs px-2 py-1 rounded-lg
+               transition font-medium
+               ${
+                 product.inStock !== false
+                   ? "bg-red-50 text-red-500 hover:bg-red-100"
+                   : "bg-green-50 text-green-600 hover:bg-green-100"
+               }`}
+                        >
+                          {product.inStock !== false
+                            ? "Mark OOS"
+                            : "Mark In Stock"}
+                        </button>
 
                         {/* Delete Button */}
                         <button

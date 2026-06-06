@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Customer = require("../models/Customer");
 const Order = require("../models/Order");
-const Seller = require("../models/Seller");
+const Seller = require("../models/seller");
 const Product = require("../models/Product");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
@@ -35,6 +35,17 @@ const customerAuth = (req, res, next) => {
 router.post("/register", async (req, res) => {
   try {
     const { name, email, mobile, password } = req.body;
+
+    // Check if seller is trying to register as customer
+    const sellerExists = await Seller.findOne({ email });
+    if (sellerExists) {
+      return res.status(400).json({
+        message: "SELLER_EMAIL",
+        detail:
+          "Yeh email seller account ke liye registered hai. Apne seller dashboard mein login karein.",
+      });
+    }
+
     const exists = await Customer.findOne({ email });
     if (exists) {
       return res.status(400).json({
@@ -73,12 +84,24 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    // Seller email check
+    const sellerExists = await Seller.findOne({ email });
+    if (sellerExists) {
+      return res.status(400).json({
+        message: "SELLER_EMAIL",
+        detail:
+          "Yeh email seller account ke liye registered hai. Apne seller dashboard mein login karein.",
+      });
+    }
+
     const customer = await Customer.findOne({ email });
     if (!customer) {
       return res.status(400).json({
         message: "Email nahi mila!",
       });
     }
+
     const isMatch = await bcrypt.compare(password, customer.password);
     if (!isMatch) {
       return res.status(400).json({
@@ -174,14 +197,15 @@ router.post("/orders", customerAuth, async (req, res) => {
       address,
       paymentMethod,
       quantity = 1,
+      selectedSize = ''
     } = req.body;
-
+   
     const seller = await Seller.findOne({ sellerId });
     const product = await Product.findById(productId);
 
     if (!seller || !product) {
       return res.status(404).json({
-        message: "Seller ya product nahi mila!",
+        message: "Seller/Product not found",
       });
     }
 
@@ -207,6 +231,7 @@ router.post("/orders", customerAuth, async (req, res) => {
       productImage: product.imageUrl,
       productPrice: product.price,
       quantity,
+      selectedSize,
       deliveryFee,
       totalAmount,
       address,
@@ -219,7 +244,14 @@ router.post("/orders", customerAuth, async (req, res) => {
         },
       ],
     });
-
+    // Admin notification email
+    try {
+      const { sendOrderNotificationEmail } = require("../config/email");
+      const sellerDoc = await Seller.findById(seller._id);
+      sendOrderNotificationEmail(order, sellerDoc).catch(console.log);
+    } catch (e) {
+      console.log("Email error:", e.message);
+    }
     res.json({
       success: true,
       order,
@@ -250,7 +282,7 @@ router.post("/orders/verify-payment", customerAuth, async (req, res) => {
 
     if (expectedSign !== razorpay_signature) {
       return res.status(400).json({
-        message: "Payment verify nahi hua!",
+        message: "Payment verification failed!",
       });
     }
 
@@ -265,7 +297,14 @@ router.post("/orders/verify-payment", customerAuth, async (req, res) => {
         },
       },
     });
-
+    // Admin ko email bhejo
+    try {
+      const { sendOrderNotificationEmail } = require("../config/email");
+      const seller = await Seller.findById(order.seller);
+      sendOrderNotificationEmail(order, seller).catch(console.log);
+    } catch (e) {
+      console.log("Email notification error:", e.message);
+    }
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -276,10 +315,11 @@ router.post("/orders/verify-payment", customerAuth, async (req, res) => {
 router.get("/orders", customerAuth, async (req, res) => {
   try {
     const orders = await Order.find({
-      customer: req.customerId,
-    })
-      .sort({ createdAt: -1 })
-      .populate("seller", "name");
+  customer: req.customerId
+})
+  .sort({ createdAt: -1 })
+  .populate('seller', 'name')
+  .populate('product', 'brandName description originalPrice highlights sizes');
 
     res.json({ success: true, orders });
   } catch (error) {
@@ -315,6 +355,105 @@ router.delete("/account", customerAuth, async (req, res) => {
   try {
     await Customer.findByIdAndDelete(req.customerId);
     res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+// Single order details
+router.get("/orders/:orderId", customerAuth, async (req, res) => {
+  try {
+    const order = await Order.findOne({
+      _id: req.params.orderId,
+      customer: req.customerId,
+    });
+    if (!order) {
+      return res.status(404).json({
+        message: "Order nahi mila!",
+      });
+    }
+    res.json({ success: true, order });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Customer cancel order
+router.post("/orders/:orderId/cancel", customerAuth, async (req, res) => {
+  try {
+    const order = await Order.findOne({
+      _id: req.params.orderId,
+      customer: req.customerId,
+    }).populate("product", "brandName description originalPrice highlights");
+
+    if (!order) {
+      return res.status(404).json({
+        message: "Order nahi mila!",
+      });
+    }
+
+    if (!["placed", "accepted"].includes(order.orderStatus)) {
+      return res.status(400).json({
+        message:
+          "Yeh order ab cancel nahi ho sakta! Shipped ya delivered orders cancel nahi hote.",
+      });
+    }
+
+    const cancelReason = `Cancelled by customer: ${reason}`;
+
+    await Order.findByIdAndUpdate(order._id, {
+      orderStatus: "cancelled",
+      cancelReason,
+      $push: {
+        trackingUpdates: {
+          status: "cancelled",
+          message: cancelReason,
+          time: new Date(),
+        },
+      },
+    });
+
+    // Auto Refund if paid online
+    let refundDone = false;
+    if (
+      order.paymentStatus === "paid" &&
+      order.razorpayPaymentId &&
+      order.paymentMethod === "razorpay"
+    ) {
+      try {
+        const Razorpay = require("razorpay");
+        const rzp = new Razorpay({
+          key_id: process.env.RAZORPAY_KEY_ID,
+          key_secret: process.env.RAZORPAY_KEY_SECRET,
+        });
+
+        await rzp.payments.refund(order.razorpayPaymentId, {
+          amount: order.totalAmount * 100,
+          speed: "normal",
+          notes: {
+            reason: cancelReason,
+            orderId: order.orderId,
+          },
+        });
+
+        await Order.findByIdAndUpdate(order._id, {
+          paymentStatus: "refunded",
+        });
+        refundDone = true;
+      } catch (refundErr) {
+        console.log("Refund error:", refundErr.message);
+        // Mark for manual refund
+        await Order.findByIdAndUpdate(order._id, {
+          paymentStatus: "refund_pending",
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: refundDone
+        ? "Order cancelled! Refund 5-7 din mein aayega."
+        : "Order cancelled!",
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

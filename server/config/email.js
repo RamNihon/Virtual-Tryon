@@ -13,8 +13,8 @@ const sendEmail = async (to, subject, html) => {
         name: "VirtualTryOn",
         email: process.env.EMAIL_USER,
       },
-      replyTo:{
-         email: process.env.EMAIL_USER
+      replyTo: {
+        email: process.env.EMAIL_USER,
       },
       to: [{ email: to }],
       subject: subject,
@@ -591,6 +591,69 @@ const sendContactEmail = async (data) => {
     html,
   );
 };
+
+// ─── Order Notification Email ──────────────
+const sendOrderNotificationEmail = async (order, seller) => {
+  try {
+    await sendEmail(
+      process.env.ADMIN_EMAIL,
+      `🛍️ New Order - ${order.orderId}`,
+      `<!DOCTYPE html>
+      <html>
+      <body style="font-family:Arial,sans-serif;max-width:600px;
+                   margin:0 auto;padding:20px;background:#f9f9f9;">
+        <div style="background:#7C3AED;padding:24px;
+                    border-radius:16px 16px 0 0;text-align:center;">
+          <h2 style="color:white;margin:0;">🛍️ New Order Alert!</h2>
+        </div>
+        <div style="background:white;padding:24px;
+                    border-radius:0 0 16px 16px;">
+
+          <h3 style="color:#7C3AED;">Order Details</h3>
+          <p style="color:#4b5563;">
+            <strong>Order ID:</strong> ${order.orderId}<br>
+            <strong>Product:</strong> ${order.productName}<br>
+            <strong>Amount:</strong> ₹${order.totalAmount}<br>
+            <strong>Payment:</strong> ${order.paymentMethod === "razorpay" ? "💳 Online Paid" : "💵 Cash on Delivery"}<br>
+            <strong>Payment Status:</strong> ${order.paymentStatus}<br>
+            <strong>Date:</strong> ${new Date().toLocaleString("en-IN")}
+          </p>
+
+          <h3 style="color:#7C3AED;">Seller Details</h3>
+          <p style="color:#4b5563;">
+            <strong>Name:</strong> ${seller?.name || "N/A"}<br>
+            <strong>WhatsApp:</strong> ${seller?.whatsapp || "N/A"}<br>
+            <strong>UPI:</strong> ${seller?.upiId || "N/A"}<br>
+            <strong>Seller Amount (after your fee):</strong>
+            ₹${Math.round(order.productPrice * 0.9)}
+          </p>
+
+          <h3 style="color:#7C3AED;">Customer Details</h3>
+          <p style="color:#4b5563;">
+            <strong>Address:</strong>
+            ${order.address?.fullName},
+            ${order.address?.addressLine1},
+            ${order.address?.city} -
+            ${order.address?.pincode}<br>
+            <strong>Mobile:</strong> ${order.address?.mobile}
+          </p>
+
+          <div style="background:#f0fdf4;border-radius:12px;
+                      padding:16px;margin:16px 0;">
+            <p style="color:#065f46;margin:0;font-size:14px;">
+              ✅ Seller ko pay karna hai:
+              <strong>₹${order.productPrice}</strong>
+              (delivery fee excluding)
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>`,
+    );
+  } catch (error) {
+    console.log("Order email error:", error.message);
+  }
+};
 module.exports = {
   sendWelcomeEmail,
   sendResetPasswordEmail,
@@ -598,4 +661,5 @@ module.exports = {
   sendLimitWarningEmail,
   sendLoginAlertEmail,
   sendContactEmail,
+  sendOrderNotificationEmail,
 };

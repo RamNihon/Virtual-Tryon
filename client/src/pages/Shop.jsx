@@ -2,6 +2,27 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import API_URL from "../api";
+import { useCustomer } from "../context/CustomerContext";
+
+// Shared status color classes (used for badges across the page)
+const STATUS_COLORS = {
+  placed: "bg-blue-100 text-blue-700",
+  accepted: "bg-purple-100 text-purple-700",
+  packed: "bg-yellow-100 text-yellow-700",
+  shipped: "bg-orange-100 text-orange-700",
+  out_for_delivery: "bg-indigo-100 text-indigo-700",
+  delivered: "bg-green-100 text-green-700",
+  cancelled: "bg-red-100 text-red-700",
+  return_requested: "bg-pink-100 text-pink-700",
+};
+
+// Reusable text color set for rating/stars
+const RATING_TEXT_COLORS = {
+  high: "text-green-500",
+  mid: "text-orange-400",
+  low: "text-red-500",
+  muted: "text-gray-200",
+};
 
 // Helper function - order track karo
 const trackOrder = async (product, orderType, shop) => {
@@ -65,11 +86,11 @@ function StarSelector({ value, onChange }) {
   const getColor = (star) => {
     const active = hover || value;
     if (star <= active) {
-      if (active >= 4) return "text-green-500";
-      if (active >= 2) return "text-orange-400";
-      return "text-red-500";
+      if (active >= 4) return RATING_TEXT_COLORS.high;
+      if (active >= 2) return RATING_TEXT_COLORS.mid;
+      return RATING_TEXT_COLORS.low;
     }
-    return "text-gray-200";
+    return RATING_TEXT_COLORS.muted;
   };
 
   const labels = {
@@ -108,6 +129,1632 @@ function StarSelector({ value, onChange }) {
     </div>
   );
 }
+
+// ─── Shop Navbar ──────────────────────────
+function ShopNavbar({ shop, onLoginClick, onProfileClick }) {
+  const { customer, logoutCustomer } = useCustomer();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [textIndex, setTextIndex] = useState(0);
+  const [displayText, setDisplayText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const features = [
+    "✨ Virtual Try-On",
+    "🤖 AI Style Advice",
+    "📱 Easy WhatsApp Orders",
+    "📱 Easy Direct order",
+    "🟢 Live order status",
+    "🚚 Fast Delivery",
+    "↩️ Easy Returns",
+    "💳 Secure Payments",
+  ];
+
+  useEffect(() => {
+    const current = features[textIndex];
+    let timeout;
+    if (!isDeleting && displayText === current) {
+      timeout = setTimeout(() => setIsDeleting(true), 1500);
+    } else if (isDeleting && displayText === "") {
+      setIsDeleting(false);
+      setTextIndex((i) => (i + 1) % features.length);
+    } else {
+      timeout = setTimeout(
+        () => {
+          setDisplayText((prev) =>
+            isDeleting ? prev.slice(0, -1) : current.slice(0, prev.length + 1),
+          );
+        },
+        isDeleting ? 50 : 80,
+      );
+    }
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayText, isDeleting, textIndex]);
+
+  return (
+    <div className="sticky top-0 z-30 shadow-md">
+      <div
+        className="bg-gradient-to-r from-purple-700
+                      via-purple-600 to-indigo-700 px-4 py-3"
+      >
+        <div
+          className="max-w-6xl mx-auto flex
+                        items-center justify-between"
+        >
+          <h1
+            className="text-xl md:text-2xl font-bold
+                         text-white italic"
+            style={{ fontFamily: "Georgia, serif" }}
+          >
+            👗 {shop?.name}
+          </h1>
+          <div className="hidden md:flex items-center gap-3">
+            {customer ? (
+              <>
+                <button
+                  onClick={onProfileClick}
+                  className="text-purple-200 text-sm
+                             hover:text-white transition"
+                >
+                  Hi, {customer.name}! 👋
+                </button>
+                <button
+                  onClick={onProfileClick}
+                  className="bg-white text-purple-700
+                             px-4 py-1.5 rounded-full text-sm
+                             font-semibold hover:bg-purple-50"
+                >
+                  My Account
+                </button>
+                <button
+                  onClick={logoutCustomer}
+                  className="text-purple-200 text-sm
+                             hover:text-white transition"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => onLoginClick("login")}
+                  className="text-white text-sm
+                             hover:text-purple-200 transition"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => onLoginClick("register")}
+                  className="bg-white text-purple-700 px-4
+                             py-1.5 rounded-full text-sm
+                             font-semibold hover:bg-purple-50"
+                >
+                  Register
+                </button>
+              </>
+            )}
+          </div>
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="md:hidden text-white text-2xl"
+          >
+            {menuOpen ? "✕" : "☰"}
+          </button>
+        </div>
+        {menuOpen && (
+          <div
+            className="md:hidden mt-3 pt-3
+                          border-t border-purple-500 space-y-2"
+          >
+            {customer ? (
+              <>
+                <button
+                  onClick={() => {
+                    onProfileClick();
+                    setMenuOpen(false);
+                  }}
+                  className="block w-full text-left
+                             text-white text-sm px-2 py-1.5"
+                >
+                  👤 My Account ({customer.name})
+                </button>
+                <button
+                  onClick={logoutCustomer}
+                  className="block w-full text-left
+                             text-white text-sm px-2 py-1.5"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => {
+                    onLoginClick("login");
+                    setMenuOpen(false);
+                  }}
+                  className="block w-full text-left
+                             text-white text-sm px-2 py-1.5"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => {
+                    onLoginClick("register");
+                    setMenuOpen(false);
+                  }}
+                  className="block w-full text-left
+                             text-white text-sm px-2 py-1.5"
+                >
+                  Register
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+      <div
+        className="bg-gradient-to-r from-indigo-600
+                      to-purple-600 py-2 px-4 text-center"
+      >
+        <p className="text-white text-sm font-medium min-h-6">
+          {displayText}
+          <span className="animate-pulse">|</span>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Customer Auth Modal ──────────────────
+// Password checks
+const checkPwd = (p) => ({
+  length: p.length >= 8,
+  upper: /[A-Z]/.test(p),
+  lower: /[a-z]/.test(p),
+  num: /[0-9]/.test(p),
+});
+
+function CustomerAuthModal({ mode, onClose, onSuccess }) {
+  const [activeMode, setActiveMode] = useState(mode);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    mobile: "",
+    password: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [sellerError, setSellerError] = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
+  const [pwdTouched, setPwdTouched] = useState(false);
+  const { loginCustomer } = useCustomer();
+
+  const pwdChecks = checkPwd(form.password);
+  const isPwdStrong = Object.values(pwdChecks).every(Boolean);
+
+  const handleSubmit = async () => {
+    // Prevent weak passwords on registration
+    if (activeMode === "register" && !isPwdStrong) {
+      setPwdTouched(true);
+      setError("Password is not strong enough");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    setSellerError(false);
+    try {
+      const endpoint =
+        activeMode === "login"
+          ? "/api/customer/login"
+          : "/api/customer/register";
+      const res = await axios.post(`${API_URL}${endpoint}`, form);
+      loginCustomer(res.data.customer, res.data.token);
+      onSuccess();
+    } catch (err) {
+      const msg = err.response?.data?.message;
+      if (msg === "SELLER_EMAIL") {
+        setSellerError(true);
+      } else {
+        setError(msg || "Error aaya!");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-60
+                    z-50 flex items-center justify-center p-4"
+    >
+      <div
+        className="bg-white rounded-3xl w-full
+                      max-w-sm shadow-2xl"
+      >
+        <div
+          className="bg-gradient-to-r from-purple-600
+                        to-indigo-600 p-6 rounded-t-3xl
+                        text-white text-center relative"
+        >
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-white
+                       opacity-70 hover:opacity-100 text-xl"
+          >
+            ✕
+          </button>
+          <div className="text-4xl mb-2">👗</div>
+          <h2 className="text-xl font-bold">
+            {activeMode === "login" ? "Welcome Back!" : "Create Account"}
+          </h2>
+        </div>
+        <div className="p-6">
+          <div
+            className="flex bg-gray-100 rounded-xl
+                          p-1 mb-5"
+          >
+            {["login", "register"].map((m) => (
+              <button
+                key={m}
+                onClick={() => setActiveMode(m)}
+                className={`flex-1 py-2 rounded-lg text-sm
+                           font-semibold transition capitalize
+                           ${
+                             activeMode === m
+                               ? "bg-white text-purple-700 shadow-sm"
+                               : "text-gray-500"
+                           }`}
+              >
+                {m === "login" ? "Login" : "Register"}
+              </button>
+            ))}
+          </div>
+          {error && (
+            <div
+              className="bg-red-50 text-red-600 p-3
+                            rounded-xl mb-4 text-sm"
+            >
+              ❌ {error}
+            </div>
+          )}
+          {sellerError && (
+            <div
+              className="bg-amber-50 border border-amber-200
+                  p-4 rounded-xl mb-4"
+            >
+              <p className="text-amber-800 font-bold text-sm mb-1">
+                ⚠️ Seller Account Detected!
+              </p>
+              <p className="text-amber-700 text-xs">
+                Yeh email seller account ke liye registered hai. Shop page se
+                login nahi kar sakte.
+              </p>
+              <button
+                onClick={() => (window.location.href = "/login")}
+                className="mt-2 text-purple-600 text-xs
+                 font-bold underline"
+              >
+                Seller Dashboard Mein Login Karein →
+              </button>
+            </div>
+          )}
+          <div className="space-y-3">
+            {activeMode === "register" && (
+              <input
+                type="text"
+                placeholder="Your name *"
+                value={form.name}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    name: e.target.value,
+                  })
+                }
+                className="w-full border border-gray-200
+                           rounded-xl px-4 py-3 text-sm
+                           focus:outline-none
+                           focus:border-purple-500"
+              />
+            )}
+            <input
+              type="email"
+              placeholder="Email *"
+              value={form.email}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  email: e.target.value,
+                })
+              }
+              className="w-full border border-gray-200
+                         rounded-xl px-4 py-3 text-sm
+                         focus:outline-none
+                         focus:border-purple-500"
+            />
+            {activeMode === "register" && (
+              <input
+                type="tel"
+                placeholder="Mobile number"
+                value={form.mobile}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    mobile: e.target.value,
+                  })
+                }
+                className="w-full border border-gray-200
+                           rounded-xl px-4 py-3 text-sm
+                           focus:outline-none
+                           focus:border-purple-500"
+              />
+            )}
+            <div className="relative">
+              <input
+                type={showPwd ? "text" : "password"}
+                placeholder="Password *"
+                value={form.password}
+                onChange={(e) => {
+                  setForm({ ...form, password: e.target.value });
+                  setPwdTouched(true);
+                }}
+                className="w-full border border-gray-200
+               rounded-xl px-4 py-3 pr-10 text-sm
+               focus:outline-none
+               focus:border-purple-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPwd(!showPwd)}
+                className="absolute right-3 top-1/2
+               -translate-y-1/2 text-gray-400
+               text-xl"
+              >
+                {showPwd ? "🙈" : "👁️"}
+              </button>
+            </div>
+
+            {/* Password strength for register */}
+            {activeMode === "register" && pwdTouched && form.password && (
+              <div className="bg-gray-50 rounded-xl p-3 space-y-1">
+                {[
+                  { c: pwdChecks.length, t: "8+ characters" },
+                  { c: pwdChecks.upper, t: "Capital letter" },
+                  { c: pwdChecks.lower, t: "Small letter" },
+                  { c: pwdChecks.num, t: "Number" },
+                ].map((r, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span
+                      className={`text-sm
+          ${r.c ? "text-green-500" : "text-gray-300"}`}
+                    >
+                      {r.c ? "✓" : "○"}
+                    </span>
+                    <span
+                      className={`text-xs
+          ${r.c ? "text-green-600 font-medium" : "text-gray-400"}`}
+                    >
+                      {r.t}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="w-full bg-gradient-to-r
+                         from-purple-600 to-indigo-600
+                         text-white py-3 rounded-xl font-bold
+                         hover:opacity-90 transition
+                         disabled:opacity-50"
+            >
+              {loading
+                ? "⏳ Please wait..."
+                : activeMode === "login"
+                  ? "🚀 Login Now"
+                  : "✅ Register Now"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Order Modal ──────────────────────────
+function OrderModal({ product, shop, onClose }) {
+  const { customer, customerToken, loginCustomer } = useCustomer();
+  const [step, setStep] = useState("options");
+  const selectedSize = product.sizes?.[0] || "";
+  const [selectedAddress, setSelectedAddress] = useState(
+    customer?.addresses?.find((a) => a.isDefault) ||
+      customer?.addresses?.[0] ||
+      null,
+  );
+  const [newAddress, setNewAddress] = useState({
+    fullName: "",
+    mobile: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    pincode: "",
+  });
+  const [addingNew, setAddingNew] = useState(!customer?.addresses?.length);
+  const [paymentMethod, setPaymentMethod] = useState("razorpay");
+  const [showPaymentStep, setShowPaymentStep] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [orderData, setOrderData] = useState(null);
+
+  const deliveryFee = product.price >= 499 ? 0 : 60;
+  const total = product.price + deliveryFee;
+
+  const handleWhatsApp = () => {
+    if (!shop?.whatsapp) return;
+    const msg = encodeURIComponent(
+      `Hi! I want to order:\n\n` +
+        `Product: ${product.name}\n` +
+        `Price: ₹${product.price}\n` +
+        `Delivery: ${deliveryFee === 0 ? "FREE" : "₹" + deliveryFee}\n` +
+        `Total: ₹${total}\n\nPlease confirm!`,
+    );
+    window.open(`https://wa.me/${shop.whatsapp}?text=${msg}`);
+    onClose();
+  };
+
+  const handleAddressAndProceed = async () => {
+    if (!customer) {
+      alert("Pehle login karo!");
+      return;
+    }
+    const address = addingNew ? newAddress : selectedAddress;
+    if (
+      !address?.fullName ||
+      !address?.mobile ||
+      !address?.addressLine1 ||
+      !address?.pincode
+    ) {
+      alert("Pura address bharo!");
+      return;
+    }
+
+    // Save new address if adding
+    if (addingNew && newAddress.fullName) {
+      try {
+        const res = await axios.post(
+          `${API_URL}/api/customer/address`,
+          { ...newAddress, isDefault: !customer?.addresses?.length },
+          { headers: { Authorization: `Bearer ${customerToken}` } },
+        );
+        const profileRes = await axios.get(`${API_URL}/api/customer/profile`, {
+          headers: { Authorization: `Bearer ${customerToken}` },
+        });
+        loginCustomer(profileRes.data.customer, customerToken);
+        // If API returned the saved address, set it as selected for the flow
+        const savedAddress =
+          res?.data?.address ||
+          profileRes?.data?.customer?.addresses?.slice(-1)[0];
+        if (savedAddress) setSelectedAddress(savedAddress);
+      } catch (e) {
+        console.log("Address save error:", e.message);
+      }
+    }
+
+    setShowPaymentStep(true);
+  };
+
+  const handleDirectOrder = async () => {
+    const address = addingNew ? newAddress : selectedAddress;
+    setLoading(true);
+    try {
+      const res = await axios.post(
+        `${API_URL}/api/customer/orders`,
+        {
+          sellerId: shop.sellerId,
+          productId: product._id,
+          address,
+          paymentMethod,
+          quantity: 1,
+          selectedSize: selectedSize || "",
+        },
+        { headers: { Authorization: `Bearer ${customerToken}` } },
+      );
+      setOrderData(res.data);
+
+      if (paymentMethod === "razorpay") {
+        const options = {
+          key: res.data.keyId,
+          amount: res.data.amount,
+          currency: "INR",
+          name: shop.name,
+          description: product.name,
+          order_id: res.data.razorpayOrderId,
+          handler: async (response) => {
+            await axios.post(
+              `${API_URL}/api/customer/orders/verify-payment`,
+              { orderId: res.data.order._id, ...response },
+              { headers: { Authorization: `Bearer ${customerToken}` } },
+            );
+            setStep("success");
+          },
+          prefill: {
+            name: customer.name,
+            email: customer.email,
+            contact: customer.mobile,
+          },
+          theme: { color: "#7C3AED" },
+        };
+        new window.Razorpay(options).open();
+      } else {
+        // COD
+        setStep("success");
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || "Error aaya!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-70
+                    z-50 flex items-end md:items-center
+                    justify-center p-0 md:p-4"
+    >
+      <div
+        className="bg-white w-full md:max-w-md
+                      rounded-t-3xl md:rounded-3xl
+                      max-h-screen overflow-y-auto"
+      >
+        <div
+          className="flex justify-between items-center
+                        p-5 border-b sticky top-0 bg-white
+                        rounded-t-3xl z-10"
+        >
+          <h2 className="font-bold text-gray-800">
+            {step === "options" && "🛍️ Order Now"}
+            {step === "address" && "📍 Delivery Address"}
+            {step === "success" && "🎉 Order Placed!"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-gray-100
+                       flex items-center justify-center
+                       text-gray-500"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="p-5">
+          {step === "options" && (
+            <div className="space-y-4">
+              <div
+                className="flex gap-3 bg-gray-50
+                              rounded-2xl p-4"
+              >
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className="w-16 h-16 object-contain
+                             rounded-xl bg-white border"
+                />
+                <div>
+                  <p className="font-semibold text-gray-800">{product.name}</p>
+                  <p className="text-purple-600 font-bold">₹{product.price}</p>
+                  <p className="text-xs text-gray-400">
+                    {deliveryFee === 0
+                      ? "🚚 Free Delivery!"
+                      : `🚚 Delivery: ₹${deliveryFee}`}
+                  </p>
+                  <p className="text-sm font-bold text-gray-800">
+                    Total: ₹{total}
+                  </p>
+                </div>
+              </div>
+
+              {shop?.whatsapp && (
+                <button
+                  onClick={handleWhatsApp}
+                  className="w-full bg-green-500 text-white
+                             py-4 rounded-2xl font-bold
+                             hover:bg-green-600 transition
+                             flex items-center
+                             justify-center gap-3"
+                >
+                  <span className="text-xl">📱</span>
+                  <div className="text-left">
+                    <p className="font-bold">Order on WhatsApp </p>
+                    <p className="text-green-100 text-xs">
+                      Deal with the seller directly
+                    </p>
+                  </div>
+                </button>
+              )}
+
+              <button
+                onClick={() => {
+                  if (!customer) {
+                    alert("Log in first for a direct order!");
+                    return;
+                  }
+                  setStep("address");
+                }}
+                className="w-full bg-gradient-to-r
+                           from-purple-600 to-indigo-600
+                           text-white py-4 pr-3 rounded-2xl
+                           font-bold hover:opacity-90 transition
+                           flex items-center
+                           justify-center gap-3"
+              >
+                <span className="text-xl"></span>
+
+                <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-6 rounded-2xl shadow-md border border-white/3 w-full">
+                  {/* Header Section */}
+                  <div className="flex items-center gap-3 mb-4 text-left">
+                    <span className="text-xl">🛒</span>
+                    <h3 className="text-lg font-bold tracking-wide text-white">
+                      Order Now
+                    </h3>
+                  </div>
+
+                  {/* Content Section */}
+                  <div className="space-y-3 text-left">
+                    {/* Green Highlighted Text */}
+                    <div className="flex items-start gap-2 text-left">
+                      <span className="text-emerald-300 text-sm mt-0.5 flex-shrink-0">
+                        ✨
+                      </span>
+                      <p className="text-emerald-300 font-medium text-xs leading-relaxed text-left">
+                        We will handle your order with the seller for a
+                        hassle-free experience
+                      </p>
+                    </div>
+
+                    {/* Secondary Info */}
+                    <div className="pl-6 text-left">
+                      <p className="text-purple-200 text-xs font-semibold tracking-wide">
+                        Address + Online Payment
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </button>
+
+              {!customer && (
+                <p className="text-center text-xs text-gray-400">
+                  Login is required for direct orders
+                </p>
+              )}
+            </div>
+          )}
+
+          {step === "address" && (
+            <div className="space-y-4">
+              {customer?.addresses?.length > 0 && (
+                <div>
+                  <p
+                    className="font-semibold text-gray-700
+                                text-sm mb-3"
+                  >
+                    Saved Addresses
+                  </p>
+                  {customer.addresses.map((addr, i) => (
+                    <div
+                      key={i}
+                      onClick={() => {
+                        setSelectedAddress(addr);
+                        setAddingNew(false);
+                      }}
+                      className={`border-2 rounded-xl p-3
+                                 cursor-pointer mb-2 transition
+                                 ${
+                                   selectedAddress === addr
+                                     ? "border-purple-500 bg-purple-50"
+                                     : "border-gray-100"
+                                 }`}
+                    >
+                      <p className="font-medium text-sm">{addr.fullName}</p>
+                      <p className="text-gray-500 text-xs">
+                        {addr.addressLine1}, {addr.city} - {addr.pincode}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <button
+                onClick={() => {
+                  setAddingNew(true);
+                  setSelectedAddress(null);
+                }}
+                className={`w-full border-2 border-dashed
+                           py-3 rounded-xl text-sm font-medium
+                           transition
+                           ${
+                             addingNew
+                               ? "border-purple-500 text-purple-600 bg-purple-50"
+                               : "border-gray-200 text-gray-500"
+                           }`}
+              >
+                + Add New Address
+              </button>
+
+              {addingNew && (
+                <div className="space-y-3">
+                  {[
+                    { k: "fullName", p: "Full name *" },
+                    { k: "mobile", p: "Mobile *" },
+                    { k: "addressLine1", p: "House/Area/Street *" },
+                    { k: "addressLine2", p: "Landmark" },
+                    { k: "city", p: "City *" },
+                    { k: "state", p: "State *" },
+                    { k: "pincode", p: "Pincode *" },
+                  ].map((f) => (
+                    <input
+                      key={f.k}
+                      type="text"
+                      placeholder={f.p}
+                      value={newAddress[f.k]}
+                      onChange={(e) =>
+                        setNewAddress({
+                          ...newAddress,
+                          [f.k]: e.target.value,
+                        })
+                      }
+                      className="w-full border border-gray-200
+                                 rounded-xl px-4 py-2.5 text-sm
+                                 focus:outline-none
+                                 focus:border-purple-500"
+                    />
+                  ))}
+                </div>
+              )}
+
+              <div className="bg-gray-50 rounded-xl p-4">
+                <div className="flex justify-between text-sm mb-1">
+                  <span>Product</span>
+                  <span>₹{product.price}</span>
+                </div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span>Delivery</span>
+                  <span
+                    className={
+                      deliveryFee === 0 ? "text-green-600 font-medium" : ""
+                    }
+                  >
+                    {deliveryFee === 0 ? "FREE 🎉" : `₹${deliveryFee}`}
+                  </span>
+                </div>
+                <div
+                  className="flex justify-between font-bold
+                                border-t pt-2"
+                >
+                  <span>Total</span>
+                  <span className="text-purple-600">₹{total}</span>
+                </div>
+              </div>
+
+              {!showPaymentStep ? (
+                <button
+                  onClick={handleAddressAndProceed}
+                  disabled={loading || (!selectedAddress && !addingNew)}
+                  className="w-full bg-gradient-to-r
+               from-purple-600 to-indigo-600
+               text-white py-4 rounded-2xl font-bold
+               disabled:opacity-50 hover:opacity-90
+               transition"
+                >
+                  Continue →
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <p className="font-semibold text-gray-700 text-sm">
+                    Payment Method
+                  </p>
+
+                  {/* COD Option */}
+                  <div
+                    onClick={() => setPaymentMethod("cod")}
+                    className={`border-2 rounded-xl p-4 cursor-pointer
+                 flex items-center gap-3 transition
+                 ${
+                   paymentMethod === "cod"
+                     ? "border-green-500 bg-green-50"
+                     : "border-gray-100 hover:border-gray-200"
+                 }`}
+                  >
+                    <span className="text-2xl">💵</span>
+                    <div>
+                      <p className="font-semibold text-sm text-gray-800">
+                        Cash on Delivery
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Pay cash at the time of delivery (COD)
+                      </p>
+                    </div>
+                    {paymentMethod === "cod" && (
+                      <span className="ml-auto text-green-500 text-xl">✓</span>
+                    )}
+                  </div>
+
+                  {/* Online Payment */}
+                  <div
+                    onClick={() => setPaymentMethod("razorpay")}
+                    className={`border-2 rounded-xl p-4 cursor-pointer
+                 flex items-center gap-3 transition
+                 ${
+                   paymentMethod === "razorpay"
+                     ? "border-purple-500 bg-purple-50"
+                     : "border-gray-100 hover:border-gray-200"
+                 }`}
+                  >
+                    <span className="text-2xl">💳</span>
+                    <div>
+                      <p className="font-semibold text-sm text-gray-800">
+                        Pay Online
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Card, UPI, NetBanking - Razorpay
+                      </p>
+                    </div>
+                    {paymentMethod === "razorpay" && (
+                      <span className="ml-auto text-purple-500 text-xl">✓</span>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={handleDirectOrder}
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r
+                 from-purple-600 to-indigo-600
+                 text-white py-4 rounded-2xl font-bold
+                 disabled:opacity-50 hover:opacity-90
+                 transition"
+                  >
+                    {loading
+                      ? "⏳ Processing..."
+                      : paymentMethod === "cod"
+                        ? `📦 Place Order (₹${total}) - COD`
+                        : `💳 Pay ₹${total} Online`}
+                  </button>
+
+                  <button
+                    onClick={() => setShowPaymentStep(false)}
+                    className="w-full text-gray-400 text-sm py-2
+                 hover:text-gray-600 transition"
+                  >
+                    ← Change Address
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {step === "success" && (
+            <div className="text-center py-6">
+              <div className="text-6xl mb-4 animate-bounce">🎉</div>
+              <h3 className="text-2xl font-black text-gray-800 mb-2">
+                Order Placed!
+              </h3>
+              <p className="text-gray-500 mb-4">
+                Your order is placed successfully!
+              </p>
+              <div className="bg-purple-50 rounded-2xl p-4 mb-6">
+                <p className="text-purple-700 font-medium text-sm">
+                  Order: #{orderData?.order?.orderId}
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                className="w-full bg-gradient-to-r
+                           from-purple-600 to-indigo-600
+                           text-white py-3 rounded-xl font-bold"
+              >
+                ✅ Done!
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AddressManager({ customer, customerToken, loginCustomer }) {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [msg, setMsg] = useState("");
+  const [form, setForm] = useState({
+    label: "Home",
+    fullName: "",
+    mobile: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    pincode: "",
+    isDefault: false,
+  });
+
+  const resetForm = () => {
+    setForm({
+      label: "Home",
+      fullName: "",
+      mobile: "",
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      state: "",
+      pincode: "",
+      isDefault: false,
+    });
+    setShowAddForm(false);
+    setEditId(null);
+  };
+
+  const handleSave = async () => {
+    if (!form.fullName || !form.mobile || !form.addressLine1 || !form.pincode) {
+      setMsg("❌ Zaroori fields bharo!");
+      return;
+    }
+    try {
+      let res;
+      if (editId) {
+        res = await axios.put(
+          `${API_URL}/api/customer/address/${editId}`,
+          form,
+          { headers: { Authorization: `Bearer ${customerToken}` } },
+        );
+      } else {
+        res = await axios.post(`${API_URL}/api/customer/address`, form, {
+          headers: { Authorization: `Bearer ${customerToken}` },
+        });
+      }
+      // read API response for user feedback
+      const saved = res?.data;
+      // Update customer context
+      const profileRes = await axios.get(`${API_URL}/api/customer/profile`, {
+        headers: { Authorization: `Bearer ${customerToken}` },
+      });
+      loginCustomer(profileRes.data.customer, customerToken);
+      setMsg(saved?.message || "✅ Address saved successfully!");
+      setTimeout(() => setMsg(""), 3000);
+      resetForm();
+    } catch (e) {
+      setMsg("❌ Error aaya!");
+    }
+  };
+
+  const handleDelete = async (addrId) => {
+    if (!window.confirm("Do you want to delete it?")) return;
+    try {
+      await axios.delete(`${API_URL}/api/customer/address/${addrId}`, {
+        headers: { Authorization: `Bearer ${customerToken}` },
+      });
+      const profileRes = await axios.get(`${API_URL}/api/customer/profile`, {
+        headers: { Authorization: `Bearer ${customerToken}` },
+      });
+      loginCustomer(profileRes.data.customer, customerToken);
+      setMsg("✅ The address has been deleted!");
+      setTimeout(() => setMsg(""), 3000);
+    } catch (e) {
+      setMsg("❌ An error occured!");
+    }
+  };
+
+  const handleEdit = (addr) => {
+    setForm({
+      label: addr.label || "Home",
+      fullName: addr.fullName || "",
+      mobile: addr.mobile || "",
+      addressLine1: addr.addressLine1 || "",
+      addressLine2: addr.addressLine2 || "",
+      city: addr.city || "",
+      state: addr.state || "",
+      pincode: addr.pincode || "",
+      isDefault: addr.isDefault || false,
+    });
+    setEditId(addr._id);
+    setShowAddForm(true);
+  };
+
+  const addressFields = [
+    { k: "fullName", p: "Full name *" },
+    { k: "mobile", p: "Mobile *" },
+    { k: "addressLine1", p: "House/Area/Street *" },
+    { k: "addressLine2", p: "Landmark" },
+    { k: "city", p: "City *" },
+    { k: "state", p: "State *" },
+    { k: "pincode", p: "Pincode *" },
+  ];
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="font-bold text-gray-800">
+          My Addresses ({customer?.addresses?.length || 0})
+        </h3>
+        {!showAddForm && (
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="text-sm bg-purple-600 text-white
+                       px-3 py-1.5 rounded-xl font-medium
+                       hover:bg-purple-700 transition"
+          >
+            + Add New
+          </button>
+        )}
+      </div>
+
+      {msg && <p className="text-sm text-center mb-3">{msg}</p>}
+
+      {/* Add/Edit Form */}
+      {showAddForm && (
+        <div
+          className="bg-purple-50 rounded-2xl p-4
+                        mb-4 border border-purple-100"
+        >
+          <h4 className="font-semibold text-gray-800 mb-3">
+            {editId ? "✏️ Edit Address" : "+ New Address"}
+          </h4>
+
+          {/* Label */}
+          <div className="flex gap-2 mb-3">
+            {["Home", "Work", "Other"].map((l) => (
+              <button
+                key={l}
+                onClick={() =>
+                  setForm({
+                    ...form,
+                    label: l,
+                  })
+                }
+                className={`px-3 py-1.5 rounded-xl text-sm
+                           font-medium transition border
+                           ${
+                             form.label === l
+                               ? "bg-purple-600 text-white border-purple-600"
+                               : "border-gray-200 text-gray-600 bg-white"
+                           }`}
+              >
+                {l === "Home" ? "🏠" : l === "Work" ? "🏢" : "📍"} {l}
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-2">
+            {addressFields.map((f) => (
+              <input
+                key={f.k}
+                type="text"
+                placeholder={f.p}
+                value={form[f.k]}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    [f.k]: e.target.value,
+                  })
+                }
+                className="w-full border border-gray-200
+                           bg-white rounded-xl px-3 py-2.5
+                           text-sm focus:outline-none
+                           focus:border-purple-500"
+              />
+            ))}
+
+            <label
+              className="flex items-center gap-2
+                               cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                checked={form.isDefault}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    isDefault: e.target.checked,
+                  })
+                }
+                className="w-4 h-4 text-purple-600"
+              />
+              <span className="text-sm text-gray-600">
+                Set as Default Address
+              </span>
+            </label>
+          </div>
+
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={handleSave}
+              className="flex-1 bg-purple-600 text-white
+                         py-2.5 rounded-xl font-bold
+                         hover:bg-purple-700 transition text-sm"
+            >
+              💾 Save
+            </button>
+            <button
+              onClick={resetForm}
+              className="px-4 border border-gray-200
+                         rounded-xl text-sm text-gray-600
+                         hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Addresses List */}
+      {!customer?.addresses?.length ? (
+        <div
+          className="text-center py-8 bg-gray-50
+                        rounded-2xl"
+        >
+          <p className="text-gray-400 text-sm">There isn't any address</p>
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="mt-2 text-purple-600 text-sm
+                       font-medium"
+          >
+            + Add the first address
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {customer.addresses.map((addr) => (
+            <div
+              key={addr._id}
+              className="border border-gray-100
+                         rounded-2xl p-4 bg-white"
+            >
+              <div
+                className="flex justify-between
+                              items-start mb-2"
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className="text-xs bg-purple-100
+                                   text-purple-700 px-2 py-0.5
+                                   rounded-full font-medium"
+                  >
+                    {addr.label || "Home"}
+                  </span>
+                  {addr.isDefault && (
+                    <span
+                      className="text-xs bg-green-100
+                                     text-green-700 px-2 py-0.5
+                                     rounded-full"
+                    >
+                      Default
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEdit(addr)}
+                    className="text-xs text-purple-600
+                               hover:text-purple-800 font-medium"
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(addr._id)}
+                    className="text-xs text-red-400
+                               hover:text-red-600"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+              <p className="font-medium text-sm text-gray-800">
+                {addr.fullName}
+              </p>
+              <p className="text-gray-500 text-xs mt-0.5">
+                {addr.addressLine1}
+                {addr.addressLine2 && `, ${addr.addressLine2}`}
+              </p>
+              <p className="text-gray-500 text-xs">
+                {addr.city}, {addr.state} - {addr.pincode}
+              </p>
+              <p className="text-gray-400 text-xs">📱 {addr.mobile}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+// ─── Customer Profile Sidebar ─────────────
+function CustomerProfile({ shop, onClose }) {
+  const { customer, customerToken, logoutCustomer, loginCustomer } =
+    useCustomer();
+  const [activeSection, setActiveSection] = useState("profile");
+  const [orders, setOrders] = useState([]);
+  const [profile, setProfile] = useState({
+    name: customer?.name || "",
+    lastName: customer?.lastName || "",
+    mobile: customer?.mobile || "",
+    gender: customer?.gender || "",
+  });
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const fetchOrders = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/customer/orders`, {
+        headers: { Authorization: `Bearer ${customerToken}` },
+      });
+      setOrders(res.data.orders);
+    } catch (e) {
+      console.log(e);
+    }
+  }, [customerToken]);
+
+  useEffect(() => {
+    if (activeSection === "orders") {
+      setOrders([]); // Clear first
+      fetchOrders();
+    }
+  }, [activeSection, fetchOrders]);
+
+  // Initial load bhi karo
+  useEffect(() => {
+    fetchOrders();
+    // eslint-disable-next-line
+  }, []);
+
+  const [profileMsg, setProfileMsg] = useState("");
+
+  const saveProfile = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.put(`${API_URL}/api/customer/profile`, profile, {
+        headers: { Authorization: `Bearer ${customerToken}` },
+      });
+      // Context update karo immediately
+      loginCustomer(res.data.customer, customerToken);
+      setEditingProfile(false);
+      setProfileMsg("✅ Profile update sucessfully!");
+      setTimeout(() => setProfileMsg(""), 3000);
+    } catch (e) {
+      setProfileMsg("❌ There is an error!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const menuItems = [
+    { key: "profile", icon: "👤", label: "Profile" },
+    { key: "orders", icon: "📦", label: "Orders" },
+    { key: "addresses", icon: "📍", label: "Addresses" },
+    { key: "account", icon: "⚙️", label: "Account" },
+    { key: "help", icon: "❓", label: "Help" },
+  ];
+
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-60
+                    z-50 flex justify-end"
+    >
+      <div
+        className="bg-white w-full md:w-96
+                      max-h-screen overflow-y-auto shadow-2xl"
+      >
+        <div
+          className="bg-gradient-to-r from-purple-600
+                        to-indigo-600 p-5 text-white"
+        >
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-xl font-bold">{customer?.name}</p>
+              <p className="text-purple-200 text-sm">{customer?.email}</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-white text-xl w-8 h-8
+                         bg-white bg-opacity-20 rounded-full
+                         flex items-center justify-center"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div
+          className="flex overflow-x-auto p-3 gap-2
+                        border-b bg-gray-50"
+        >
+          {menuItems.map((item) => (
+            <button
+              key={item.key}
+              onClick={() => setActiveSection(item.key)}
+              className={`flex-shrink-0 flex items-center
+                         gap-1.5 px-3 py-2 rounded-xl text-sm
+                         font-medium transition whitespace-nowrap
+                         ${
+                           activeSection === item.key
+                             ? "bg-purple-600 text-white"
+                             : "bg-white text-gray-600 border"
+                         }`}
+            >
+              {item.icon} {item.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="p-4">
+          {/* Profile */}
+          {activeSection === "profile" && (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="font-bold text-gray-800">My Profile</h3>
+                <button
+                  onClick={() => setEditingProfile(!editingProfile)}
+                  className="text-purple-600 text-sm font-medium"
+                >
+                  {editingProfile ? "Cancel" : "✏️ Edit"}
+                </button>
+              </div>
+              {["name", "lastName", "mobile"].map((field) => (
+                <div key={field}>
+                  <label
+                    className="text-xs text-gray-400
+                                    capitalize block mb-1"
+                  >
+                    {field === "lastName"
+                      ? "Last Name"
+                      : field.charAt(0).toUpperCase() + field.slice(1)}
+                  </label>
+                  {editingProfile ? (
+                    <input
+                      type="text"
+                      value={profile[field]}
+                      onChange={(e) =>
+                        setProfile({
+                          ...profile,
+                          [field]: e.target.value,
+                        })
+                      }
+                      className="w-full border border-gray-200
+                                 rounded-xl px-4 py-2.5 text-sm
+                                 focus:outline-none
+                                 focus:border-purple-500"
+                    />
+                  ) : (
+                    <p
+                      className="text-gray-700 text-sm
+                                  bg-gray-50 rounded-xl px-4 py-2.5"
+                    >
+                      {profile[field] || "—"}
+                    </p>
+                  )}
+                </div>
+              ))}
+              {editingProfile && (
+                <>
+                  <div>
+                    <label className="text-xs text-gray-400 mb-2 block">
+                      Gender
+                    </label>
+                    <div className="flex gap-2">
+                      {["male", "female", "other"].map((g) => (
+                        <button
+                          key={g}
+                          onClick={() =>
+                            setProfile({
+                              ...profile,
+                              gender: g,
+                            })
+                          }
+                          className={`flex-1 py-2 rounded-xl text-sm
+                                     font-medium capitalize transition
+                                     border
+                                     ${
+                                       profile.gender === g
+                                         ? "bg-purple-600 text-white border-purple-600"
+                                         : "border-gray-200 text-gray-600"
+                                     }`}
+                        >
+                          {g === "male" ? "👨" : g === "female" ? "👩" : "🧑"}{" "}
+                          {g}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <button
+                    onClick={saveProfile}
+                    disabled={loading}
+                    className="w-full bg-purple-600 text-white
+                               py-3 rounded-xl font-bold
+                               hover:bg-purple-700 transition"
+                  >
+                    {loading ? "⏳..." : "💾 Save"}
+                  </button>
+                  {profileMsg && (
+                    <p className="text-sm text-center">{profileMsg}</p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Orders */}
+          {activeSection === "orders" && (
+            <div>
+              <h3 className="font-bold text-gray-800 mb-4">
+                My Orders ({orders.length})
+              </h3>
+              {orders.length === 0 ? (
+                <div className="text-center py-10">
+                  <div className="text-4xl mb-2">📦</div>
+                  <p className="text-gray-400">There are no any orders!</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {orders.map((order) => (
+                    <div
+                      key={order._id}
+                      className="border border-gray-100
+               rounded-2xl p-4 cursor-pointer
+               hover:shadow-md hover:border-purple-200
+               transition"
+                      onClick={() => {
+                        window.location.href = `/order/${order._id}`;
+                      }}
+                    >
+                      <div
+                        className="flex items-center
+                    justify-between mb-3"
+                      >
+                        <div>
+                          <p className="text-xs text-gray-400 font-medium">
+                            #{order.orderId}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {new Date(order.createdAt).toLocaleDateString(
+                              "en-IN",
+                            )}
+                          </p>
+                        </div>
+                        <span
+                          className={`text-xs px-3 py-1 rounded-full font-semibold capitalize ${STATUS_COLORS[order.orderStatus] || "bg-gray-100 text-gray-700"}`}
+                        >
+                          {order.orderStatus === "out_for_delivery"
+                            ? "Out for Delivery"
+                            : order.orderStatus?.replace(/_/g, " ")}
+                        </span>
+                      </div>
+
+                      <div className="flex gap-3 items-center">
+                        <img
+                          src={order.productImage}
+                          alt={order.productName}
+                          className="w-12 h-12 object-contain
+                   rounded-xl bg-gray-50 border"
+                        />
+                        <div>
+                          <p className="font-medium text-sm text-gray-800">
+                            {order.productName}
+                          </p>
+                          <p className="text-purple-600 font-bold text-sm">
+                            ₹{order.totalAmount}
+                          </p>
+                        </div>
+                        <span className="ml-auto text-gray-300 text-lg">→</span>
+                      </div>
+
+                      {/* Live dot for active orders */}
+                      {!["delivered", "cancelled"].includes(
+                        order.orderStatus,
+                      ) && (
+                        <div className="flex items-center gap-1.5 mt-3">
+                          <div
+                            className="w-2 h-2 bg-green-500
+                        rounded-full animate-pulse"
+                          />
+                          <span className="text-xs text-green-600 font-medium">
+                            See all details
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Addresses */}
+          {activeSection === "addresses" && (
+            <AddressManager
+              customer={customer}
+              customerToken={customerToken}
+              loginCustomer={loginCustomer}
+            />
+          )}
+          {/* Account */}
+          {activeSection === "account" && (
+            <div className="space-y-4">
+              <h3 className="font-bold text-gray-800">My Account</h3>
+              <button
+                onClick={() => {
+                  logoutCustomer();
+                  onClose();
+                }}
+                className="w-full border-2 border-gray-200
+                           text-gray-600 py-3 rounded-xl
+                           font-semibold hover:bg-gray-50"
+              >
+                🚪 Logout
+              </button>
+              <button
+                onClick={async () => {
+                  if (
+                    !window.confirm(
+                      "Are you sure you want to delete your account?",
+                    )
+                  )
+                    return;
+                  try {
+                    await axios.delete(`${API_URL}/api/customer/account`, {
+                      headers: { Authorization: `Bearer ${customerToken}` },
+                    });
+                    logoutCustomer();
+                    onClose();
+                  } catch (e) {
+                    alert("Error!");
+                  }
+                }}
+                className="w-full bg-red-50 border-2 border-red-200
+                           text-red-600 py-3 rounded-xl font-semibold
+                           hover:bg-red-100"
+              >
+                🗑️ Delete Account
+              </button>
+            </div>
+          )}
+
+          {/* Help */}
+          {activeSection === "help" && (
+            <div className="space-y-4">
+              <h3 className="font-bold text-gray-800">Help Center</h3>
+              <textarea
+                rows={4}
+                placeholder="Write your query..."
+                className="w-full border border-gray-200
+                           rounded-xl p-3 text-sm
+                           focus:outline-none
+                           focus:border-purple-500 resize-none"
+              />
+              <button
+                className="w-full bg-purple-600 text-white
+                                 py-3 rounded-xl font-bold
+                                 hover:bg-purple-700"
+              >
+                📩 Submit
+              </button>
+              {shop?.whatsapp && (
+                <a
+                  href={`https://wa.me/${shop.whatsapp}?text=Hi, I need help.`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block w-full bg-green-500 text-white
+                             py-3 rounded-xl font-bold text-center
+                             hover:bg-green-600"
+                >
+                  📱 WhatsApp Support
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Loading Animation ────────────────────
 function TryOnAnimation() {
   const MESSAGES = [
@@ -283,8 +1930,253 @@ function ImageSlider({ images, onClick }) {
     </div>
   );
 }
+function ProductReviews({
+  product,
+  showAllReviews,
+  setShowAllReviews,
+  onImageClick,
+}) {
+  const [reviews, setReviews] = useState([]);
+  const [avgRating, setAvgRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [breakdown, setBreakdown] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await axios.get(
+          `${API_URL}/api/reviews/product/${product._id}`,
+        );
+        setReviews(res.data.reviews);
+        setAvgRating(res.data.avgRating);
+        setTotalReviews(res.data.totalReviews);
+        setBreakdown(res.data.breakdown);
+      } catch (e) {
+        console.log(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReviews();
+  }, [product._id]);
+
+  const getBarColor = (r) =>
+    r >= 4 ? "bg-green-500" : r >= 2 ? "bg-orange-400" : "bg-red-500";
+
+  const getRatingColor = (r) =>
+    r >= 4 ? "text-green-600" : r >= 2 ? "text-orange-500" : "text-red-500";
+
+  const displayedReviews = showAllReviews ? reviews : reviews.slice(0, 2);
+
+  return (
+    <div className="mb-4">
+      <p
+        className="text-sm font-bold text-gray-800
+                    mb-3 uppercase tracking-wide"
+      >
+        Ratings & Reviews
+      </p>
+
+      {/* Summary */}
+      <div className="flex items-start gap-4 mb-4">
+        <div className="text-center flex-shrink-0">
+          <div
+            className={`text-4xl font-black
+            ${
+              avgRating >= 4
+                ? "text-green-500"
+                : avgRating >= 2
+                  ? "text-orange-400"
+                  : avgRating > 0
+                    ? "text-red-500"
+                    : "text-gray-300"
+            }`}
+          >
+            {avgRating > 0 ? avgRating.toFixed(1) : "—"}
+          </div>
+          <div className="flex justify-center mt-1">
+            {[1, 2, 3, 4, 5].map((s) => (
+              <span
+                key={s}
+                className={`text-sm ${
+                  s <= Math.round(avgRating)
+                    ? getRatingColor(avgRating)
+                    : "text-gray-200"
+                }`}
+              >
+                ★
+              </span>
+            ))}
+          </div>
+          <p className="text-gray-400 text-xs mt-0.5">{totalReviews} reviews</p>
+        </div>
+        <div className="flex-1 space-y-1">
+          {[5, 4, 3, 2, 1].map((star) => (
+            <div key={star} className="flex items-center gap-2">
+              <span className="text-xs text-gray-400 w-3">{star}</span>
+              <span
+                className={`text-xs
+                ${
+                  star >= 4
+                    ? "text-green-500"
+                    : star >= 2
+                      ? "text-orange-400"
+                      : "text-red-500"
+                }`}
+              >
+                ★
+              </span>
+              <div
+                className="flex-1 bg-gray-100
+                              rounded-full h-1.5"
+              >
+                <div
+                  className={`h-full rounded-full
+                             ${getBarColor(star)}`}
+                  style={{
+                    width:
+                      totalReviews > 0
+                        ? `${((breakdown[star] || 0) / totalReviews) * 100}%`
+                        : "0%",
+                  }}
+                />
+              </div>
+              <span className="text-xs text-gray-400 w-4">
+                {breakdown[star] || 0}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Reviews List */}
+      {loading ? (
+        <p className="text-center text-gray-400 text-sm py-4">
+          Loading reviews...
+        </p>
+      ) : reviews.length === 0 ? (
+        <div
+          className="text-center py-6 bg-gray-50
+                        rounded-2xl"
+        >
+          <p className="text-gray-400 text-sm">There are no reviews yet.</p>
+        </div>
+      ) : (
+        <>
+          <div className="space-y-4">
+            {displayedReviews.map((review) => (
+              <div
+                key={review._id}
+                className="border-b border-gray-100
+                           pb-4 last:border-0"
+              >
+                <div
+                  className="flex items-start
+                                justify-between mb-1.5"
+                >
+                  <div>
+                    <p
+                      className="font-semibold text-sm
+                                  text-gray-800"
+                    >
+                      {review.customerName}
+                    </p>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <span
+                          key={s}
+                          className={`text-xs ${
+                            s <= review.rating
+                              ? review.rating >= 4
+                                ? "text-green-500"
+                                : review.rating >= 2
+                                  ? "text-orange-400"
+                                  : "text-red-500"
+                              : "text-gray-200"
+                          }`}
+                        >
+                          ★
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-xs font-bold
+                                     px-2 py-0.5 rounded-full
+                                     ${
+                                       review.rating >= 4
+                                         ? "bg-green-100 text-green-700"
+                                         : review.rating >= 2
+                                           ? "bg-orange-100 text-orange-600"
+                                           : "bg-red-100 text-red-600"
+                                     }`}
+                    >
+                      {review.rating}★
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {new Date(review.createdAt).toLocaleDateString("en-IN")}
+                    </span>
+                  </div>
+                </div>
+
+                {review.review && (
+                  <p
+                    className="text-sm text-gray-600
+                                leading-relaxed mb-2"
+                  >
+                    {review.review}
+                  </p>
+                )}
+
+                {/* Review Images - Clickable */}
+                {review.images?.length > 0 && (
+                  <div className="flex gap-2">
+                    {review.images.map((img, i) => (
+                      <button
+                        key={i}
+                        onClick={() => onImageClick(img, review)}
+                        className="w-16 h-16 rounded-xl
+                                   overflow-hidden border
+                                   border-gray-100
+                                   hover:opacity-80
+                                   transition flex-shrink-0"
+                      >
+                        <img
+                          src={img}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {reviews.length > 2 && (
+            <button
+              onClick={() => setShowAllReviews(!showAllReviews)}
+              className="w-full mt-3 py-3 border-2
+                         border-gray-200 rounded-xl text-sm
+                         font-semibold text-gray-600
+                         hover:bg-gray-50 transition"
+            >
+              {showAllReviews
+                ? "Show Less ↑"
+                : `Show All Reviews (${totalReviews}) ↓`}
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
 
 // ─── Reviews Section ──────────────────────
+// eslint-disable-next-line no-unused-vars
 function ReviewsSection({ product, shop }) {
   const [reviews, setReviews] = useState([]);
   const [avgRating, setAvgRating] = useState(0);
@@ -865,198 +2757,512 @@ function ZoomModal({ images, initialIndex, onClose }) {
 }
 
 // ─── Product Detail Modal ─────────────────
-function ProductModal({ product, shop, onClose, onTryOn }) {
+function ProductModal({ product, shop, onClose, onTryOn, onOrder }) {
   const [selectedImage, setSelectedImage] = useState(0);
-  const [zoomImages, setZoomImages] = useState(null);
-  const [zoomIndex, setZoomIndex] = useState(0);
+  const [showAllReviews, setShowAllReviews] = useState(false);
+  const [selectedSize, setSelectedSize] = useState("");
+  const [zoomedReview, setZoomedReview] = useState(null);
   const images =
     product.images?.length > 0 ? product.images : [product.imageUrl];
 
-  const openImageZoom = (imageIndex = 0) => {
-    setZoomIndex(imageIndex);
-    setZoomImages(images);
-  };
+  const hasDiscount =
+    product.originalPrice && product.originalPrice > product.price;
 
   return (
-    <>
+    <div
+      className="fixed inset-0 bg-black bg-opacity-70
+                    z-40 flex items-end md:items-center
+                    justify-center p-0 md:p-4"
+      onClick={onClose}
+    >
       <div
-        className="fixed inset-0 bg-black bg-opacity-70
-                      z-40 flex items-end md:items-center
-                      justify-center p-0 md:p-4"
-        onClick={onClose}
+        className="bg-white w-full md:max-w-lg
+                      rounded-t-3xl md:rounded-3xl
+                      max-h-screen overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
       >
+        {/* Header */}
         <div
-          className="bg-white w-full md:max-w-2xl
-                        rounded-t-3xl md:rounded-3xl
-                        max-h-screen overflow-y-auto"
-          onClick={(e) => e.stopPropagation()}
+          className="flex justify-between items-center
+                        p-4 border-b sticky top-0 bg-white
+                        z-10 rounded-t-3xl"
         >
-          {/* Header */}
-          <div
-            className="flex justify-between items-center
-                          p-5 border-b sticky top-0 bg-white
-                          z-10 rounded-t-3xl"
+          <h2
+            className="text-sm font-semibold text-gray-600
+                         truncate max-w-xs"
           >
-            <h2 className="text-lg font-bold text-gray-800">{product.name}</h2>
-            <button
-              onClick={onClose}
-              className="w-9 h-9 rounded-full bg-gray-100
-                         flex items-center justify-center
-                         text-gray-500 hover:bg-gray-200
-                         transition text-lg"
-            >
-              ✕
-            </button>
+            {product.brandName && (
+              <span className="text-purple-600">{product.brandName} · </span>
+            )}
+            {product.name}
+          </h2>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-gray-100
+                       flex items-center justify-center
+                       text-gray-500 flex-shrink-0"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Images */}
+        <div className="relative">
+          <div className="bg-gray-50">
+            <img
+              src={images[selectedImage]}
+              alt={product.name}
+              className="w-full h-80 object-contain p-3
+                         cursor-zoom-in"
+              onClick={() => {
+                // Zoom handled in parent
+              }}
+            />
           </div>
 
-          <div className="p-5">
-            {/* Main Image */}
-            <div className="bg-white rounded-2xl mb-4 relative overflow-hidden border border-gray-100">
-              <img
-                src={images[selectedImage]}
-                alt={product.name}
-                className="w-full h-72 object-contain p-4 cursor-zoom-in"
-                onClick={() => openImageZoom(selectedImage)}
-              />
+          {/* Thumbnail Strip */}
+          {images.length > 1 && (
+            <div
+              className="flex gap-2 p-3 overflow-x-auto
+                            bg-white border-b"
+            >
+              {images.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSelectedImage(i)}
+                  className={`flex-shrink-0 w-14 h-14
+                             rounded-xl overflow-hidden
+                             border-2 transition
+                             ${
+                               i === selectedImage
+                                 ? "border-purple-500"
+                                 : "border-gray-100"
+                             }`}
+                >
+                  <img
+                    src={img}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
             </div>
+          )}
+        </div>
 
-            {/* Thumbnail Strip */}
-            {images.length > 1 && (
-              <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
-                {images.map((img, i) => (
+        <div className="p-5">
+          {/* Brand + Name */}
+          {product.brandName && (
+            <p
+              className="text-purple-600 font-bold
+                          text-sm mb-1"
+            >
+              {product.brandName}
+            </p>
+          )}
+          <h1 className="text-xl font-bold text-gray-800 mb-2">
+            {product.name}
+          </h1>
+
+          {/* Description */}
+          {product.description && (
+            <p
+              className="text-gray-500 text-sm
+                          leading-relaxed mb-3"
+            >
+              {product.description}
+            </p>
+          )}
+
+          {/* Pricing */}
+          <div className="flex items-center gap-3 mb-4">
+            {hasDiscount && (
+              <span
+                className="bg-green-600 text-white
+                               text-xs font-bold px-2 py-1
+                               rounded-lg"
+              >
+                ↓ {product.discountPercent}% OFF
+              </span>
+            )}
+            <div className="flex items-center gap-2">
+              <span
+                className="text-2xl font-black
+                               text-gray-900"
+              >
+                ₹{product.price}
+              </span>
+              {hasDiscount && (
+                <span
+                  className="text-gray-400 text-sm
+                                 line-through"
+                >
+                  ₹{product.originalPrice}
+                </span>
+              )}
+            </div>
+            {hasDiscount && (
+              <span
+                className="text-green-600 text-xs
+                               font-medium"
+              >
+                Save ₹{product.originalPrice - product.price}
+              </span>
+            )}
+          </div>
+
+          {/* Size Chart */}
+          {product.sizes?.length > 0 && (
+            <div className="mb-4">
+              <p
+                className="text-sm font-semibold
+                            text-gray-700 mb-2"
+              >
+                Size Select Karo
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {product.sizes.map((size) => (
                   <button
-                    key={i}
-                    onClick={() => setSelectedImage(i)}
-                    className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition ${
-                      i === selectedImage
-                        ? "border-purple-500"
-                        : "border-transparent"
-                    }`}
+                    key={size}
+                    onClick={() => setSelectedSize(size)}
+                    className={`px-4 py-2 rounded-xl text-sm
+                               font-semibold border-2 transition
+                               ${
+                                 selectedSize === size
+                                   ? "bg-gray-900 text-white border-gray-900"
+                                   : "border-gray-200 text-gray-700 hover:border-gray-400"
+                               }`}
                   >
-                    <img
-                      src={img}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
+                    {size}
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Delivery Info */}
+          <div className="bg-gray-50 rounded-2xl p-4 mb-4">
+            <p
+              className="text-xs font-semibold text-gray-500
+                          uppercase tracking-wide mb-3"
+            >
+              Delivery Details
+            </p>
+            <div className="flex items-start gap-2 mb-2">
+              <span className="text-base">📍</span>
+              <div>
+                <p className="text-sm text-gray-700 font-medium">
+                  {product.price >= 499
+                    ? "🚚 Free Delivery!"
+                    : "🚚 Delivery: ₹60"}
+                </p>
+                <p className="text-xs text-gray-400">
+                  Expected by{" "}
+                  {new Date(
+                    Date.now() + 5 * 24 * 60 * 60 * 1000,
+                  ).toLocaleDateString("en-IN", {
+                    weekday: "short",
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </p>
+              </div>
+            </div>
+            <p
+              className="text-xs text-gray-500 flex
+                          items-center gap-1"
+            >
+              <span>🏪</span>
+              Fulfilled by{" "}
+              <span className="font-semibold text-gray-700 ml-1">
+                {shop?.name}
+              </span>
+            </p>
+            <p
+              className=" font-semibold text-xs text-blue-500 flex
+                          items-center gap-1 mt-2"
+            >
+              <span>⛟.</span>
+              Free delivery on all orders above ₹499
+            </p>
+          </div>
+
+          {/* Trust Badges */}
+          <div className="grid grid-cols-3 gap-3 mb-5">
+            {[
+              { icon: "↩️", text: "7 Day Return" },
+              { icon: "💵", text: "Cash on Delivery" },
+              { icon: "✅", text: "VirtualTryOn Assured" },
+            ].map((b, i) => (
+              <div
+                key={i}
+                className="text-center bg-blue-50
+                           rounded-xl p-3"
+              >
+                <div className="text-xl mb-1">{b.icon}</div>
+                <p
+                  className="text-xs text-gray-600
+                               font-medium leading-tight"
+                >
+                  {b.text}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Product Highlights */}
+          {product.highlights &&
+            Object.values(product.highlights).some((v) => v) && (
+              <div className="mb-5">
+                <p
+                  className="text-sm font-bold text-gray-800
+                            mb-3 uppercase tracking-wide"
+                >
+                  Product Highlights
+                </p>
+                <div
+                  className="bg-gray-50 rounded-2xl
+                              overflow-hidden"
+                >
+                  {[
+                    { k: "packOf", l: "Pack Of" },
+                    { k: "color", l: "Color" },
+                    { k: "pattern", l: "Pattern" },
+                    { k: "fabric", l: "Fabric" },
+                    { k: "occasion", l: "Occasion" },
+                    { k: "suitableFor", l: "Suitable For" },
+                  ]
+                    .filter((f) => product.highlights[f.k])
+                    .map((f, i, arr) => (
+                      <div
+                        key={f.k}
+                        className={`flex px-4 py-3
+                               ${
+                                 i !== arr.length - 1
+                                   ? "border-b border-gray-100"
+                                   : ""
+                               }`}
+                      >
+                        <span
+                          className="text-gray-400 text-sm
+                                     w-28 flex-shrink-0"
+                        >
+                          {f.l}
+                        </span>
+                        <span
+                          className="text-gray-800 text-sm
+                                     font-medium"
+                        >
+                          {product.highlights[f.k]}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
             )}
 
-            {/* Product Info */}
-            <div className="mb-5">
-              <h3 className="text-2xl font-bold text-gray-800 mb-1">
-                {product.name}
-              </h3>
-              <p className="text-3xl font-black text-purple-600 mb-2">
-                ₹{product.price}
-              </p>
-              <span
-                className="bg-purple-100 text-purple-700
-                               px-3 py-1 rounded-full text-sm
-                               font-medium capitalize"
-              >
-                {product.category?.replace("_", " ")}
-              </span>
-              {product.description && (
-                <p className="text-gray-500 mt-3 leading-relaxed text-sm">
-                  {product.description}
+          {/* Reviews Section - Read Only */}
+          <ProductReviews
+            product={product}
+            showAllReviews={showAllReviews}
+            setShowAllReviews={setShowAllReviews}
+            onImageClick={(img, review) => setZoomedReview({ img, review })}
+          />
+        </div>
+
+        {/* Sticky Buttons */}
+        <div
+          className="sticky bottom-0 bg-white border-t
+                        px-5 py-4 space-y-2.5
+                        shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
+        >
+          <button
+            onClick={() => onOrder(product)}
+            disabled={!product?.inStock}
+            className={`w-full py-3.5 rounded-2xl font-bold text-lg flex items-center justify-center gap-2.5 
+             transition-all duration-300 ease-in-out shadow-lg transform active:scale-[0.98]
+             ${
+               product?.inStock
+                 ? "bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 text-white shadow-green-500/20 hover:shadow-green-500/40 hover:-translate-y-0.5 cursor-pointer"
+                 : "bg-gradient-to-r from-gray-100 via-gray-200 to-gray-300 text-gray-400 shadow-none cursor-not-allowed border border-gray-300/30"
+             }`}
+          >
+            {product?.inStock ? (
+              <>
+                {/* आइकॉन रैपर - इसे परफेक्टली सेंटर और अलाइन किया गया है */}
+                <div className="relative flex items-center justify-center bg-white/15 p-1 rounded-lg animate-pulse [animation-duration:1.5s]">
+                  <span className="absolute inline-flex h-full w-full rounded-lg bg-white/20 animate-ping opacity-60"></span>
+                  <svg
+                    xmlns="http://w3.org"
+                    width="18" // साइज़ थोड़ा छोटा किया ताकि ऊपर टच न हो
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5" // यह आइकॉन को बढ़िया और बोल्ड रखेगा
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="relative z-10"
+                  >
+                    <circle cx="8" cy="21" r="1" />
+                    <circle cx="19" cy="21" r="1" />
+                    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+                  </svg>
+                </div>
+
+                <span className="tracking-wide">Order Now</span>
+              </>
+            ) : (
+              <>
+                <svg
+                  xmlns="http://w3.org"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="m4.93 4.93 14.14 14.14" />
+                </svg>
+                <span className="tracking-wide uppercase text-sm font-extrabold opacity-75">
+                  Out of Stock
+                </span>
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (product.inStock === false) return;
+              onTryOn(product);
+            }}
+            disabled={product.inStock === false}
+            className={`w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 
+             transition-all duration-300 ease-in-out shadow-lg transform active:scale-[0.98]
+             ${
+               product.inStock === false
+                 ? "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-400 shadow-none cursor-not-allowed border border-gray-300/30"
+                 : "bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 text-white shadow-purple-500/20 hover:shadow-purple-500/40 hover:-translate-y-0.5 cursor-pointer"
+             }`}
+          >
+            {product.inStock === false ? (
+              <>
+                {/* आउट ऑफ़ स्टॉक स्टेट */}
+                <svg
+                  xmlns="http://w3.org"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="m4.93 4.93 14.14 14.14" />
+                </svg>
+                <span className="tracking-wide uppercase text-sm font-extrabold opacity-75">
+                  Tryon Unavailable
+                </span>
+              </>
+            ) : (
+              <>
+                {/* एक्टिव AI / फैशन ट्राई-ऑन स्टेट */}
+                <div className="relative flex items-center justify-center bg-white/20 p-1 rounded-lg animate-pulse [animation-duration:1.8s]">
+                  {/* पीछे हल्का सा ग्लोइंग रिंग इफ़ेक्ट */}
+                  <span className="absolute inline-flex h-full w-full rounded-lg bg-white/20 animate-ping opacity-60"></span>
+
+                  {/* स्पार्कल / मैजिक AI आइकॉन (जो वर्चुअल ट्राई-ऑन को दर्शाता है) */}
+                  <svg
+                    xmlns="http://w3.org"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="relative z-10"
+                  >
+                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z" />
+                    <path
+                      d="m5 3 1 2.5L8.5 6 6 7 5 9.5 4 7 1.5 6 4 5.5Z"
+                      className="opacity-80"
+                    />
+                    <path
+                      d="m19 17 1 2.5 2.5.5-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1Z"
+                      className="opacity-80"
+                    />
+                  </svg>
+                </div>
+
+                <span className="tracking-wide">Try-On Now!</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Review Image Zoom */}
+      {zoomedReview && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-90
+                     z-50 flex items-center justify-center p-4"
+          onClick={() => setZoomedReview(null)}
+        >
+          <div
+            className="bg-white rounded-2xl overflow-hidden
+                          max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={zoomedReview.img}
+              alt=""
+              className="w-full h-64 object-cover"
+            />
+            <div className="p-4">
+              <div className="flex items-center gap-1 mb-2">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <span
+                    key={s}
+                    className={`text-sm ${
+                      s <= zoomedReview.review.rating
+                        ? "text-yellow-400"
+                        : "text-gray-200"
+                    }`}
+                  >
+                    ★
+                  </span>
+                ))}
+                <span className="text-xs text-gray-500 ml-1">
+                  {zoomedReview.review.customerName}
+                </span>
+              </div>
+              {zoomedReview.review.review && (
+                <p className="text-sm text-gray-700">
+                  {zoomedReview.review.review}
                 </p>
               )}
             </div>
-
-            {/* Action Buttons */}
-            <div className="space-y-3">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (product.inStock === false) return;
-                  onTryOn(product);
-                }}
-                disabled={product.inStock === false}
-                className={`w-full  py-4 rounded-2xl
-                           font-bold text-lg hover:opacity-90
-                           transition flex items-center
-                           justify-center gap-2 shadow-lg
-                           shadow-purple-200
-                           ${
-                             product.inStock === false
-                               ? "bg-gray-100 text-red-500 cursor-not-allowed"
-                               : "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90"
-                           }`}
-              >
-                {product.inStock === false
-                  ? "❌ Out of Stock"
-                  : "👗 Virtual Try On Karen!"}
-              </button>
-
-              {shop?.whatsapp && (
-                <a
-                  href={`https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(
-                    `Hi! Mujhe yeh chahiye:\n👗 ${product.name}\n💰 ₹${product.price}\n\nKya available hai?`,
-                  )}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={() => trackOrder(product, "whatsapp")}
-                  className="w-full bg-green-500 text-white
-                             py-4 rounded-2xl font-bold text-base
-                             hover:bg-green-600 transition
-                             flex items-center justify-center gap-2"
-                >
-                  📱 WhatsApp Par Order Karen
-                </a>
-              )}
-
-              {shop?.upiId && (
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(shop.upiId);
-                    alert(
-                      `UPI ID copied!\n${shop.upiId}\nAmount: ₹${product.price}`,
-                    );
-                  }}
-                  className="w-full border-2 border-green-500
-                             text-green-600 py-3.5 rounded-2xl
-                             font-semibold hover:bg-green-50
-                             transition flex items-center
-                             justify-center gap-2"
-                >
-                  💳 UPI Se Pay Karen
-                </button>
-              )}
-            </div>
-            {/* Reviews Section */}
-            <ReviewsSection product={product} shop={shop} />
-
-            {/* Trust badges */}
-            <div className="flex flex-wrap gap-2 mt-5 pt-5 border-t">
-              {["🔒 Secure", "📦 Fast Delivery", "↩️ Easy Returns"].map(
-                (b, i) => (
-                  <span
-                    key={i}
-                    className="bg-gray-100 text-gray-600
-                               px-3 py-1.5 rounded-full text-xs
-                               font-medium"
-                  >
-                    {b}
-                  </span>
-                ),
-              )}
-            </div>
+            <button
+              onClick={() => setZoomedReview(null)}
+              className="w-full bg-gray-100 py-3 text-sm
+                         font-semibold text-gray-600
+                         hover:bg-gray-200 transition"
+            >
+              Close
+            </button>
           </div>
         </div>
-      </div>
-      {zoomImages && (
-        <ZoomModal
-          images={zoomImages}
-          initialIndex={zoomIndex}
-          onClose={() => {
-            setZoomImages(null);
-            setZoomIndex(0);
-          }}
-        />
       )}
-    </>
+    </div>
   );
 }
 
@@ -1077,7 +3283,7 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
 
   const handleTryOn = async () => {
     if (!humanImage) {
-      alert("Pehle apni photo upload karen!");
+      alert("Upload your photo first!");
       return;
     }
     setTryonLoading(true);
@@ -1180,7 +3386,10 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
                   ) : (
                     <div className="text-center p-3">
                       <div className="text-3xl mb-1">📷</div>
-                      <p className="text-gray-300 text-xs">Upload karen</p>
+                      <p className="text-gray-300 text-xs">
+                        {" "}
+                        Your photo preview
+                      </p>
                     </div>
                   )}
                 </div>
@@ -1188,29 +3397,83 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
             </div>
 
             {/* Upload */}
-            <div>
-              <label
-                className="block text-sm font-semibold
-                                text-gray-700 mb-2"
-              >
-                Upload your photo
+            <div className="w-full max-w-md mx-auto space-y-3">
+              {/* मुख्य लेबल */}
+              <label className="block text-sm font-bold text-gray-800 tracking-wide">
+                Upload your photo <span className="text-purple-500">*</span>
               </label>
+
+              {/* अपलोडर बॉक्स */}
               <label
-                className="flex flex-col items-center
-                                justify-center w-full h-24
-                                border-2 border-dashed
-                                border-purple-200 rounded-2xl
-                                cursor-pointer hover:border-purple-400
-                                hover:bg-purple-50 transition bg-gray-50"
+                className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed 
+               rounded-2xl cursor-pointer transition-all duration-300 ease-in-out relative overflow-hidden
+               ${
+                 humanImage
+                   ? "border-emerald-400 bg-emerald-50/40 hover:bg-emerald-50 shadow-md shadow-emerald-500/5"
+                   : "border-purple-200 bg-gray-50/50 hover:border-purple-500 hover:bg-purple-50/60 shadow-sm"
+               }`}
               >
-                <div className="text-center">
-                  <div className="text-2xl mb-1">📸</div>
-                  <p className="text-sm text-gray-400">
-                    {humanImage
-                      ? `✅ ${humanImage.name}`
-                      : "Apni photo yahan upload karen"}
-                  </p>
+                <div className="flex flex-col items-center justify-center pt-5 pb-6 px-4 text-center space-y-2">
+                  {/* डायनैमिक आइकॉन एनिमेशन के साथ */}
+                  <div
+                    className={`p-2.5 rounded-xl transition-all duration-300 ${
+                      humanImage
+                        ? "bg-emerald-100 text-emerald-600 animate-pulse"
+                        : "bg-purple-100 text-purple-600"
+                    }`}
+                  >
+                    {humanImage ? (
+                      // सफलता का टिक आइकॉन
+                      <svg
+                        xmlns="http://w3.org"
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M20 6 9 17l-5-5" />
+                      </svg>
+                    ) : (
+                      // कैमरा / फोटो अपलोड आइकॉन
+                      <svg
+                        xmlns="http://w3.org"
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+                        <circle cx="12" cy="13" r="3" />
+                      </svg>
+                    )}
+                  </div>
+
+                  {/* टेक्स्ट कंटेंट */}
+                  <div className="space-y-0.5">
+                    <p
+                      className={`text-sm font-semibold transition-colors ${humanImage ? "text-emerald-700" : "text-gray-700"}`}
+                    >
+                      {humanImage
+                        ? "Photo Uploaded Successfully!"
+                        : "Click to upload or drag & drop"}
+                    </p>
+                    <p className="text-xs text-gray-400 truncate max-w-[280px] font-medium">
+                      {humanImage
+                        ? humanImage.name
+                        : "PNG, JPG or JPEG (Max. 5MB)"}
+                    </p>
+                  </div>
                 </div>
+
+                {/* हिडन इनपुट फ़ील्ड */}
                 <input
                   type="file"
                   accept="image/*"
@@ -1218,24 +3481,97 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
                   className="hidden"
                 />
               </label>
-              <p className="text-xs text-purple-500 mt-1.5">
-                💡 Seedhi khadi photo best result deti hai!
-              </p>
+
+              {/* एडवांस टिप/हिंट सेक्शन */}
+              <div className="flex items-start gap-2 bg-purple-50/50 border border-purple-100/80 p-3 rounded-xl transition-all duration-300">
+                <div className="text-purple-500 mt-0.5 animate-bounce [animation-duration:3s] flex-shrink-0">
+                  <svg
+                    xmlns="http://w3.org"
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .6 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+                    <path d="M9 18h6" />
+                    <path d="M10 22h4" />
+                  </svg>
+                </div>
+                <p className="text-xs font-medium text-purple-700 leading-relaxed">
+                  <span className="font-bold">Tip:</span> Seedhi khadi photo
+                  (Front-face portrait) best result deti hai!
+                </p>
+              </div>
             </div>
 
             {/* Try On Button */}
-            <button
-              onClick={handleTryOn}
-              disabled={tryonLoading || !humanImage}
-              className="w-full bg-gradient-to-r from-purple-600
-                         to-indigo-600 text-white py-4 rounded-2xl
-                         font-bold text-lg hover:opacity-90
-                         transition disabled:opacity-40
-                         flex items-center justify-center gap-2
-                         shadow-lg shadow-purple-200"
+           <button
+  onClick={handleTryOn}
+  disabled={tryonLoading || !humanImage}
+  className={`w-full py-3.5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 
+             transition-all duration-500 ease-in-out relative overflow-hidden transform active:scale-[0.98]
+             ${
+               tryonLoading || !humanImage
+                 ? "bg-gradient-to-r from-gray-100 via-gray-200 to-gray-300 text-gray-400 shadow-none cursor-not-allowed border border-gray-300/30"
+                 : "bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 text-white shadow-xl shadow-purple-500/30 hover:shadow-purple-500/50 hover:-translate-y-0.5 cursor-pointer"
+             }`}
+>
+  {tryonLoading ? (
+    <>
+      <svg className="animate-spin h-6 w-6 text-white" xmlns="http://w3.org" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <span className="tracking-wider animate-pulse">AI is Processing...</span>
+    </>
+  ) : (
+    <>
+      {!tryonLoading && humanImage ? (
+        <>
+          {/* परफेक्टली सेंटर अलाइंड आइकॉन बॉक्स (साइज छोटा किया ताकि ऊपर टच न हो) */}
+          <div className="relative flex items-center justify-center bg-white/15 p-1 rounded-lg animate-pulse [animation-duration:2s]">
+            <span className="absolute inline-flex h-full w-full rounded-lg bg-white/20 animate-ping opacity-60"></span>
+            
+            {/* नया "Hanger + Magic" आइकॉन (फैशन और AI ट्राई-ऑन के लिए एकदम परफेक्ट) */}
+            <svg
+              xmlns="http://w3.org"
+              width="18" // साइज छोटा किया ताकि ऊपर टच न करे
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="relative z-10 text-white"
             >
-              ✨ Try On Karen!
-            </button>
+              {/* हैंगर का हुक और त्रिकोण */}
+              <path d="M12 2a2 2 0 0 1 2 2c0 .7-.4 1.3-1 1.7L13 6v1" />
+              <path d="M21 18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              {/* अंदर की चमक / मैजिक */}
+              <path d="m10 11 1 2 1-2 2-1-2-1-1-2-1 2-2 1z" className="fill-amber-300 stroke-none animate-pulse" />
+            </svg>
+          </div>
+          
+          {/* यहाँ से पुराना '✨' हटा दिया है ताकि दो-दो स्टार न दिखें */}
+          <span className="tracking-wide drop-shadow-md">✨Try On Karen!</span>
+          
+          <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]"></span>
+        </>
+      ) : (
+        <>
+          <svg xmlns="http://w3.org" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+          <span className="text-sm font-bold tracking-wide uppercase opacity-60">Upload Photo First</span>
+        </>
+      )}
+    </>
+  )}
+</button>
+
 
             {/* Result */}
             {tryonResult && (
@@ -1371,6 +3707,11 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
 export default function Shop() {
   const { sellerId } = useParams();
   const [shop, setShop] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState("login");
+  const [showProfile, setShowProfile] = useState(false);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [orderProduct, setOrderProduct] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -1392,6 +3733,35 @@ export default function Shop() {
     fetchShop();
     // eslint-disable-next-line
   }, [sellerId]);
+
+  // Scroll lock - jab bhi koi modal khule
+  useEffect(() => {
+    const shouldLock =
+      showDetail ||
+      showTryOn ||
+      showAuthModal ||
+      showOrderModal ||
+      showProfile ||
+      !!zoomImages;
+
+    if (shouldLock) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    // Cleanup
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [
+    showDetail,
+    showTryOn,
+    showAuthModal,
+    showOrderModal,
+    showProfile,
+    zoomImages,
+  ]);
 
   const fetchShop = async () => {
     try {
@@ -1450,13 +3820,21 @@ export default function Shop() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Shop Header */}
-      <div
+      <ShopNavbar
+        shop={shop}
+        onLoginClick={(mode) => {
+          setAuthMode(mode);
+          setShowAuthModal(true);
+        }}
+        onProfileClick={() => setShowProfile(true)}
+      />
+      {/* <div
         className="bg-gradient-to-r from-purple-600
                       via-purple-700 to-indigo-700
                       text-white relative overflow-hidden"
-      >
-        {/* Background pattern */}
-        <div
+      > */}
+      {/* Background pattern */}
+      {/* <div
           className="absolute inset-0 opacity-10"
           style={{
             backgroundImage: `
@@ -1465,9 +3843,9 @@ export default function Shop() {
             `,
             backgroundSize: "30px 30px",
           }}
-        ></div>
+        ></div> */}
 
-        <div className="relative z-10 text-center py-10 px-4">
+      {/* <div className="relative z-10 text-center py-10 px-4">
           <div
             className="w-16 h-16 bg-white bg-opacity-20
                           rounded-2xl flex items-center
@@ -1478,10 +3856,10 @@ export default function Shop() {
           <h1 className="text-2xl md:text-4xl font-bold mb-2">{shop?.name}</h1>
           <p className="text-purple-200 text-sm md:text-base">
             Ghar baithe kapde try karen! ✨
-          </p>
+          </p> */}
 
-          {/* Stats */}
-          <div className="flex justify-center gap-6 mt-5">
+      {/* Stats */}
+      {/* <div className="flex justify-center gap-6 mt-5">
             {[
               { label: "Products", value: products.length },
               { label: "Try-On", value: "🤖 AI" },
@@ -1499,7 +3877,7 @@ export default function Shop() {
             ))}
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Products Grid */}
       <div className="mb-6 space-y-3">
@@ -1705,18 +4083,57 @@ export default function Shop() {
                       openTryOn(product);
                     }}
                     disabled={product.inStock === false}
-                    className={`w-full mt-3 py-2 rounded-xl
-             text-sm font-semibold transition
-             flex items-center justify-center gap-1.5
+                    className={`w-full mt-3 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 
+             transition-all duration-200 ease-in-out shadow-sm transform active:scale-[0.97]
              ${
                product.inStock === false
-                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                 : "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90"
+                 ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200/50"
+                 : "bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 text-white shadow-purple-500/10 hover:shadow-md hover:shadow-purple-500/20 hover:-translate-y-0.5 cursor-pointer"
              }`}
                   >
-                    {product.inStock === false
-                      ? "❌ Out of Stock"
-                      : "👗 Try On Karo"}
+                    {product.inStock === false ? (
+                      <>
+                        {/* आउट ऑफ़ स्टॉक के लिए साफ-सुथरा लुक */}
+                        <svg
+                          xmlns="http://w3.org"
+                          width="13"
+                          height="13"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="opacity-70"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="m4.93 4.93 14.14 14.14" />
+                        </svg>
+                        <span className="tracking-wide uppercase text-[10px] font-extrabold">
+                          Out of Stock
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        {/* मैजिक AI स्पार्कल्स आइकॉन (जो छोटा और स्लीक है) */}
+                        <svg
+                          xmlns="http://w3.org"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5" // बटन छोटा है इसलिए २.५ मोटाई एकदम बोल्ड दिखेगी
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="animate-pulse [animation-duration:2s]"
+                        >
+                          <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z" />
+                        </svg>
+
+                        <span className="tracking-wide">Try On Karen</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -1724,6 +4141,10 @@ export default function Shop() {
           })}
         </div>
       )}
+
+      {/* Size Selector in Order */}
+      {/* This section is intentionally left out in the main Shop page because
+          size selection is handled inside the product/order modals. */}
 
       {/* Product Detail Modal */}
 
@@ -1735,6 +4156,11 @@ export default function Shop() {
           onTryOn={(p) => {
             setShowDetail(false);
             openTryOn(p);
+          }}
+          onOrder={(p) => {
+            setShowDetail(false);
+            setOrderProduct(p);
+            setShowOrderModal(true);
           }}
         />
       )}
@@ -1758,6 +4184,29 @@ export default function Shop() {
           shop={shop}
           onClose={() => setShowTryOn(false)}
         />
+      )}
+
+      {showAuthModal && (
+        <CustomerAuthModal
+          mode={authMode}
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={() => setShowAuthModal(false)}
+        />
+      )}
+
+      {showOrderModal && orderProduct && (
+        <OrderModal
+          product={orderProduct}
+          shop={shop}
+          onClose={() => {
+            setShowOrderModal(false);
+            setOrderProduct(null);
+          }}
+        />
+      )}
+
+      {showProfile && (
+        <CustomerProfile shop={shop} onClose={() => setShowProfile(false)} />
       )}
     </div>
   );

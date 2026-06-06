@@ -9,6 +9,9 @@ export default function Navbar() {
   if (location.pathname.startsWith('/shop/')) {
     return null
   }
+   if (location.pathname.startsWith('/order/')) {
+    return null
+  }
 
   const handleLogout = () => {
     logout()

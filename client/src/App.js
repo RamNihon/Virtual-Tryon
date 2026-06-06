@@ -1,4 +1,10 @@
-import {BrowserRouter,Routes, Route, Navigate, useLocation,} from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -7,6 +13,7 @@ import Shop from "./pages/Shop";
 import Pricing from "./pages/Pricing";
 import Footer from "./components/Footer";
 import ShopFooter from "./components/ShopFooter";
+import OrderDetail from "./pages/OrderDetail";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Refund from "./pages/Refund";
@@ -77,6 +84,7 @@ function AppContent() {
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/auth/google/success" element={<GoogleSuccess />} />
           <Route path="/widget-guide" element={<WidgetGuide />} />
+          <Route path="/order/:orderId" element={<OrderDetail />} />
         </Routes>
       </main>
 

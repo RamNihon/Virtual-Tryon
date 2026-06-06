@@ -23,6 +23,7 @@ const orderSchema = new mongoose.Schema(
     productName: String,
     productImage: String,
     productPrice: Number,
+    selectedSize: { type: String, default: '' },
     quantity: { type: Number, default: 1 },
     deliveryFee: { type: Number, default: 0 },
     totalAmount: Number,
@@ -37,7 +38,7 @@ const orderSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["razorpay", "whatsapp_cod"],
+      enum: ["razorpay", "cod"],
       default: "razorpay",
     },
     paymentStatus: {
@@ -63,6 +64,7 @@ const orderSchema = new mongoose.Schema(
       default: "placed",
     },
     trackingId: String,
+    logistics: String,
     trackingUpdates: [
       {
         status: String,

@@ -3,6 +3,454 @@ import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../api";
+import { ExternalLink } from "lucide-react";
+
+function SellerOrders({ token }) {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchOrders();
+    // eslint-disable-next-line
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/seller/orders`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setOrders(res.data.orders || []);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const [shippedDialog, setShippedDialog] = useState(null);
+  const [cancelDialog, setCancelDialog] = useState(null);
+  const [shippedForm, setShippedForm] = useState({
+    logistics: "",
+    trackingId: "",
+  });
+  const [cancelReason, setCancelReason] = useState("");
+
+  const LOGISTICS = [
+    "Delhivery",
+    "Blue Dart",
+    "DTDC",
+    "Ekart Logistics",
+    "Xpressbees",
+    "Shadowfax",
+    "Dunzo",
+    "Porter",
+    "Amazon Logistics",
+    "FedEx",
+    "Speed Post",
+    "Other",
+  ];
+
+  const updateStatus = async (orderId, status, extra = {}) => {
+    try {
+      await axios.patch(
+        `${API_URL}/api/seller/orders/${orderId}/status`,
+        {
+          status,
+          message: getStatusMessage(status),
+          ...extra,
+        },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      fetchOrders();
+      setShippedDialog(null);
+      setCancelDialog(null);
+      setShippedForm({ logistics: "", trackingId: "" });
+      setCancelReason("");
+    } catch (e) {
+      alert("Error!");
+    }
+  };
+
+  const getStatusMessage = (status) => {
+    const messages = {
+      accepted: "Order accepted by seller!",
+      packed: "Order has been packed.",
+      shipped: "Order has been shipped.",
+      out_for_delivery: "Out for delivery!",
+      delivered: "Order delivered successfully!",
+      cancelled: "Order cancelled.",
+    };
+    return messages[status] || `Order ${status}`;
+  };
+
+  const statusColors = {
+    placed: "bg-blue-100 text-blue-700",
+    accepted: "bg-purple-100 text-purple-700",
+    packed: "bg-yellow-100 text-yellow-700",
+    shipped: "bg-orange-100 text-orange-700",
+    out_for_delivery: "bg-indigo-100 text-indigo-700",
+    delivered: "bg-green-100 text-green-700",
+    cancelled: "bg-red-100 text-red-700",
+  };
+
+  if (loading)
+    return <p className="text-center py-8 text-gray-400">Loading...</p>;
+
+  return (
+    <div>
+      <h2 className="text-xl font-bold mb-4">
+        📦 Customer Orders ({orders.length})
+      </h2>
+      {orders.length === 0 ? (
+        <div
+          className="text-center py-10 bg-white
+                        rounded-2xl border border-gray-100"
+        >
+          <div className="text-4xl mb-2">📦</div>
+          <p className="text-gray-400">Abhi koi order nahi</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {orders.map((order) => (
+            <div
+              key={order._id}
+              className="bg-white rounded-2xl border
+                         border-gray-100 overflow-hidden"
+            >
+              <div
+                className="bg-gray-50 px-4 py-3
+                              flex flex-wrap gap-2
+                              justify-between items-center"
+              >
+                <div>
+                  <p className="font-bold text-sm">#{order.orderId}</p>
+                  <p className="text-xs text-gray-400">
+                    {new Date(order.createdAt).toLocaleString("en-IN")}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <span
+                    className={`text-xs px-2 py-1
+                                   rounded-full font-medium
+                                   ${
+                                     order.paymentStatus === "paid"
+                                       ? "bg-green-100 text-green-700"
+                                       : "bg-yellow-100 text-yellow-700"
+                                   }`}
+                  >
+                    {order.paymentStatus === "paid" ? "💰 Paid" : "⏳ Pending"}
+                  </span>
+                  <span
+                    className={`text-xs px-2 py-1
+                                   rounded-full font-medium capitalize
+                                   ${statusColors[order.orderStatus] || "bg-gray-100"}`}
+                  >
+                    {order.orderStatus?.replace("_", " ")}
+                  </span>
+                </div>
+              </div>
+              <div className="p-4">
+                <div className="flex gap-3 mb-3">
+                  <img
+                    src={order.productImage}
+                    alt={order.productName}
+                    className="w-14 h-14 object-contain
+                               rounded-xl bg-gray-50 border"
+                  />
+                  <div>
+                    <p className="font-medium text-sm">{order.productName}</p>
+                    <p className="text-purple-600 font-bold">
+                      ₹{order.totalAmount}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Delivery:{" "}
+                      {order.deliveryFee === 0
+                        ? "FREE"
+                        : `₹${order.deliveryFee}`}
+                    </p>
+                  </div>
+                </div>
+
+                {order.customer && (
+                  <div className="bg-blue-50 rounded-xl p-3 mb-3">
+                    <p className="font-medium text-blue-800 text-sm">
+                      👤 {order.customer.name}
+                    </p>
+                    <p className="text-blue-600 text-xs">
+                      📱 {order.customer.mobile}
+                    </p>
+                  </div>
+                )}
+
+                {order.address && (
+                  <div
+                    className="bg-gray-50 rounded-xl p-3 mb-3
+                                  text-xs text-gray-600"
+                  >
+                    <p className="font-medium">📍 {order.address.fullName}</p>
+                    <p>
+                      {order.address.addressLine1},{order.address.city} -{" "}
+                      {order.address.pincode}
+                    </p>
+                    <p>📱 {order.address.mobile}</p>
+                  </div>
+                )}
+
+                <div>
+                  <p
+                    className="text-xs font-medium
+                text-gray-500 mb-2"
+                  >
+                    Update Order Status:
+                  </p>
+                  {/* Status Flow */}
+                  {(() => {
+                    const SEQ = [
+                      "placed",
+                      "accepted",
+                      "packed",
+                      "shipped",
+                      "out_for_delivery",
+                      "delivered",
+                    ];
+                    const currentIdx = SEQ.indexOf(order.orderStatus);
+                    const isCancelled = order.orderStatus === "cancelled";
+
+                    if (isCancelled) {
+                      return (
+                        <div className="bg-red-50 rounded-xl px-4 py-3">
+                          <p className="text-red-600 text-sm font-semibold">
+                            ❌ Order Cancelled
+                          </p>
+                          {order.cancelReason && (
+                            <p className="text-red-400 text-xs mt-0.5">
+                              {order.cancelReason}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { v: "accepted", l: "✅ Accept" },
+                          { v: "packed", l: "📦 Packed" },
+                          { v: "shipped", l: "🚚 Ship" },
+                          { v: "out_for_delivery", l: "🛵 OFD" },
+                          { v: "delivered", l: "✅ Delivered" },
+                          { v: "cancelled", l: "❌ Cancel" },
+                        ].map((opt) => {
+                          const optIdx = SEQ.indexOf(opt.v);
+                          const isCurrentStatus = order.orderStatus === opt.v;
+                          const isDone =
+                            optIdx <= currentIdx && opt.v !== "cancelled";
+                          const isNext = optIdx === currentIdx + 1;
+                          const isCancel = opt.v === "cancelled";
+
+                          // Disable conditions
+                          const isDisabled =
+                            (!isNext && !isCancel) ||
+                            (isCancel && currentIdx >= 4); // Can't cancel if OFD or delivered
+
+                          return (
+                            <button
+                              key={opt.v}
+                              onClick={() => {
+                                if (isDisabled) return;
+                                if (opt.v === "shipped") {
+                                  setShippedDialog(order._id);
+                                } else if (opt.v === "cancelled") {
+                                  setCancelDialog(order._id);
+                                } else {
+                                  updateStatus(order._id, opt.v);
+                                }
+                              }}
+                              disabled={isDisabled}
+                              className={`text-xs px-3 py-1.5 rounded-xl
+                       font-medium transition border
+                       ${
+                         isCurrentStatus
+                           ? "bg-purple-600 text-white border-purple-600"
+                           : isDone
+                             ? "bg-gray-100 text-gray-400 border-gray-100 line-through cursor-not-allowed"
+                             : isNext
+                               ? isCancel
+                                 ? "border-red-300 text-red-500 hover:bg-red-50"
+                                 : "border-purple-300 text-purple-600 hover:bg-purple-50 font-bold"
+                               : isDisabled
+                                 ? "border-gray-100 text-gray-300 cursor-not-allowed opacity-50"
+                                 : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                       }`}
+                            >
+                              {opt.l}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                  {/* Shipped Dialog */}
+                  {shippedDialog === order._id && (
+                    <div
+                      className="mt-3 bg-blue-50 rounded-xl p-4
+                  border border-blue-100"
+                    >
+                      <p
+                        className="font-semibold text-blue-800
+                  text-sm mb-3"
+                      >
+                        🚚 Shipping Details
+                      </p>
+                      <div className="space-y-2">
+                        <select
+                          value={shippedForm.logistics}
+                          onChange={(e) =>
+                            setShippedForm({
+                              ...shippedForm,
+                              logistics: e.target.value,
+                            })
+                          }
+                          className="w-full border border-blue-200
+                   rounded-xl px-3 py-2.5 text-sm
+                   bg-white focus:outline-none
+                   focus:border-blue-500"
+                        >
+                          <option value="">Select a Logistics Partner *</option>
+                          {LOGISTICS.map((l) => (
+                            <option key={l} value={l}>
+                              {l}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="text"
+                          placeholder="Tracking ID *"
+                          value={shippedForm.trackingId}
+                          onChange={(e) =>
+                            setShippedForm({
+                              ...shippedForm,
+                              trackingId: e.target.value,
+                            })
+                          }
+                          className="w-full border border-blue-200
+                   rounded-xl px-3 py-2.5 text-sm
+                   focus:outline-none
+                   focus:border-blue-500"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              if (
+                                !shippedForm.logistics ||
+                                !shippedForm.trackingId
+                              ) {
+                                alert(
+                                  "Logistics and tracking ID are required for all shipments!",
+                                );
+                                return;
+                              }
+                              updateStatus(order._id, "shipped", {
+                                logistics: shippedForm.logistics,
+                                trackingId: shippedForm.trackingId,
+                                message: `Shipped via ${shippedForm.logistics}. Tracking: ${shippedForm.trackingId}`,
+                              });
+                            }}
+                            className="flex-1 bg-blue-600 text-white
+                     py-2.5 rounded-xl text-sm font-bold
+                     hover:bg-blue-700 transition"
+                          >
+                            ✅ Confirm Ship
+                          </button>
+                          <button
+                            onClick={() => setShippedDialog(null)}
+                            className="px-4 border border-gray-200
+                     rounded-xl text-sm text-gray-600
+                     hover:bg-gray-50"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cancel Dialog */}
+                  {cancelDialog === order._id && (
+                    <div
+                      className="mt-3 bg-red-50 rounded-xl p-4
+                  border border-red-100"
+                    >
+                      <p
+                        className="font-semibold text-red-800
+                  text-sm mb-3"
+                      >
+                        ❌ Cancel Reason
+                      </p>
+                      <div className="space-y-2">
+                        {[
+                          "Out of stock",
+                          "Cannot deliver to location",
+                          "Customer not reachable",
+                          "Fraudulent order",
+                          "Other",
+                        ].map((reason) => (
+                          <label
+                            key={reason}
+                            className="flex items-center gap-2
+                     cursor-pointer"
+                          >
+                            <input
+                              type="radio"
+                              name={`cancel_${order._id}`}
+                              value={reason}
+                              onChange={(e) => setCancelReason(e.target.value)}
+                              className="text-red-500"
+                            />
+                            <span className="text-sm text-gray-700">
+                              {reason}
+                            </span>
+                          </label>
+                        ))}
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={() => {
+                              if (!cancelReason) {
+                                alert("Reason select karo!");
+                                return;
+                              }
+                              updateStatus(order._id, "cancelled", {
+                                cancelReason,
+                                message: `Cancelled: ${cancelReason}`,
+                              });
+                            }}
+                            className="flex-1 bg-red-500 text-white
+                     py-2.5 rounded-xl text-sm font-bold
+                     hover:bg-red-600 transition"
+                          >
+                            Confirm Cancel
+                          </button>
+                          <button
+                            onClick={() => setCancelDialog(null)}
+                            className="px-4 border border-gray-200
+                     rounded-xl text-sm text-gray-600
+                     hover:bg-gray-50"
+                          >
+                            Back
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function DashboardImageSlider({ images, className = "" }) {
   const [current, setCurrent] = useState(0);
@@ -93,7 +541,7 @@ export default function Dashboard() {
         prev ? { ...prev, seller: res.data.seller } : prev,
       );
       setEditingName(false);
-      setNameMsg("✅ Name update ho gaya!");
+      setNameMsg("✅ Name updated successfully!");
       setTimeout(() => setNameMsg(""), 3000);
     } catch (err) {
       setNameMsg("❌ Error aaya!");
@@ -103,12 +551,17 @@ export default function Dashboard() {
   };
   const [productForm, setProductForm] = useState({
     name: "",
+    brandName: "",
     price: "",
+    originalPrice: "",
     description: "",
     category: "upper_body",
     productUrl: "",
+    sizes: [],
+    highlights: {},
+    seqImages: [],
   });
-  const [productImage, setProductImage] = useState(null);
+  // const [productImage, setProductImage] = useState(null);
   const [productLoading, setProductLoading] = useState(false);
   const [productMsg, setProductMsg] = useState("");
   const [imageUrls, setImageUrls] = useState([""]);
@@ -159,19 +612,28 @@ export default function Dashboard() {
   }, [seller, token, navigate, fetchDashboard, fetchProducts]);
 
   const handleAddProduct = async () => {
-    const validUrls = imageUrls.filter(
-      (url) => url && url.trim().startsWith("http"),
+    // Validation
+    if (!productForm.name) {
+      setProductMsg("❌ Product name is necessary!");
+      return;
+    }
+    if (!productForm.price) {
+      setProductMsg("❌ Price is necessary!");
+      return;
+    }
+
+    // Sequence images check
+    const seqImgs = (productForm.seqImages || []).filter(Boolean);
+
+    // URL images
+    const validUrls = (imageUrls || []).filter(
+      (url) => url && url.startsWith("http"),
     );
 
-    if (
-      !productForm.name ||
-      ((!productImage ||
-        (Array.isArray(productImage) && productImage.length === 0)) &&
-        validUrls.length === 0)
-    ) {
-      setProductMsg(
-        "❌ Name is necessary and Either→ Add product Urls or  Select images!",
-      );
+    const totalImages = seqImgs.length + validUrls.length;
+
+    if (totalImages < 2) {
+      setProductMsg("❌ You need to upload a minimum of 2 photos!");
       return;
     }
 
@@ -181,23 +643,31 @@ export default function Dashboard() {
     try {
       const formData = new FormData();
 
-      if (productImage && Array.isArray(productImage)) {
-        productImage.forEach((img) => {
-          formData.append("productImages", img);
-        });
-      } else if (productImage) {
-        formData.append("productImages", productImage);
-      }
+      // Sequence mein images add karo
+      seqImgs.forEach((img) => {
+        if (img) formData.append("productImages", img);
+      });
 
+      // URL images
       validUrls.forEach((url) => {
         formData.append("imageUrls", url);
       });
 
       formData.append("name", productForm.name);
+      formData.append("brandName", productForm.brandName || "");
+      formData.append("description", productForm.description || "");
       formData.append("price", productForm.price);
-      formData.append("description", productForm.description);
+      formData.append("originalPrice", productForm.originalPrice || 0);
       formData.append("category", productForm.category);
-      formData.append("productUrl", productForm.productUrl);
+      formData.append("productUrl", productForm.productUrl || "");
+
+      // Sizes
+      const sizes = productForm.sizes || [];
+      formData.append("sizes", JSON.stringify(sizes));
+
+      // Highlights
+      const highlights = productForm.highlights || {};
+      formData.append("highlights", JSON.stringify(highlights));
 
       await axios.post(`${API_URL}/api/seller/products`, formData, {
         headers: {
@@ -209,16 +679,20 @@ export default function Dashboard() {
       setProductMsg("✅ Product added successfully!");
       setProductForm({
         name: "",
+        brandName: "",
         price: "",
+        originalPrice: "",
         description: "",
         category: "upper_body",
         productUrl: "",
+        sizes: [],
+        highlights: {},
+        seqImages: [],
       });
-      setProductImage(null);
       setImageUrls([""]);
       fetchProducts();
     } catch (err) {
-      setProductMsg("❌ Error found!");
+      setProductMsg(err.response?.data?.message || "❌ Error aaya!");
     } finally {
       setProductLoading(false);
     }
@@ -317,7 +791,7 @@ export default function Dashboard() {
               <span className="text-2xl">→</span>
             </Link>
           )}
-           {seller?.plan !== "free" && (
+          {seller?.plan !== "free" && (
             <Link
               to="/analytics"
               className="col-span-1 md:col-span-3
@@ -344,6 +818,7 @@ export default function Dashboard() {
             { key: "overview", label: "📊 Overview" },
             { key: "products", label: "👗 Products" },
             { key: "integration", label: "🔌 Integration" },
+            { key: "orders", label: "📦 Orders" },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -446,11 +921,24 @@ export default function Dashboard() {
                     &nbsp; {dashboard?.shopUrl}
                   </span>
                   <button
-                    onClick={() => copyToClipboard(dashboard?.shopUrl)}
-                    className="bg-purple-100 text-purple-700
-                               px-3 py-1 rounded-full text-xs"
+                    onClick={() => {
+                      copyToClipboard(dashboard?.shopUrl);
+                      if (dashboard?.shopUrl) {
+                        window.open(
+                          dashboard?.shopUrl,
+                          "_blank",
+                          "noopener,noreferrer",
+                        );
+                      }
+                    }}
+                    className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 
+             text-white font-medium px-4 py-2 rounded-xl text-xs
+             shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40
+             transform hover:-translate-y-0.5 active:translate-y-0
+             transition-all duration-200 ease-out"
                   >
-                    Copy
+                    <span>Open Shop</span>
+                    <ExternalLink size={14} className="opacity-80" />
                   </button>
                 </div>
               </div>
@@ -541,155 +1029,580 @@ export default function Dashboard() {
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h2 className="text-xl font-bold mb-4">➕ Add New Product</h2>
 
-              <div className="space-y-3">
-                <input
-                  type="text"
-                  placeholder="Product naam *"
-                  value={productForm.name}
-                  onChange={(e) =>
-                    setProductForm({
-                      ...productForm,
-                      name: e.target.value,
-                    })
-                  }
-                  className="w-full border border-gray-300
-                             rounded-lg px-4 py-2.5 text-sm
-                             focus:outline-none
-                             focus:border-purple-500"
-                />
-
-                <input
-                  type="number"
-                  placeholder="Price (₹)"
-                  value={productForm.price}
-                  onChange={(e) =>
-                    setProductForm({
-                      ...productForm,
-                      price: e.target.value,
-                    })
-                  }
-                  className="w-full border border-gray-300
-                             rounded-lg px-4 py-2.5 text-sm
-                             focus:outline-none
-                             focus:border-purple-500"
-                />
-
-                <select
-                  value={productForm.category}
-                  onChange={(e) =>
-                    setProductForm({
-                      ...productForm,
-                      category: e.target.value,
-                    })
-                  }
-                  className="w-full border border-gray-300
-                             rounded-lg px-4 py-2.5 text-sm
-                             focus:outline-none
-                             focus:border-purple-500"
-                >
-                  <option value="upper_body">👕 Upper Body</option>
-                  <option value="lower_body">👖 Lower Body</option>
-                  <option value="dress">👗 Full Dress</option>
-                </select>
-
-                {/* <input
-                  type="url"
-                  placeholder="Product URL (optional)"
-                  value={productForm.productUrl}
-                  onChange={(e) =>
-                    setProductForm({
-                      ...productForm,
-                      productUrl: e.target.value,
-                    })
-                  }
-                  className="w-full border border-gray-300
-                             rounded-lg px-4 py-2.5 text-sm
-                             focus:outline-none
-                             focus:border-purple-500"
-                /> */}
-
+              <div
+                className="space-y-4 max-h-96
+                  overflow-y-auto pr-2"
+              >
+                {/* Brand Name */}
                 <div>
                   <label
-                    className="text-sm text-gray-600 
-                    block mb-1"
+                    className="text-xs font-semibold
+                        text-gray-500 uppercase
+                        tracking-wide block mb-1.5"
                   >
-                    Product Photos *
-                    <span className="text-gray-400 ml-1">(max 5 photos)</span>
+                    Brand Name
                   </label>
                   <input
-                    type="file"
-                    accept="image/*"
-                    multiple
+                    type="text"
+                    placeholder="like: Raymond, Zara"
+                    value={productForm.brandName || ""}
                     onChange={(e) =>
-                      setProductImage(Array.from(e.target.files))
+                      setProductForm({
+                        ...productForm,
+                        brandName: e.target.value,
+                      })
                     }
-                    className="w-full text-sm"
+                    className="w-full border border-gray-200
+                   rounded-xl px-4 py-2.5 text-sm
+                   focus:outline-none
+                   focus:border-purple-500"
                   />
-                  <p className="text-xs text-purple-600 mt-1">
-                    💡 Tip: Pehli photo front view rakhen! AI try-on ke liye
-                    best hai.
-                  </p>
-                  {productImage && productImage.length > 0 && (
-                    <p className="text-xs text-green-600 mt-1">
-                      ✅ {productImage.length} photo(s) selected
-                    </p>
-                  )}
                 </div>
 
-                <div className="flex items-center gap-3 my-4">
-                  <div className="flex-1 h-px bg-gray-300"></div>
-                  <span className="text-gray-600 text-xs">OR</span>
-                  <div className="flex-1 h-px bg-gray-300"></div>
+                {/* Product Name */}
+                <div>
+                  <label
+                    className="text-xs font-semibold
+                        text-gray-500 uppercase
+                        tracking-wide block mb-1.5"
+                  >
+                    Product Name *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="like: Men Slim Fit Shirt"
+                    value={productForm.name}
+                    onChange={(e) =>
+                      setProductForm({
+                        ...productForm,
+                        name: e.target.value,
+                      })
+                    }
+                    className="w-full border border-gray-200
+                   rounded-xl px-4 py-2.5 text-sm
+                   focus:outline-none
+                   focus:border-purple-500"
+                  />
                 </div>
-                <div className="mt-4 bg-gray-50 rounded-xl p-4 border border-gray-200">
-                  <label className="text-sm text-gray-600 block mb-1">
-                    <br />
-                    Enter Product Image URLs
-                    <span className="text-gray-400 text-xs ml-1">(❄️)</span>
+
+                {/* Description */}
+                <div>
+                  <label
+                    className="text-xs font-semibold
+                        text-gray-500 uppercase
+                        tracking-wide block mb-1.5"
+                  >
+                    Product Description
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Describe the product's key qualities..."
+                    value={productForm.description || ""}
+                    onChange={(e) =>
+                      setProductForm({
+                        ...productForm,
+                        description: e.target.value,
+                      })
+                    }
+                    className="w-full border border-gray-200
+                   rounded-xl px-4 py-2.5 text-sm
+                   focus:outline-none
+                   focus:border-purple-500 resize-none"
+                  />
+                </div>
+
+                {/* Pricing */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label
+                      className="text-xs font-semibold
+                          text-gray-500 uppercase
+                          tracking-wide block mb-1.5"
+                    >
+                      Original Price (₹)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="eg-999"
+                      value={productForm.originalPrice || ""}
+                      onChange={(e) =>
+                        setProductForm({
+                          ...productForm,
+                          originalPrice: e.target.value,
+                        })
+                      }
+                      className="w-full border border-gray-200
+                     rounded-xl px-4 py-2.5 text-sm
+                     focus:outline-none
+                     focus:border-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      className="text-xs font-semibold
+                          text-gray-500 uppercase
+                          tracking-wide block mb-1.5"
+                    >
+                      Final Price (₹) *
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="eg-599"
+                      value={productForm.price}
+                      onChange={(e) =>
+                        setProductForm({
+                          ...productForm,
+                          price: e.target.value,
+                        })
+                      }
+                      className="w-full border border-gray-200
+                     rounded-xl px-4 py-2.5 text-sm
+                     focus:outline-none
+                     focus:border-purple-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Discount Preview */}
+                {productForm.originalPrice &&
+                  productForm.price &&
+                  parseFloat(productForm.originalPrice) >
+                    parseFloat(productForm.price) && (
+                    <div
+                      className="bg-green-50 rounded-xl px-4
+                      py-2 flex items-center gap-2"
+                    >
+                      <span className="text-green-600 font-bold text-sm">
+                        {Math.round(
+                          ((parseFloat(productForm.originalPrice) -
+                            parseFloat(productForm.price)) /
+                            parseFloat(productForm.originalPrice)) *
+                            100,
+                        )}
+                        % OFF
+                      </span>
+                      <span className="text-gray-400 text-xs">
+                        savings: ₹
+                        {Math.round(
+                          parseFloat(productForm.originalPrice) -
+                            parseFloat(productForm.price),
+                        )}
+                      </span>
+                    </div>
+                  )}
+
+                {/* Category */}
+                <div>
+                  <label
+                    className="text-xs font-semibold
+                        text-gray-500 uppercase
+                        tracking-wide block mb-1.5"
+                  >
+                    Category *
+                  </label>
+                  <select
+                    value={productForm.category}
+                    onChange={(e) =>
+                      setProductForm({
+                        ...productForm,
+                        category: e.target.value,
+                      })
+                    }
+                    className="w-full border border-gray-200
+                   rounded-xl px-4 py-2.5 text-sm
+                   focus:outline-none
+                   focus:border-purple-500 bg-white"
+                  >
+                    <option value="upper_body">👕 Upper Body</option>
+                    <option value="lower_body">👖 Lower Body</option>
+                    <option value="dress">👗 Full Dress</option>
+                  </select>
+                </div>
+
+                {/* Size Chart */}
+                <div>
+                  <label
+                    className="text-xs font-semibold
+                        text-gray-500 uppercase
+                        tracking-wide block mb-2"
+                  >
+                    Available Sizes
+                  </label>
+                  <div className="flex gap-2 flex-wrap">
+                    {["XS", "S", "M", "L", "XL", "XXL", "Free Size"].map(
+                      (size) => (
+                        <button
+                          key={size}
+                          type="button"
+                          onClick={() => {
+                            const sizes = productForm.sizes || [];
+                            setProductForm({
+                              ...productForm,
+                              sizes: sizes.includes(size)
+                                ? sizes.filter((s) => s !== size)
+                                : [...sizes, size],
+                            });
+                          }}
+                          className={`px-3 py-1.5 rounded-xl text-sm
+                       font-semibold border-2 transition
+                       ${
+                         (productForm.sizes || []).includes(size)
+                           ? "bg-purple-600 text-white border-purple-600"
+                           : "border-gray-200 text-gray-600 hover:border-purple-300"
+                       }`}
+                        >
+                          {size}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                </div>
+
+                {/* Product Highlights */}
+                <div>
+                  <label
+                    className="text-xs font-semibold
+                        text-gray-500 uppercase
+                        tracking-wide block mb-3"
+                  >
+                    Product Highlights
+                  </label>
+                  <div
+                    className="bg-gray-50 rounded-xl p-4
+                      space-y-3"
+                  >
+                    {[
+                      { k: "packOf", l: "Pack Of", p: "1, 2, 3..." },
+                      { k: "color", l: "Color", p: "Blue, Red, Black..." },
+                      { k: "fabric", l: "Fabric", p: "Cotton, Polyester..." },
+                      { k: "occasion", l: "Occasion", p: "Casual, Formal..." },
+                    ].map((f) => (
+                      <div
+                        key={f.k}
+                        className="grid grid-cols-2 gap-2 items-center"
+                      >
+                        <label className="text-xs text-gray-500 font-medium">
+                          {f.l}
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={f.p}
+                          value={productForm.highlights?.[f.k] || ""}
+                          onChange={(e) =>
+                            setProductForm({
+                              ...productForm,
+                              highlights: {
+                                ...productForm.highlights,
+                                [f.k]: e.target.value,
+                              },
+                            })
+                          }
+                          className="border border-gray-200
+                         rounded-lg px-3 py-1.5 text-xs
+                         focus:outline-none
+                         focus:border-purple-500 bg-white"
+                        />
+                      </div>
+                    ))}
+
+                    {/* Pattern */}
+                    <div className="grid grid-cols-2 gap-2 items-center">
+                      <label className="text-xs text-gray-500 font-medium">
+                        Pattern
+                      </label>
+                      <select
+                        value={productForm.highlights?.pattern || "Solid"}
+                        onChange={(e) =>
+                          setProductForm({
+                            ...productForm,
+                            highlights: {
+                              ...productForm.highlights,
+                              pattern: e.target.value,
+                            },
+                          })
+                        }
+                        className="border border-gray-200
+                       rounded-lg px-3 py-1.5 text-xs
+                       focus:outline-none
+                       focus:border-purple-500 bg-white"
+                      >
+                        {[
+                          "Solid",
+                          "Striped",
+                          "Printed",
+                          "Checked",
+                          "Floral",
+                          "Geometric",
+                          "Abstract",
+                        ].map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Suitable For */}
+                    <div className="grid grid-cols-2 gap-2 items-center">
+                      <label className="text-xs text-gray-500 font-medium">
+                        Suitable For
+                      </label>
+                      <select
+                        value={productForm.highlights?.suitableFor || ""}
+                        onChange={(e) =>
+                          setProductForm({
+                            ...productForm,
+                            highlights: {
+                              ...productForm.highlights,
+                              suitableFor: e.target.value,
+                            },
+                          })
+                        }
+                        className="border border-gray-200
+                       rounded-lg px-3 py-1.5 text-xs
+                       focus:outline-none
+                       focus:border-purple-500 bg-white"
+                      >
+                        <option value="">Select...</option>
+                        <option value="Western Wear">Western Wear</option>
+                        <option value="Traditional Wear">
+                          Traditional Wear
+                        </option>
+                        <option value="Party Wear">Party Wear</option>
+                        <option value="Sportswear">Sportswear</option>
+                        <option value="Ethnic Wear">Ethnic Wear</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sequence Image Upload */}
+                <div>
+                  <label
+                    className="text-xs font-semibold
+                        text-gray-500 uppercase
+                        tracking-wide block mb-3"
+                  >
+                    Product Photos
+                    <span className="text-red-500 ml-1">
+                      * (min 2 required)
+                    </span>
                   </label>
 
-                  {imageUrls.map((url, index) => (
-                    <div key={index} className="flex gap-2 mb-2">
-                      <input
-                        type="url"
-                        placeholder="https://example.com/image.jpg"
-                        value={url}
-                        onChange={(e) => {
-                          const updated = [...imageUrls];
-                          updated[index] = e.target.value;
-                          setImageUrls(updated);
-                        }}
-                        className="flex-1 border border-gray-300
-                           rounded-lg px-3 py-2 text-sm
-                           focus:outline-none
-                           focus:border-purple-500"
-                      />
-                      {imageUrls.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setImageUrls(
-                              imageUrls.filter((_, i) => i !== index),
-                            )
-                          }
-                          className="text-red-400 hover:text-red-600
-                             text-lg px-2"
-                        >
-                          ✕
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                  <div className="space-y-3">
+                    {[
+                      {
+                        num: 1,
+                        label: "Front View",
+                        hint: "Main Photo - Front-facing",
+                        required: true,
+                      },
+                      {
+                        num: 2,
+                        label: "Back View",
+                        hint: " Cloth Photo from the back",
+                        required: true,
+                      },
+                      {
+                        num: 3,
+                        label: "Side View",
+                        hint: "Optional",
+                        required: false,
+                      },
+                      {
+                        num: 4,
+                        label: "Detail Shot",
+                        hint: "Optional - fabric, texture close-up",
+                        required: false,
+                      },
+                      {
+                        num: 5,
+                        label: "Lifestyle / Model",
+                        hint: "Optional - Worn by any model",
+                        required: false,
+                      },
+                    ].map((slot) => {
+                      const currentImages = productForm.seqImages || [];
+                      const file = currentImages[slot.num - 1];
 
-                  {imageUrls.length < 5 && (
-                    <button
-                      type="button"
-                      onClick={() => setImageUrls([...imageUrls, ""])}
-                      className="text-purple-600 text-xs hover:text-purple-700"
+                      return (
+                        <div
+                          key={slot.num}
+                          className={`border-2 rounded-xl p-3
+                         transition
+                         ${
+                           file
+                             ? "border-purple-400 bg-purple-50"
+                             : slot.required
+                               ? "border-dashed border-red-200 bg-red-50"
+                               : "border-dashed border-gray-200 bg-gray-50"
+                         }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`w-8 h-8 rounded-full
+                                flex items-center
+                                justify-center text-sm
+                                font-bold flex-shrink-0
+                                ${
+                                  file
+                                    ? "bg-purple-600 text-white"
+                                    : slot.required
+                                      ? "bg-red-100 text-red-500"
+                                      : "bg-gray-200 text-gray-400"
+                                }`}
+                            >
+                              {file ? "✓" : slot.num}
+                            </div>
+                            <div className="flex-1">
+                              <p
+                                className="text-sm font-semibold
+                                text-gray-700"
+                              >
+                                {slot.label}
+                                {slot.required && (
+                                  <span className="text-red-500 ml-1 text-xs">
+                                    *
+                                  </span>
+                                )}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {slot.hint}
+                              </p>
+                            </div>
+                            {file ? (
+                              <div className="flex items-center gap-2">
+                                <img
+                                  src={URL.createObjectURL(file)}
+                                  alt=""
+                                  className="w-12 h-12 object-cover
+                                 rounded-lg"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const imgs = [
+                                      ...(productForm.seqImages || []),
+                                    ];
+                                    imgs[slot.num - 1] = undefined;
+                                    setProductForm({
+                                      ...productForm,
+                                      seqImages: imgs,
+                                    });
+                                  }}
+                                  className="text-red-400 text-lg
+                                 hover:text-red-600"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ) : (
+                              <label
+                                className="cursor-pointer
+                                    bg-white border
+                                    border-gray-200
+                                    rounded-xl px-3 py-2
+                                    text-xs text-gray-600
+                                    hover:border-purple-400
+                                    transition"
+                              >
+                                Choose
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const f = e.target.files[0];
+                                    if (!f) return;
+                                    const imgs = [
+                                      ...(productForm.seqImages || []),
+                                    ];
+                                    imgs[slot.num - 1] = f;
+                                    setProductForm({
+                                      ...productForm,
+                                      seqImages: imgs,
+                                    });
+                                  }}
+                                />
+                              </label>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <p className="text-xs text-purple-600 mt-2">
+                    💡 Front view pehle rakho - AI try-on ke liye best!
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 my-4">
+                  <div className="flex-1 h-px bg-gray-300"></div>
+                  <span className="text-gray-500 text-xs">OR</span>
+                  <div className="flex-1 h-px bg-gray-300"></div>
+                </div>
+                {/* ─── URL Images Section ──────────────── */}
+                <div>
+                  <label
+                    className="text-xs font-semibold
+                        text-gray-500 uppercase
+                        tracking-wide block mb-3"
+                  >
+                    Add Image URL
+                    <span
+                      className="text-red-500 text-xs
+                         normal-case ml-1 font-normal"
                     >
-                      + Add more URLs
-                    </button>
-                  )}
+                      ( Optional ➤ online images's link )
+                    </span>
+                  </label>
+
+                  <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                    {imageUrls.map((url, index) => (
+                      <div key={index} className="flex gap-2 items-center">
+                        <input
+                          type="url"
+                          placeholder="https://example.com/image.jpg"
+                          value={url}
+                          onChange={(e) => {
+                            const updated = [...imageUrls];
+                            updated[index] = e.target.value;
+                            setImageUrls(updated);
+                          }}
+                          className="flex-1 border border-gray-200
+                         rounded-xl px-3 py-2.5 text-sm
+                         focus:outline-none
+                         focus:border-purple-500 bg-white"
+                        />
+                        {imageUrls.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setImageUrls(
+                                imageUrls.filter((_, i) => i !== index),
+                              )
+                            }
+                            className="text-red-400 hover:text-red-600
+                           text-lg px-2 flex-shrink-0"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    ))}
+
+                    {imageUrls.length < 5 && (
+                      <button
+                        type="button"
+                        onClick={() => setImageUrls([...imageUrls, ""])}
+                        className="text-purple-600 text-sm
+                       font-medium hover:text-purple-800
+                       transition flex items-center gap-1"
+                      >
+                        + Add More URLs
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {productMsg && <p className="text-sm">{productMsg}</p>}
@@ -698,13 +1611,11 @@ export default function Dashboard() {
                   onClick={handleAddProduct}
                   disabled={productLoading}
                   className="w-full bg-purple-700 text-white
-                             py-3 rounded-full font-semibold
-                             hover:bg-purple-800 transition
-                             disabled:opacity-50 text-sm"
+                 py-3 rounded-full font-semibold
+                 hover:bg-purple-800 transition
+                 disabled:opacity-50 text-sm"
                 >
-                  {productLoading
-                    ? "⏳ Please wait, the item is uploading..."
-                    : "➕ Add the item"}
+                  {productLoading ? "⏳ It is uploading..." : "➕ Add the item"}
                 </button>
               </div>
             </div>
@@ -823,6 +1734,9 @@ export default function Dashboard() {
             </div>
           </div>
         )}
+
+        {/* Orders Tab */}
+        {activeTab === "orders" && <SellerOrders token={token} />}
 
         {/* Integration Tab */}
         {activeTab === "integration" && (

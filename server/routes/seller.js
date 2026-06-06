@@ -81,7 +81,18 @@ router.post("/login", async (req, res) => {
     }
 
     const token = jwt.sign({ sellerId: seller._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
+      expiresIn: "48h",
+    });
+    // Login alert email
+    const loginTime = new Date().toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+    sendLoginAlertEmail(seller, {
+      time: loginTime + " IST",
+    }).catch((err) => {
+      console.log("Login alert error:", err.message);
     });
 
     res.json({
@@ -111,7 +122,7 @@ router.post(
     try {
       let imageUrls = [];
 
-      // File uploads handle karo
+      // File uploads - sequence maintain karo
       if (req.files && req.files.length > 0) {
         const uploadPromises = req.files.map(
           (file) =>
@@ -127,36 +138,63 @@ router.post(
             }),
         );
         const uploadedUrls = await Promise.all(uploadPromises);
-        imageUrls = [...imageUrls, ...uploadedUrls];
+        imageUrls = [...uploadedUrls];
       }
 
-      // URL wali images handle karo
+      // URL images
       if (req.body.imageUrls) {
         const urlArray = Array.isArray(req.body.imageUrls)
           ? req.body.imageUrls
           : [req.body.imageUrls];
-
-        // Valid URLs filter karo
         const validUrls = urlArray.filter(
-          (url) => url && url.startsWith("https"),
+          (url) => url && url.startsWith("http"),
         );
         imageUrls = [...imageUrls, ...validUrls];
       }
 
-      // Agar koi bhi image nahi
-      if (imageUrls.length === 0) {
+      if (imageUrls.length < 2) {
         return res.status(400).json({
-          message: "Kam se kam ek photo ya URL zaroori hai!",
+          message: "Kam se kam 2 photos zaroori hain!",
         });
       }
 
+      // Parse sizes
+      let sizes = [];
+      if (req.body.sizes) {
+        sizes = Array.isArray(req.body.sizes)
+          ? req.body.sizes
+          : JSON.parse(req.body.sizes);
+      }
+
+      // Parse highlights
+      let highlights = {};
+      if (req.body.highlights) {
+        highlights =
+          typeof req.body.highlights === "string"
+            ? JSON.parse(req.body.highlights)
+            : req.body.highlights;
+      }
+
+      // Discount calculate
+      const price = parseFloat(req.body.price) || 0;
+      const originalPrice = parseFloat(req.body.originalPrice) || 0;
+      const discountPercent =
+        originalPrice > price
+          ? Math.round(((originalPrice - price) / originalPrice) * 100)
+          : 0;
+
       const product = await Product.create({
         seller: req.sellerId,
+        brandName: req.body.brandName || "",
         name: req.body.name,
-        description: req.body.description,
-        price: req.body.price,
+        description: req.body.description || "",
+        originalPrice,
+        price,
+        discountPercent,
         category: req.body.category || "upper_body",
-        productUrl: req.body.productUrl,
+        sizes,
+        highlights,
+        productUrl: req.body.productUrl || "",
         imageUrl: imageUrls[0],
         images: imageUrls,
       });
@@ -464,24 +502,68 @@ router.get("/orders", authMiddleware, async (req, res) => {
 });
 
 // Order status update
+// Status sequence define karo
+const STATUS_SEQUENCE = [
+  "placed",
+  "accepted",
+  "packed",
+  "shipped",
+  "out_for_delivery",
+  "delivered",
+];
+
 router.patch("/orders/:orderId/status", authMiddleware, async (req, res) => {
   try {
-    const { status, message, trackingId } = req.body;
+    const { status, message, trackingId, logistics, cancelReason } = req.body;
+
+    const order = await Order.findOne({
+      _id: req.params.orderId,
+      seller: req.sellerId,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        message: "Order nahi mila!",
+      });
+    }
+
+    // Cancelled order update nahi ho sakta
+    if (order.orderStatus === "cancelled") {
+      return res.status(400).json({
+        message:
+          "The system does not allow changes to the status of a cancelled order.",
+      });
+    }
+
+    // Sequence check - pichhe nahi ja sakte
+    if (status !== "cancelled") {
+      const currentIndex = STATUS_SEQUENCE.indexOf(order.orderStatus);
+      const newIndex = STATUS_SEQUENCE.indexOf(status);
+
+      // Must be next in sequence
+      if (newIndex !== currentIndex + 1) {
+        return res.status(400).json({
+          message: `Invalid status! Current: ${order.orderStatus}. You can only go to the next step.`,
+        });
+      }
+    }
+
     const updateData = {
       orderStatus: status,
       $push: {
         trackingUpdates: {
           status,
           message: message || `Order ${status}`,
+          time: new Date(),
         },
       },
     };
-    if (trackingId) updateData.trackingId = trackingId;
 
-    await Order.findOneAndUpdate(
-      { _id: req.params.orderId, seller: req.sellerId },
-      updateData,
-    );
+    if (trackingId) updateData.trackingId = trackingId;
+    if (logistics) updateData.logistics = logistics;
+    if (cancelReason) updateData.cancelReason = cancelReason;
+
+    await Order.findByIdAndUpdate(order._id, updateData);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ message: error.message });

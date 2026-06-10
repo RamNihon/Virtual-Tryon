@@ -3,12 +3,35 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta name="description" content="Virtual Try-On client application" />
+    <meta name="theme-color" content="#7c3aed" /> <!-- आपकी पर्पल थीम के अनुसार चेंज किया -->
+
+    <!-- 1. ब्राऊज़र टैब में दिखने वाली फोटो (Favicon) -->
+    <!-- ध्यान रखें: आपकी फोटो public फोल्डर के अंदर 'favicon.ico' नाम से होनी चाहिए -->
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+
+    <!-- 2. बुनियादी SEO टैग्स (Google Search के लिए) -->
+    <title>Virtual Try-On | AI Fashion & Fabric Customization</title>
+    <meta name="description" content="Experience the future of fashion with our Virtual Try-On tool. Upload your photo, try custom fabrics, and see garments instantly before you buy!" />
+    <meta name="keywords" content="virtual try-on, ai fashion, fabric customizer, online tailoring, digital trial room" />
+    <meta name="author" content="Your Brand Name" />
+
+    <!-- 3. सोशल मीडिया SEO (Open Graph Tags - जब आप लिंक WhatsApp/Facebook पर शेयर करेंगे तो फोटो और नाम दिखेगा) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Virtual Try-On | AI Fashion Experience" />
+    <meta property="og:description" content="Upload your photo, try on trendy clothes or custom fabrics virtually in real-time." />
+    <meta property="og:image" content="%PUBLIC_URL%/og-image.png" /> <!-- public फ़ोल्डर में एक og-image.png (1200x630 साइज) रख दें -->
+    <meta property="og:url" content="https://yourwebsite.com" />
+
+    <!-- 4. ट्विटर SEO टैग्स -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Virtual Try-On | AI Fashion" />
+    <meta name="twitter:description" content="Try custom fabrics and outfits virtually using AI." />
+    <meta name="twitter:image" content="%PUBLIC_URL%/og-image.png" />
+
+    <!-- पेमेंट गेटवे स्क्रिप्ट -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    <title>Virtual Try-On</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

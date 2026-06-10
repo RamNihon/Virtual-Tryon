@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Shop from "./pages/Shop";
+import FabricShop from './pages/FabricShop'
 import Pricing from "./pages/Pricing";
 import Footer from "./components/Footer";
 import ShopFooter from "./components/ShopFooter";
@@ -26,6 +27,7 @@ import Navbar from "./components/Navbar";
 import { useAuth } from "./context/AuthContext";
 import ScrollToTop from "./components/ScrollToTop";
 import WidgetGuide from "./pages/WidgetGuide";
+import CreditHistory from './pages/CreditHistory'
 
 const RedirectIfLogin = ({ children }) => {
   const { token } = useAuth();
@@ -73,6 +75,7 @@ function AppContent() {
             }
           />
           <Route path="/shop/:sellerId" element={<Shop />} />
+          <Route path="/fabric/:sellerId" element={<FabricShop />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
@@ -85,6 +88,7 @@ function AppContent() {
           <Route path="/auth/google/success" element={<GoogleSuccess />} />
           <Route path="/widget-guide" element={<WidgetGuide />} />
           <Route path="/order/:orderId" element={<OrderDetail />} />
+          <Route path="/credits" element={<CreditHistory />} />
         </Routes>
       </main>
 

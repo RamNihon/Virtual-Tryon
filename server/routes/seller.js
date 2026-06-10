@@ -229,11 +229,23 @@ router.get("/dashboard", authMiddleware, async (req, res) => {
       success: true,
       seller: {
         name: seller.name,
+        email: seller.email,
         apiKey: seller.apiKey,
         sellerId: seller.sellerId,
         plan: seller.plan,
-        tryonCount: seller.tryonCount,
-        tryonLimit: seller.tryonLimit,
+
+        // Credit system
+        credits: seller.credits || 0,
+        totalCreditsUsed: seller.totalCreditsUsed || 0,
+        monthlyCreditsUsed: seller.monthlyCreditsUsed || 0,
+        monthlyCreditsLimit: seller.monthlyCreditsLimit || 100,
+
+        // Legacy
+        tryonCount: seller.tryonCount || 0,
+        tryonLimit: seller.tryonLimit || 100,
+
+        whatsapp: seller.whatsapp,
+        upiId: seller.upiId,
       },
       totalProducts: products.length,
       shopUrl: `${process.env.FRONTEND_URL}/shop/${seller.sellerId}`,
@@ -241,6 +253,33 @@ router.get("/dashboard", authMiddleware, async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+// SETTINGS SAVE KARNE KE LIYE POST ROUTE
+router.post("/settings", authMiddleware, async (req, res) => {
+  try {
+    const { whatsapp, upiId } = req.body;
+
+    // Database me seller ko dhoondkar uski details update karein
+    const updatedSeller = await Seller.findByIdAndUpdate(
+      req.sellerId, // authMiddleware se aane wali id
+      { whatsapp, upiId },
+      { new: true }, // Isse updated data return hoga
+    );
+
+    if (!updatedSeller) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Seller nahi mila!" });
+    }
+
+    res.json({
+      success: true,
+      message: "Settings successfully save ho gayi hain!",
+      seller: updatedSeller,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
@@ -308,6 +347,68 @@ router.get("/analytics", authMiddleware, async (req, res) => {
       } catch (e) {
         // Silent fail - 0 hi rahega
       }
+      // Fabric generation count
+      let fabricGenCount = 0;
+      let fabricTryonCount = 0;
+
+      try {
+        const CreditTransaction = require("../models/CreditTransaction");
+
+        fabricGenCount = await CreditTransaction.countDocuments({
+          seller: req.sellerId,
+          action: "fabricGen",
+        });
+
+        fabricTryonCount = await CreditTransaction.countDocuments({
+          seller: req.sellerId,
+          action: "fabricTryon",
+        });
+
+        // Direct orders count
+        const directOrders = await Order.countDocuments({
+          seller: req.sellerId,
+          paymentStatus: "paid",
+        });
+
+        // Daily data mein fabric bhi add karo
+        for (let i = 0; i < dailyData.length; i++) {
+          const date = new Date();
+          date.setDate(date.getDate() - (6 - i));
+          date.setHours(0, 0, 0, 0);
+          const nextDate = new Date(date);
+          nextDate.setDate(nextDate.getDate() + 1);
+
+          const fabricGens = await CreditTransaction.countDocuments({
+            seller: req.sellerId,
+            action: "fabricGen",
+            createdAt: { $gte: date, $lt: nextDate },
+          });
+
+          dailyData[i].fabricGens = fabricGens;
+        }
+      } catch (e) {
+        console.log("Analytics extra data error:", e.message);
+      }
+
+      // Stats mein add karo:
+      res.json({
+        success: true,
+        stats: {
+          totalTryons: seller.tryonCount || 0,
+          totalProducts: products.length || 0,
+          recentTryons: recentTryons.length || 0,
+          totalOrders,
+          recentOrders: recentOrders.length || 0,
+          fabricGenCount, // ← Naya
+          fabricTryonCount, // ← Naya
+          plan: seller.plan,
+          credits: seller.credits || 0,
+          monthlyCreditsUsed: seller.monthlyCreditsUsed || 0,
+          monthlyCreditsLimit: seller.monthlyCreditsLimit || 100,
+        },
+        dailyData,
+        productTryons: [],
+      });
 
       dailyData.push({
         date: date.toLocaleDateString("en-IN", {
@@ -448,6 +549,10 @@ router.get("/shop/:sellerId", async (req, res) => {
       shop: {
         name: seller.name,
         sellerId: seller.sellerId,
+        apiKey: seller.apiKey, // ← Yeh hai?
+        whatsapp: seller.whatsapp || "",
+        upiId: seller.upiId || "",
+        plan: seller.plan,
       },
       products,
     });
@@ -565,6 +670,43 @@ router.patch("/orders/:orderId/status", authMiddleware, async (req, res) => {
 
     await Order.findByIdAndUpdate(order._id, updateData);
     res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Credit transaction history
+router.get("/credit-history", authMiddleware, async (req, res) => {
+  try {
+    const seller = await Seller.findById(req.sellerId);
+
+    // MongoDB mein transactions store nahi hain abhi
+    // Isliye basic info return karte hain
+    res.json({
+      success: true,
+      currentCredits: seller.credits,
+      totalUsed: seller.totalCreditsUsed,
+      monthlyUsed: seller.monthlyCreditsUsed,
+      monthlyLimit: seller.monthlyCreditsLimit,
+      plan: seller.plan,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+const CreditTransaction = require("../models/CreditTransaction");
+
+// Credit transaction history
+router.get("/credit-transactions", authMiddleware, async (req, res) => {
+  try {
+    const transactions = await CreditTransaction.find({
+      seller: req.sellerId,
+    })
+      .sort({ createdAt: -1 })
+      .limit(100);
+
+    res.json({ success: true, transactions });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

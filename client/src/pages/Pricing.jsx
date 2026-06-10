@@ -8,64 +8,97 @@ export default function Pricing() {
   const { seller, token } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState("");
+  // eslint-disable-next-line
   const [billingType] = useState("monthly");
 
   const plans = [
     {
       key: "free",
-      name: "Free",
       emoji: "🆓",
-      price: { monthly: 0 },
-      description: "Shuru karne ke liye perfect",
+      name: "Free",
+      tagline: "Try karne ke liye",
+      price: "₹0",
+      credits: 100,
       color: "border-gray-200",
-      btnStyle: "bg-gray-800 hover:bg-gray-900",
+      headerBg: "bg-gray-50",
+      btnStyle: "bg-gray-800 hover:bg-gray-900 text-white",
       features: [
-        { text: "50 try-ons/month", available: true },
+        { text: "100 credits included", available: true, highlight: true },
+        { text: "~10 ready-made try-ons", available: true },
+        { text: "~4 fabric generations", available: true },
         { text: "Basic shop page", available: true },
         { text: "WhatsApp orders", available: true },
-        { text: "AI style advice", available: true },
         { text: "Website widget", available: false },
-        { text: "Analytics dashboard", available: false },
+        { text: "Fabric shop", available: false },
+        { text: "Analytics", available: false },
         { text: "Priority support", available: false },
       ],
     },
     {
-      key: "starter",
-      name: "Starter",
+      key: "basic",
       emoji: "🚀",
-      price: { monthly: 1999 },
-      description: "Growing sellers ke liye",
-      color: "border-purple-500",
-      btnStyle:
-        "bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-90",
-      popular: true,
+      name: "Basic",
+      tagline: "Ready-made sellers ke liye",
+      price: "₹999",
+      credits: 1500,
+      color: "border-blue-400",
+      headerBg: "bg-blue-50",
+      btnStyle: "bg-blue-600 hover:bg-blue-700 text-white",
       features: [
-        { text: "500 try-ons/month", available: true },
-        { text: "Custom shop page", available: false },
-        { text: "WhatsApp orders", available: true },
-        { text: "AI style advice", available: true },
+        { text: "1,500 credits/month", available: true, highlight: true },
+        { text: "~150 ready-made try-ons", available: true },
+        { text: "Custom shop page", available: true },
+        { text: "WhatsApp + UPI orders", available: true },
         { text: "Website widget", available: true },
-        { text: "Analytics dashboard", available: true },
-        { text: "Priority support", available: true },
+        { text: "AI style advice", available: true },
+        { text: "Basic analytics", available: true },
+        { text: "Fabric shop", available: false },
+        { text: "Priority support", available: false },
       ],
     },
     {
       key: "pro",
-      name: "Pro",
       emoji: "💎",
-      price: { monthly: 4999 },
-      description: "Serious sellers ke liye",
-      color: "border-indigo-500",
+      name: "Pro",
+      tagline: "Fabric sellers ke liye",
+      price: "₹2,499",
+      credits: 3000,
+      color: "border-purple-500",
+      headerBg: "bg-purple-50",
       btnStyle:
-        "bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90",
+        "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90",
+      popular: true,
       features: [
-        { text: "Unlimited try-ons", available: true },
-        { text: "Custom shop page", available: true },
-        { text: "WhatsApp orders", available: true },
-        { text: "AI style advice", available: true },
+        { text: "3,500 credits/month", available: true, highlight: true },
+        { text: "~500 ready-made try-ons", available: true },
+        { text: "~200 fabric generations", available: true },
+        { text: "Fabric shop access", available: true },
         { text: "Website widget", available: true },
-        { text: "Analytics dashboard", available: true },
+        { text: "Full analytics", available: true },
         { text: "Priority support", available: true },
+        { text: "Custom domain", available: false },
+      ],
+    },
+    {
+      key: "elite",
+      emoji: "👑",
+      name: "Elite",
+      tagline: "Bade boutiques ke liye",
+      price: "₹4,999",
+      credits: 10000,
+      color: "border-yellow-500",
+      headerBg: "bg-yellow-50",
+      btnStyle:
+        "bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:opacity-90",
+      features: [
+        { text: "10,000 credits/month", available: true, highlight: true },
+        { text: "~1200 ready-made try-ons", available: true },
+        { text: "~500 fabric generations", available: true },
+        { text: "Fabric shop access", available: true },
+        { text: "Website widget", available: true },
+        { text: "Full analytics", available: true },
+        { text: "Priority support", available: true },
+        { text: "Custom domain", available: true },
       ],
     },
   ];
@@ -116,6 +149,55 @@ export default function Pricing() {
       alert("Found an error! Please try again.");
     } finally {
       setLoading("");
+    }
+  };
+
+  const handleTopUp = async (pack) => {
+    if (!seller || !token) {
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const res = await axios.post(
+        `${API_URL}/api/payment/topup-order`,
+        { pack },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      const options = {
+        key: res.data.keyId,
+        amount: res.data.amount,
+        currency: "INR",
+        name: "VirtualTryOn Credits",
+        description: `${res.data.packName} - ${res.data.credits} Credits`,
+        order_id: res.data.orderId,
+        handler: async (response) => {
+          try {
+            const verifyRes = await axios.post(
+              `${API_URL}/api/payment/topup-verify`,
+              { ...response, pack },
+              { headers: { Authorization: `Bearer ${token}` } },
+            );
+            alert(
+              `🎉 ${res.data.credits} Credits add ho gaye!\n` +
+                `New Balance: ${verifyRes.data.newBalance} credits`,
+            );
+            navigate("/dashboard");
+          } catch {
+            alert("Top-up verify nahi hua!");
+          }
+        },
+        prefill: {
+          name: seller?.name,
+          email: seller?.email,
+        },
+        theme: { color: "#7C3AED" },
+      };
+
+      new window.Razorpay(options).open();
+    } catch (err) {
+      alert(err.response?.data?.message || "Error aaya!");
     }
   };
 
@@ -196,82 +278,74 @@ export default function Pricing() {
             <div
               key={plan.key}
               className={`relative bg-white rounded-3xl
-                         border-2 ${plan.color} overflow-hidden
-                         hover:shadow-2xl transition-all
-                         duration-300 hover:-translate-y-2
-                         ${plan.popular ? "shadow-xl shadow-purple-100" : "shadow-sm"}`}
+               border-2 ${plan.color} overflow-hidden
+               hover:shadow-2xl transition-all
+               duration-300 hover:-translate-y-2
+               ${plan.popular ? "shadow-xl shadow-purple-100" : "shadow-sm"}`}
             >
               {plan.popular && (
                 <div
                   className="bg-gradient-to-r from-purple-600
-                                to-indigo-600 text-white text-center
-                                py-2 text-sm font-bold"
+                      to-indigo-600 text-white text-center
+                      py-2 text-sm font-bold"
                 >
-                  ⭐ MOST POPULAR PLAN
+                  ⭐ MOST POPULAR
                 </div>
               )}
 
-              <div className="p-8">
-                {/* Header */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div
-                    className={`w-12 h-12 rounded-2xl
-                                  flex items-center justify-center
-                                  text-2xl
-                                  ${
-                                    plan.popular
-                                      ? "bg-purple-100"
-                                      : "bg-gray-100"
-                                  }`}
-                  >
-                    {plan.emoji}
-                  </div>
+              <div className={`${plan.headerBg} p-6 border-b`}>
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-3xl">{plan.emoji}</span>
                   <div>
                     <h3 className="text-xl font-black text-gray-800">
                       {plan.name}
                     </h3>
-                    <p className="text-gray-400 text-xs">{plan.description}</p>
+                    <p className="text-gray-400 text-xs">{plan.tagline}</p>
                   </div>
                 </div>
-
-                {/* Price */}
-                <div className="mb-6">
-                  <div className="flex items-end gap-1">
-                    <span className="text-5xl font-black text-gray-800">
-                      ₹{plan.price[billingType].toLocaleString()}
-                    </span>
-                    {plan.price[billingType] > 0 && (
-                      <span className="text-gray-400 mb-2">/month</span>
-                    )}
-                  </div>
-                  {plan.price[billingType] === 0 && (
-                    <span className="text-gray-400 text-sm">Forever Free!</span>
+                <div className="flex items-end gap-1">
+                  <span className="text-4xl font-black text-gray-800">
+                    {plan.price}
+                  </span>
+                  {plan.key !== "free" && (
+                    <span className="text-gray-400 text-sm mb-1">/month</span>
                   )}
                 </div>
+                <div
+                  className="mt-2 bg-white rounded-xl px-3 py-1.5
+                      inline-block"
+                >
+                  <span className="text-purple-600 font-bold text-sm">
+                    💳 {plan.credits.toLocaleString()} Credits
+                  </span>
+                </div>
+              </div>
 
-                {/* Features */}
-                <ul className="space-y-3 mb-8">
+              <div className="p-6">
+                <ul className="space-y-2.5 mb-6">
                   {plan.features.map((f, fi) => (
-                    <li key={fi} className="flex items-center gap-3">
+                    <li key={fi} className="flex items-center gap-2.5">
                       <span
                         className={`w-5 h-5 rounded-full flex
-                                       items-center justify-center
-                                       text-xs flex-shrink-0
-                                       ${
-                                         f.available
-                                           ? "bg-green-100 text-green-600"
-                                           : "bg-gray-100 text-gray-300"
-                                       }`}
+                             items-center justify-center
+                             text-xs flex-shrink-0
+                             ${
+                               f.available
+                                 ? "bg-green-100 text-green-600"
+                                 : "bg-gray-100 text-gray-300"
+                             }`}
                       >
                         {f.available ? "✓" : "✕"}
                       </span>
                       <span
                         className={`text-sm
-                                       ${
-                                         f.available
-                                           ? "text-gray-700"
-                                           : "text-gray-300 line-through"
-                                       }`}
+                             ${
+                               !f.available
+                                 ? "text-gray-300 line-through"
+                                 : f.highlight
+                                   ? "font-bold text-gray-800"
+                                   : "text-gray-600"
+                             }`}
                       >
                         {f.text}
                       </span>
@@ -279,24 +353,153 @@ export default function Pricing() {
                   ))}
                 </ul>
 
-                {/* CTA */}
                 <button
                   onClick={() => handlePayment(plan)}
                   disabled={loading === plan.key}
-                  className={`w-full ${plan.btnStyle} text-white
-                             py-4 rounded-2xl font-bold text-base
-                             transition-all duration-300
-                             disabled:opacity-50 shadow-lg`}
+                  className={`${plan.btnStyle} w-full py-3.5
+                   rounded-2xl font-bold text-base
+                   transition-all duration-300
+                   disabled:opacity-50 shadow-md`}
                 >
                   {loading === plan.key
                     ? "⏳ Loading..."
                     : plan.key === "free"
-                      ? "🆓 Free Mein Shuru Karem"
-                      : `🚀 ${plan.name} Plan → Buy Now!`}
+                      ? "🆓 Start with Free Plan"
+                      : `🚀 Buy ${plan.name} Plan Now →`}
                 </button>
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Credit Info Box */}
+        <div
+          className="max-w-4xl mx-auto mt-12 bg-gradient-to-br
+                from-purple-50 to-indigo-50 rounded-3xl
+                p-6 border border-purple-100"
+        >
+          <h3 className="font-bold text-gray-800 text-lg mb-4 text-center">
+            💳 Credit System Kaise Kaam Karta Hai?
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { action: "👗 Ready Try-On", credits: "5 credits", cost: "~₹5" },
+              {
+                action: "🧵 Fabric Generation",
+                credits: "12 credits",
+                cost: "~₹12",
+              },
+              { action: "🪡 Fabric Try-On", credits: "8 credits", cost: "~₹8" },
+              { action: "✨ Style Advice", credits: "1 credit", cost: "~₹1" },
+            ].map((item, i) => (
+              <div
+                key={i}
+                className="bg-white rounded-2xl p-4 text-center
+                   border border-purple-100"
+              >
+                <p className="text-xl mb-1">{item.action.split(" ")[0]}</p>
+                <p className="text-xs text-gray-500 mb-1">
+                  {item.action.split(" ").slice(1).join(" ")}
+                </p>
+                <p className="font-black text-purple-600">{item.credits}</p>
+                <p className="text-xs text-gray-400">{item.cost}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Top-Up Packs */}
+        <div className="max-w-5xl mx-auto mt-16">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-black text-gray-800">
+              ⚡ Credit Top-Up Packs
+            </h2>
+            <p className="text-gray-500 mt-2">
+              Credits khatam? Turant top-up karen!
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {[
+              {
+                key: "mini",
+                name: "Mini",
+                price: "₹149",
+                credits: 200,
+                desc: "~20 try-ons",
+                color: "border-gray-200",
+              },
+              {
+                key: "starter",
+                name: "Starter",
+                price: "₹299",
+                credits: 450,
+                desc: "~45 try-ons",
+                color: "border-blue-200",
+              },
+              {
+                key: "growth",
+                name: "Growth",
+                price: "₹599",
+                credits: 1000,
+                desc: "~100 try-ons",
+                color: "border-purple-300",
+                popular: true,
+              },
+              {
+                key: "power",
+                name: "Power",
+                price: "₹999",
+                credits: 1800,
+                desc: "~180 try-ons",
+                color: "border-indigo-300",
+              },
+              {
+                key: "mega",
+                name: "Mega",
+                price: "₹1,999",
+                credits: 4000,
+                desc: "~400 try-ons",
+                color: "border-yellow-400",
+              },
+            ].map((pack) => (
+              <div
+                key={pack.key}
+                className={`bg-white rounded-2xl p-4 text-center
+                   border-2 ${pack.color} relative
+                   hover:shadow-lg transition-all
+                   hover:-translate-y-1`}
+              >
+                {pack.popular && (
+                  <span
+                    className="absolute -top-2.5 left-1/2
+                           -translate-x-1/2 bg-purple-600
+                           text-white text-xs px-3 py-0.5
+                           rounded-full font-bold"
+                  >
+                    Best Value
+                  </span>
+                )}
+                <h3 className="font-black text-gray-800 mb-1">{pack.name}</h3>
+                <p className="text-2xl font-black text-purple-600 mb-1">
+                  {pack.price}
+                </p>
+                <p className="text-sm font-bold text-gray-600 mb-0.5">
+                  {pack.credits} Credits
+                </p>
+                <p className="text-xs text-gray-400 mb-3">{pack.desc}</p>
+                <button
+                  onClick={() => handleTopUp(pack.key)}
+                  className="w-full bg-gradient-to-r from-purple-600
+                     to-indigo-600 text-white py-2 rounded-xl
+                     font-bold text-sm hover:opacity-90
+                     transition"
+                >
+                  Buy →
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* FAQ */}

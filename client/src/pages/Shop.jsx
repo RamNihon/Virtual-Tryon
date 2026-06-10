@@ -1430,6 +1430,7 @@ function CustomerProfile({ shop, onClose }) {
     { key: "orders", icon: "📦", label: "Orders" },
     { key: "addresses", icon: "📍", label: "Addresses" },
     { key: "account", icon: "⚙️", label: "Account" },
+    { key: "measurements", icon: "📏", label: "Fabric Shop" },
     { key: "help", icon: "❓", label: "Help" },
   ];
 
@@ -1579,47 +1580,136 @@ function CustomerProfile({ shop, onClose }) {
               )}
             </div>
           )}
+          {/* Measurements */}
+          {activeSection === "measurements" && (
+            <div className="space-y-4">
+              <h3 className="font-bold text-gray-800">📏 Fabric Shop</h3>
+              <p className="text-gray-400 text-sm">
+                Fabric shop mein better fitting ke liye measurements save karen!
+              </p>
+              <a
+                href={`/fabric/${shop?.sellerId || ""}`}
+                className="block w-full bg-gradient-to-r
+                  from-purple-600 to-indigo-600
+                  text-white py-3 rounded-xl
+                  font-bold text-center"
+              >
+                🧵 Go to Fabric Shop
+              </a>
+            </div>
+          )}
 
           {/* Orders */}
           {activeSection === "orders" && (
-            <div>
-              <h3 className="font-bold text-gray-800 mb-4">
-                My Orders ({orders.length})
-              </h3>
+            <div className="w-full max-w-2xl mx-auto space-y-4 pb 8">
+              {/* सेक्शन हेडिंग काउंट बैज के साथ */}
+              <div className="flex items-center justify-between mb-5 pb-2 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <svg
+                    xmlns="http://w3.org"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    className="text-purple-600"
+                  >
+                    <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                    <path d="m3.3 7 8.7 5 8.7-5" />
+                    <path d="M12 22V12" />
+                  </svg>
+                  <h3 className="font-black text-gray-800 tracking-wide uppercase text-sm">
+                    My Orders
+                  </h3>
+                </div>
+                <span className="bg-purple-100 text-purple-700 text-xs font-black px-2.5 py-1 rounded-lg">
+                  {orders.length} {orders.length === 1 ? "Order" : "Orders"}
+                </span>
+              </div>
+
               {orders.length === 0 ? (
-                <div className="text-center py-10">
-                  <div className="text-4xl mb-2">📦</div>
-                  <p className="text-gray-400">There are no any orders!</p>
+                /* खाली स्टेट का प्रीमियम और एनिमेटेड लुक (No Orders State) */
+                <div className="text-center py-14 bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-200/60 p-6">
+                  <div className="relative flex items-center justify-center bg-gray-100 text-gray-400 w-14 h-14 rounded-2xl mx-auto mb-3 animate-pulse">
+                    <svg
+                      xmlns="http://w3.org"
+                      width="28"
+                      height="28"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    >
+                      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                      <path d="m3.3 7 8.7 5 8.7-5" />
+                      <path d="M12 22V12" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-700 font-bold text-base mb-0.5">
+                    No orders placed yet
+                  </p>
+                  <p className="text-gray-400 text-xs font-medium max-w-xs mx-auto">
+                    When you purchase custom garments or fabrics, they will
+                    appear right here.
+                  </p>
                 </div>
               ) : (
+                /* ऑर्डर्स लिस्ट कार्ड्स (Active Orders Grid) */
                 <div className="space-y-4">
                   {orders.map((order) => (
                     <div
                       key={order._id}
-                      className="border border-gray-100
-               rounded-2xl p-4 cursor-pointer
-               hover:shadow-md hover:border-purple-200
-               transition"
                       onClick={() => {
+                        // ⚡ यहाँ हमने सीधे ब्राउज़र के इन-बिल्ट विंडो ऑब्जेक्ट का उपयोग किया है
+                        // इससे कोई भी 'navigate' एरर नहीं आएगा और पेज स्मूथली खुल जाएगा
                         window.location.href = `/order/${order._id}`;
                       }}
+                      className="group border border-gray-100 bg-white rounded-2xl p-4.5 cursor-pointer
+                       shadow-sm hover:shadow-md hover:border-purple-200 hover:-translate-y-0.5
+                       transition-all duration-300 ease-out relative overflow-hidden"
                     >
-                      <div
-                        className="flex items-center
-                    justify-between mb-3"
-                      >
-                        <div>
-                          <p className="text-xs text-gray-400 font-medium">
+                      {/* शीर्ष हिस्सा: ऑर्डर आईडी और स्टेटस */}
+                      <div className="flex items-start justify-between mb-4 pb-3 border-b border-gray-50">
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-bold text-gray-800 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-md inline-block font-mono">
                             #{order.orderId}
                           </p>
-                          <p className="text-xs text-gray-400">
+                          <p className="text-[11px] text-gray-400 font-semibold tracking-wide flex items-center gap-1">
+                            <svg
+                              xmlns="http://w3.org"
+                              width="11"
+                              height="11"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <circle cx="12" cy="12" r="10" />
+                              <polyline points="12 6 12 12 16 14" />
+                            </svg>
                             {new Date(order.createdAt).toLocaleDateString(
                               "en-IN",
+                              {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              },
                             )}
                           </p>
                         </div>
+
+                        {/* मॉडर्न स्टेटस बैज (यहाँ STATUS_COLORS का उपयोग करके वार्निंग भी ठीक कर दी गई है) */}
                         <span
-                          className={`text-xs px-3 py-1 rounded-full font-semibold capitalize ${STATUS_COLORS[order.orderStatus] || "bg-gray-100 text-gray-700"}`}
+                          className={`text-[10px] uppercase font-black tracking-widest px-2.5 py-1 rounded-lg border shadow-sm ${
+                            STATUS_COLORS && STATUS_COLORS[order.orderStatus]
+                              ? STATUS_COLORS[order.orderStatus]
+                              : order.orderStatus === "delivered"
+                                ? "bg-emerald-50 border-emerald-100 text-emerald-700"
+                                : order.orderStatus === "cancelled"
+                                  ? "bg-rose-50 border-rose-100 text-rose-700"
+                                  : "bg-purple-50 border-purple-100 text-purple-700"
+                          }`}
                         >
                           {order.orderStatus === "out_for_delivery"
                             ? "Out for Delivery"
@@ -1627,35 +1717,57 @@ function CustomerProfile({ shop, onClose }) {
                         </span>
                       </div>
 
-                      <div className="flex gap-3 items-center">
-                        <img
-                          src={order.productImage}
-                          alt={order.productName}
-                          className="w-12 h-12 object-contain
-                   rounded-xl bg-gray-50 border"
-                        />
-                        <div>
-                          <p className="font-medium text-sm text-gray-800">
+                      {/* मध्य हिस्सा: प्रोडक्ट की इमेज और नाम/कीमत */}
+                      <div className="flex gap-3.5 items-center">
+                        <div className="w-14 h-14 bg-neutral-50 rounded-xl border border-gray-100 p-1 flex-shrink-0 overflow-hidden relative group-hover:scale-102 transition-transform duration-300">
+                          <img
+                            src={order.productImage}
+                            alt={order.productName}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+
+                        <div className="space-y-0.5 flex-1 min-w-0">
+                          <p className="font-bold text-sm text-gray-800 truncate group-hover:text-purple-700 transition-colors duration-200">
                             {order.productName}
                           </p>
-                          <p className="text-purple-600 font-bold text-sm">
+                          <p className="text-purple-600 font-black text-base">
                             ₹{order.totalAmount}
                           </p>
                         </div>
-                        <span className="ml-auto text-gray-300 text-lg">→</span>
+
+                        {/* तीर का निशान जो माउस ले जाने पर सीधे खिसकेगा (Micro-interaction) */}
+                        <div className="text-gray-300 group-hover:text-purple-500 transform group-hover:translate-x-1 transition-all duration-300 flex-shrink-0">
+                          <svg
+                            xmlns="http://w3.org"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                          >
+                            <path d="M5 12h14M12 5l7 7-7 7" />
+                          </svg>
+                        </div>
                       </div>
 
-                      {/* Live dot for active orders */}
+                      {/* लाइव ट्रैकिंग बार (सक्रिय ऑर्डर्स के लिए) */}
                       {!["delivered", "cancelled"].includes(
                         order.orderStatus,
                       ) && (
-                        <div className="flex items-center gap-1.5 mt-3">
-                          <div
-                            className="w-2 h-2 bg-green-500
-                        rounded-full animate-pulse"
-                          />
-                          <span className="text-xs text-green-600 font-medium">
-                            See all details
+                        <div className="flex flex-wrap items-center justify-between gap-1 mt-4 pt-3 border-t border-gray-50 bg-purple-50/10 px-1 rounded-b-2xl w-full overflow-hidden">
+                          <div className="flex items-center gap-2">
+                            <div className="relative flex h-2 w-2 flex-shrink-0">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </div>
+                            <span className="text-[11px] text-emerald-700 font-bold uppercase tracking-wider whitespace-nowrap">
+                              Live Tracking Available
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap ml-auto sm:ml-0">
+                            Click to view status
                           </span>
                         </div>
                       )}
@@ -2784,8 +2896,8 @@ function ProductModal({ product, shop, onClose, onTryOn, onOrder }) {
         {/* Header */}
         <div
           className="flex justify-between items-center
-                        p-4 border-b sticky top-0 bg-white
-                        z-10 rounded-t-3xl"
+                p-5 border-b bg-white
+                rounded-t-3xl"
         >
           <h2
             className="text-sm font-semibold text-gray-600
@@ -3292,12 +3404,12 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
     try {
       const formData = new FormData();
       formData.append("humanImage", humanImage);
-      formData.append("garmentUrl", product.imageUrl);
-      formData.append("description", product.category);
+      formData.append("garmentUrl", product.imageUrl); // imageUrl sahi hai
+      formData.append("description", product.category || "upper_body");
 
       const res = await axios.post(`${API_URL}/api/tryon`, formData, {
         headers: {
-          "x-api-key": shop.apiKey,
+          "x-api-key": shop.apiKey, // ← Yeh hai na?
           "Content-Type": "multipart/form-data",
         },
       });
@@ -3509,69 +3621,107 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
             </div>
 
             {/* Try On Button */}
-           <button
-  onClick={handleTryOn}
-  disabled={tryonLoading || !humanImage}
-  className={`w-full py-3.5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 
+            <button
+              onClick={handleTryOn}
+              disabled={tryonLoading || !humanImage}
+              className={`w-full py-3.5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 
              transition-all duration-500 ease-in-out relative overflow-hidden transform active:scale-[0.98]
              ${
                tryonLoading || !humanImage
                  ? "bg-gradient-to-r from-gray-100 via-gray-200 to-gray-300 text-gray-400 shadow-none cursor-not-allowed border border-gray-300/30"
                  : "bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 text-white shadow-xl shadow-purple-500/30 hover:shadow-purple-500/50 hover:-translate-y-0.5 cursor-pointer"
              }`}
->
-  {tryonLoading ? (
-    <>
-      <svg className="animate-spin h-6 w-6 text-white" xmlns="http://w3.org" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg>
-      <span className="tracking-wider animate-pulse">AI is Processing...</span>
-    </>
-  ) : (
-    <>
-      {!tryonLoading && humanImage ? (
-        <>
-          {/* परफेक्टली सेंटर अलाइंड आइकॉन बॉक्स (साइज छोटा किया ताकि ऊपर टच न हो) */}
-          <div className="relative flex items-center justify-center bg-white/15 p-1 rounded-lg animate-pulse [animation-duration:2s]">
-            <span className="absolute inline-flex h-full w-full rounded-lg bg-white/20 animate-ping opacity-60"></span>
-            
-            {/* नया "Hanger + Magic" आइकॉन (फैशन और AI ट्राई-ऑन के लिए एकदम परफेक्ट) */}
-            <svg
-              xmlns="http://w3.org"
-              width="18" // साइज छोटा किया ताकि ऊपर टच न करे
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="relative z-10 text-white"
             >
-              {/* हैंगर का हुक और त्रिकोण */}
-              <path d="M12 2a2 2 0 0 1 2 2c0 .7-.4 1.3-1 1.7L13 6v1" />
-              <path d="M21 18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              {/* अंदर की चमक / मैजिक */}
-              <path d="m10 11 1 2 1-2 2-1-2-1-1-2-1 2-2 1z" className="fill-amber-300 stroke-none animate-pulse" />
-            </svg>
-          </div>
-          
-          {/* यहाँ से पुराना '✨' हटा दिया है ताकि दो-दो स्टार न दिखें */}
-          <span className="tracking-wide drop-shadow-md">✨Try On Karen!</span>
-          
-          <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]"></span>
-        </>
-      ) : (
-        <>
-          <svg xmlns="http://w3.org" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
-          <span className="text-sm font-bold tracking-wide uppercase opacity-60">Upload Photo First</span>
-        </>
-      )}
-    </>
-  )}
-</button>
+              {tryonLoading ? (
+                <>
+                  <svg
+                    className="animate-spin h-6 w-6 text-white"
+                    xmlns="http://w3.org"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  <span className="tracking-wider animate-pulse">
+                    AI is Processing...
+                  </span>
+                </>
+              ) : (
+                <>
+                  {!tryonLoading && humanImage ? (
+                    <>
+                      {/* परफेक्टली सेंटर अलाइंड आइकॉन बॉक्स (साइज छोटा किया ताकि ऊपर टच न हो) */}
+                      <div className="relative flex items-center justify-center bg-white/15 p-1 rounded-lg animate-pulse [animation-duration:2s]">
+                        <span className="absolute inline-flex h-full w-full rounded-lg bg-white/20 animate-ping opacity-60"></span>
 
+                        {/* नया "Hanger + Magic" आइकॉन (फैशन और AI ट्राई-ऑन के लिए एकदम परफेक्ट) */}
+                        <svg
+                          xmlns="http://w3.org"
+                          width="18" // साइज छोटा किया ताकि ऊपर टच न करे
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="relative z-10 text-white"
+                        >
+                          {/* हैंगर का हुक और त्रिकोण */}
+                          <path d="M12 2a2 2 0 0 1 2 2c0 .7-.4 1.3-1 1.7L13 6v1" />
+                          <path d="M21 18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                          {/* अंदर की चमक / मैजिक */}
+                          <path
+                            d="m10 11 1 2 1-2 2-1-2-1-1-2-1 2-2 1z"
+                            className="fill-amber-300 stroke-none animate-pulse"
+                          />
+                        </svg>
+                      </div>
+
+                      {/* यहाँ से पुराना '✨' हटा दिया है ताकि दो-दो स्टार न दिखें */}
+                      <span className="tracking-wide drop-shadow-md">
+                        ✨Try On Karen!
+                      </span>
+
+                      <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]"></span>
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        xmlns="http://w3.org"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="m15 9-6 6" />
+                        <path d="m9 9 6 6" />
+                      </svg>
+                      <span className="text-sm font-bold tracking-wide uppercase opacity-60">
+                        Upload Photo First
+                      </span>
+                    </>
+                  )}
+                </>
+              )}
+            </button>
 
             {/* Result */}
             {tryonResult && (
@@ -3647,7 +3797,7 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
                   {/* Action Buttons */}
                   <div
                     className="bg-black bg-opacity-80
-                      px-4 pb-6 pt-2 space-y-2"
+                      px-4 pb-6 pt-2 space-y-2 mt-4"
                   >
                     {shop?.whatsapp && (
                       <a
@@ -3734,6 +3884,36 @@ export default function Shop() {
     // eslint-disable-next-line
   }, [sellerId]);
 
+  //SEO tags code
+  useEffect(() => {
+    if (shop) {
+      document.title = `${shop.name} - Virtual Try-On Shop`;
+
+      const setMeta = (name, content, prop = false) => {
+        const attr = prop ? "property" : "name";
+        const existing = document.querySelector(`meta[${attr}="${name}"]`);
+        const tag = existing || document.createElement("meta");
+        tag.setAttribute(attr, name);
+        tag.content = content;
+        if (!existing) document.head.appendChild(tag);
+      };
+
+      setMeta(
+        "description",
+        `${shop.name} ki virtual try-on shop. ` +
+          `Ghar baithe kapde try karo! AI-powered virtual try-on.`,
+      );
+      setMeta("og:title", `${shop.name} - Try-On Shop`, true);
+      setMeta("og:description", "AI se kapde try karo ghar baithe!", true);
+      setMeta("og:type", "website", true);
+      setMeta("og:url", window.location.href, true);
+
+      return () => {
+        document.title = "VirtualTryOn";
+      };
+    }
+  }, [shop]);
+
   // Scroll lock - jab bhi koi modal khule
   useEffect(() => {
     const shouldLock =
@@ -3768,6 +3948,7 @@ export default function Shop() {
       const res = await axios.get(`${API_URL}/api/seller/shop/${sellerId}`);
       setShop(res.data.shop);
       setProducts(res.data.products);
+      console.log("Shop apiKey:", res.data.shop?.apiKey);
     } catch {
       setError("Shop nahi mili!");
     } finally {

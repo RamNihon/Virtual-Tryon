@@ -4,6 +4,7 @@ const cloudinary = require("../config/cloudinary");
 const upload = require("../middleware/upload");
 const Replicate = require("replicate");
 const Seller = require("../models/seller");
+const { useCredits } = require("../config/openai");
 const { sendLimitWarningEmail } = require("../config/email");
 const TryonHistory = require("../models/TryonHistory");
 
@@ -52,13 +53,15 @@ const getStyleAdviceClaude = async (imageUrl) => {
               {
                 type: "text",
                 text: `Tu ek expert fashion stylist hai.
-Is try-on image ko dekh kar Hindi mein batao:
+Is try-on image ko dekh kar Hindi mein batayen:
 
 1. 🎨 Color Rating: /10
-2. ✅ Kya achha lag raha hai
+2. ✅ Kya yah achha lag raha hai
 3. 👖 Best combination (pant/bottom)
 4. ❌ Kya avoid karein
 5. 🎯 Kis occasion ke liye perfect
+6. 🎯 skin color kaisi hai and  skin color ke hisab se aur konse color combination achha dikhega
+7. 🎯 Aur kya accesories or hairstyle or other improvement kar sakte hain, taki bold and confident dikhen
 
 Short aur friendly jawab do!`,
               },
@@ -111,10 +114,12 @@ const getStyleAdviceOpenRouter = async (imageUrl) => {
 Is try-on image ko dekh kar Hindi mein batao:
 
 1. 🎨 Color Rating: /10
-2. ✅ Kya achha lag raha hai
+2. ✅ Kya yah achha lag raha hai
 3. 👖 Best combination (pant/bottom)
 4. ❌ Kya avoid karein
 5. 🎯 Kis occasion ke liye perfect
+6. 🎯 skin color kaisi hai and  skin color ke hisab se aur konse color combination achha dikhega
+7. 🎯 Aur kya accesories or hairstyle or other improvement kar sakte hain, taki bold and confident dikhen
 
 Short aur friendly jawab do!`,
                 },
@@ -156,11 +161,14 @@ router.post(
       }
 
       // Limit check karo
-      if (seller.tryonCount >= seller.tryonLimit) {
-        // Limit khatam email bhejo
+      // Credit system check
+      try {
         await sendLimitWarningEmail(seller);
+        await useCredits(Seller, seller._id, "readyTryon");
+      } catch (creditError) {
         return res.status(403).json({
-          message: "Try-on limit khatam! Plan upgrade karo.",
+          message: creditError.message,
+          type: "insufficient_credits",
         });
       }
 
@@ -229,6 +237,7 @@ router.post(
       }
 
       // Try-on count badhao
+      // Legacy count update
       await Seller.findByIdAndUpdate(seller._id, {
         $inc: { tryonCount: 1 },
       });

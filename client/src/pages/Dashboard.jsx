@@ -515,6 +515,553 @@ function DashboardImageSlider({ images, className = "" }) {
     </div>
   );
 }
+
+// ─── Fabric Dashboard Component ──────────
+function FabricDashboard({ token, seller }) {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [addMsg, setAddMsg] = useState("");
+  const [addLoading, setAddLoading] = useState(false);
+  // eslint-disable-next-line
+  const [generatingFor, setGeneratingFor] = useState(null);
+
+  const [form, setForm] = useState({
+    name: "",
+    price: "",
+    pricePerMeter: "",
+    fabricType: "",
+    description: "",
+    availableGarments: [],
+  });
+  const [fabricImages, setFabricImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+
+  const GARMENT_OPTIONS = [
+    { value: "shirt_full", label: "👔 Full Sleeve Shirt" },
+    { value: "shirt_half", label: "👕 Half Sleeve Shirt" },
+    { value: "pant", label: "👖 Formal Pant" },
+    { value: "kurta", label: "🪭 Kurta" },
+    { value: "salwar_suit", label: "👗 Salwar Suit" },
+    { value: "kurti", label: "👘 Kurti" },
+    { value: "saree", label: "🥻 Saree" },
+  ];
+
+  useEffect(() => {
+    fetchProducts();
+    // eslint-disable-next-line
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/fabric/products`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setProducts(res.data.products || []);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    setFabricImages(files);
+    setImagePreviews(files.map((f) => URL.createObjectURL(f)));
+  };
+
+  const toggleGarment = (value) => {
+    setForm((prev) => ({
+      ...prev,
+      availableGarments: prev.availableGarments.includes(value)
+        ? prev.availableGarments.filter((g) => g !== value)
+        : [...prev.availableGarments, value],
+    }));
+  };
+
+  const handleAddProduct = async () => {
+    if (!form.name || !form.price || fabricImages.length === 0) {
+      setAddMsg("❌ Name, price, and fabric photo are necessary.!");
+      return;
+    }
+    if (form.availableGarments.length === 0) {
+      setAddMsg("❌ Choose at least one garment type!");
+      return;
+    }
+    setAddLoading(true);
+    setAddMsg("");
+    try {
+      const formData = new FormData();
+      fabricImages.forEach((img) => formData.append("fabricImages", img));
+      formData.append("name", form.name);
+      formData.append("price", form.price);
+      formData.append("pricePerMeter", form.pricePerMeter);
+      formData.append("fabricType", form.fabricType);
+      formData.append("description", form.description);
+      form.availableGarments.forEach((g) =>
+        formData.append("availableGarments", g),
+      );
+
+      await axios.post(`${API_URL}/api/fabric/products`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      setAddMsg("✅ Fabric product added successfully!");
+      setShowAddForm(false);
+      setForm({
+        name: "",
+        price: "",
+        pricePerMeter: "",
+        fabricType: "",
+        description: "",
+        availableGarments: [],
+      });
+      setFabricImages([]);
+      setImagePreviews([]);
+      fetchProducts();
+    } catch (e) {
+      setAddMsg("❌ Error: " + (e.response?.data?.message || e.message));
+    } finally {
+      setAddLoading(false);
+    }
+  };
+
+  // Plan check
+  const isPlanAllowed =
+    seller?.plan.toLowerCase() === "pro" ||
+    seller?.plan.toLowerCase() === "elite";
+
+  if (!isPlanAllowed) {
+    return (
+      <div
+        className="bg-white rounded-3xl p-10 text-center
+                      border border-gray-100"
+      >
+        <div className="text-6xl mb-4">🧵</div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-3">
+          Fabric Shop - Pro/Elite Only
+        </h2>
+        <p className="text-gray-500 mb-6 max-w-md mx-auto">
+          Upload unstitched fabric, AI designs the stitched garment, and
+          customers try it on!
+        </p>
+        <Link
+          to="/pricing"
+          className="bg-gradient-to-r from-purple-600
+                     to-indigo-600 text-white px-8 py-3
+                     rounded-2xl font-bold hover:opacity-90
+                     transition inline-block"
+        >
+          🚀 Buy Pro Plan!
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div
+        className="flex items-center justify-between
+                      flex-wrap gap-3"
+      >
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">🧵 Fabric Shop</h2>
+          <p className="text-gray-400 text-sm">
+            Unstitched fabric → AI stitched garment
+          </p>
+        </div>
+        <button
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="bg-gradient-to-r from-purple-600
+                     to-indigo-600 text-white px-5 py-2.5
+                     rounded-2xl font-bold hover:opacity-90
+                     transition flex items-center gap-2"
+        >
+          {showAddForm ? "✕ Cancel" : "+ Add Fabric"}
+        </button>
+      </div>
+
+      {/* Add Form */}
+      {showAddForm && (
+        <div
+          className="bg-gradient-to-br from-purple-50
+                        to-indigo-50 rounded-3xl p-6
+                        border border-purple-100"
+        >
+          <h3 className="font-bold text-gray-800 text-lg mb-5">
+            ➕ Add New Fabric Product
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label
+                className="text-sm font-medium
+                                text-gray-700 block mb-1.5"
+              >
+                Fabric Name *
+              </label>
+              <input
+                type="text"
+                placeholder="Like: German Silk, Cotton..."
+                value={form.name}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    name: e.target.value,
+                  })
+                }
+                className="w-full border border-purple-200
+                           bg-white rounded-xl px-4 py-2.5 text-sm
+                           focus:outline-none focus:border-purple-500"
+              />
+            </div>
+
+            <div>
+              <label
+                className="text-sm font-medium
+                                text-gray-700 block mb-1.5"
+              >
+                Fabric Type
+              </label>
+              <input
+                type="text"
+                placeholder="Like: Silk, Cotton, Linen..."
+                value={form.fabricType}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    fabricType: e.target.value,
+                  })
+                }
+                className="w-full border border-purple-200
+                           bg-white rounded-xl px-4 py-2.5 text-sm
+                           focus:outline-none focus:border-purple-500"
+              />
+            </div>
+
+            <div>
+              <label
+                className="text-sm font-medium
+                                text-gray-700 block mb-1.5"
+              >
+                Price (₹) *
+              </label>
+              <input
+                type="number"
+                placeholder="Total price"
+                value={form.price}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    price: e.target.value,
+                  })
+                }
+                className="w-full border border-purple-200
+                           bg-white rounded-xl px-4 py-2.5 text-sm
+                           focus:outline-none focus:border-purple-500"
+              />
+            </div>
+
+            <div>
+              <label
+                className="text-sm font-medium
+                                text-gray-700 block mb-1.5"
+              >
+                Price per Meter (₹)
+              </label>
+              <input
+                type="number"
+                placeholder="Per meter price"
+                value={form.pricePerMeter}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    pricePerMeter: e.target.value,
+                  })
+                }
+                className="w-full border border-purple-200
+                           bg-white rounded-xl px-4 py-2.5 text-sm
+                           focus:outline-none focus:border-purple-500"
+              />
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <label
+              className="text-sm font-medium
+                              text-gray-700 block mb-1.5"
+            >
+              Description
+            </label>
+            <textarea
+              rows={2}
+              placeholder="Fabric ke baare mein batao..."
+              value={form.description}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  description: e.target.value,
+                })
+              }
+              className="w-full border border-purple-200
+                         bg-white rounded-xl px-4 py-2.5 text-sm
+                         focus:outline-none focus:border-purple-500
+                         resize-none"
+            />
+          </div>
+
+          {/* Garment Types */}
+          <div className="mt-4">
+            <label
+              className="text-sm font-medium
+                              text-gray-700 block mb-2"
+            >
+              Available Garment Types * (multiple select)
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {GARMENT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => toggleGarment(opt.value)}
+                  className={`px-4 py-2 rounded-xl text-sm
+                             font-medium transition border-2
+                             ${
+                               form.availableGarments.includes(opt.value)
+                                 ? "bg-purple-600 text-white border-purple-600"
+                                 : "bg-white text-gray-600 border-gray-200 hover:border-purple-300"
+                             }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Fabric Images */}
+          <div className="mt-4">
+            <label
+              className="text-sm font-medium
+                              text-gray-700 block mb-1.5"
+            >
+              Fabric Photos * (max 5)
+            </label>
+            <label
+              className="flex items-center gap-3
+                              border-2 border-dashed
+                              border-purple-200 rounded-2xl p-4
+                              cursor-pointer hover:border-purple-400
+                              transition bg-white"
+            >
+              <span className="text-3xl">🧵</span>
+              <div>
+                <p className="font-medium text-gray-700 text-sm">
+                  Fabric photos select karen
+                </p>
+                <p className="text-gray-400 text-xs">
+                  Flat lay photo best hoti hai!
+                </p>
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </label>
+
+            {imagePreviews.length > 0 && (
+              <div className="flex gap-2 mt-3 flex-wrap">
+                {imagePreviews.map((p, i) => (
+                  <img
+                    key={i}
+                    src={p}
+                    alt=""
+                    className="w-20 h-20 object-cover
+                               rounded-xl border-2 border-purple-200"
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {addMsg && <p className="mt-3 text-sm">{addMsg}</p>}
+
+          <button
+            onClick={handleAddProduct}
+            disabled={addLoading}
+            className="mt-5 bg-gradient-to-r from-purple-600
+                       to-indigo-600 text-white px-8 py-3
+                       rounded-2xl font-bold hover:opacity-90
+                       transition disabled:opacity-50 w-full"
+          >
+            {addLoading ? "⏳ Adding..." : "✅ Add Fabric Product"}
+          </button>
+        </div>
+      )}
+
+      {/* Products List */}
+      {loading ? (
+        <p className="text-center text-gray-400 py-8">Loading...</p>
+      ) : products.length === 0 ? (
+        <div
+          className="bg-white rounded-3xl p-10 text-center
+                        border border-gray-100"
+        >
+          <div className="text-5xl mb-3">🧵</div>
+          <p className="text-gray-400">
+            There is no fabric product. Please add it!
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {products.map((product) => (
+            <div
+              key={product._id}
+              className="bg-white rounded-3xl overflow-hidden
+                         border border-gray-100 shadow-sm
+                         hover:shadow-md transition-all"
+            >
+              {/* Fabric Image */}
+              <div className="relative h-48 bg-gray-50">
+                <img
+                  src={product.fabricImageUrl}
+                  alt={product.name}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="absolute top-3 right-3">
+                  <span
+                    className={`text-xs px-2 py-1
+                                   rounded-full font-medium
+                                   ${
+                                     product.inStock
+                                       ? "bg-green-100 text-green-700"
+                                       : "bg-red-100 text-red-600"
+                                   }`}
+                  >
+                    {product.inStock ? "✅ In Stock" : "❌ OOS"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-5">
+                <h3 className="font-bold text-gray-800 text-lg">
+                  {product.name}
+                </h3>
+                {product.fabricType && (
+                  <p className="text-gray-400 text-xs mb-2">
+                    {product.fabricType}
+                  </p>
+                )}
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-purple-600 font-black text-xl">
+                    ₹{product.price}
+                  </span>
+                  {product.pricePerMeter > 0 && (
+                    <span className="text-gray-400 text-xs">
+                      ₹{product.pricePerMeter}/meter
+                    </span>
+                  )}
+                </div>
+
+                {/* Available Garments */}
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {product.availableGarments?.map((g) => (
+                    <span
+                      key={g}
+                      className="text-xs bg-purple-50
+                                 text-purple-700 px-2 py-1
+                                 rounded-lg font-medium"
+                    >
+                      {GARMENT_OPTIONS.find((o) => o.value === g)?.label || g}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Generated Previews */}
+                {product.generatedPreviews?.length > 0 && (
+                  <div className="mb-4">
+                    <p
+                      className="text-xs font-medium
+                                  text-gray-500 mb-2"
+                    >
+                      AI Generated Previews:
+                    </p>
+                    <div className="flex gap-2 overflow-x-auto">
+                      {product.generatedPreviews.map((prev, i) => (
+                        <div key={i} className="flex-shrink-0 text-center">
+                          <img
+                            src={prev.imageUrl}
+                            alt={prev.garmentType}
+                            className="w-16 h-20 object-cover
+                                       rounded-xl border border-gray-100"
+                          />
+                          <p className="text-xs text-gray-400 mt-1">
+                            {
+                              GARMENT_OPTIONS.find(
+                                (o) => o.value === prev.garmentType,
+                              )?.label?.split(" ")[0]
+                            }
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={async () => {
+                      await axios.patch(
+                        `${API_URL}/api/fabric/products/${product._id}/stock`,
+                        { inStock: !product.inStock },
+                        { headers: { Authorization: `Bearer ${token}` } },
+                      );
+                      fetchProducts();
+                    }}
+                    className={`flex-1 py-2 rounded-xl text-xs
+                               font-semibold transition border
+                               ${
+                                 product.inStock
+                                   ? "border-red-200 text-red-500 hover:bg-red-50"
+                                   : "border-green-200 text-green-600 hover:bg-green-50"
+                               }`}
+                  >
+                    {product.inStock ? "Mark OOS" : "Mark In Stock"}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!window.confirm("Delete?")) return;
+                      await axios.delete(
+                        `${API_URL}/api/fabric/products/${product._id}`,
+                        { headers: { Authorization: `Bearer ${token}` } },
+                      );
+                      fetchProducts();
+                    }}
+                    className="px-3 py-2 rounded-xl text-xs
+                               font-semibold text-red-400
+                               hover:bg-red-50 transition border
+                               border-red-100"
+                  >
+                    🗑️Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const { seller, token, login, logout } = useAuth();
   const navigate = useNavigate();
@@ -570,6 +1117,7 @@ export default function Dashboard() {
     upiId: "",
   });
   const [settingsMsg, setSettingsMsg] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -743,27 +1291,47 @@ export default function Dashboard() {
         >
           {[
             {
-              label: "Try-On Used",
-              value: dashboard?.seller?.tryonCount || 0,
-              sub: `of ${dashboard?.seller?.tryonLimit} limit`,
+              label: "💳 Credits Remaining",
+              value: dashboard?.seller?.credits || 0,
+              sub: "available credits",
+              highlight: (dashboard?.seller?.credits || 0) < 50,
             },
-
             {
-              label: "Total Products",
+              label: "📊 This Month Used",
+              value: dashboard?.seller?.monthlyCreditsUsed || 0,
+              sub: `of ${dashboard?.seller?.monthlyCreditsLimit || 100} limit`,
+            },
+            {
+              label: "🏪 Total Products",
               value: dashboard?.totalProducts || 0,
-              sub: "products",
+              sub: "products added",
             },
             {
-              label: "Current Plan",
-              value: dashboard?.seller?.plan || "Free",
-              sub: "plan",
+              label: "👑 Current Plan",
+              value: (dashboard?.seller?.plan || "Free").toUpperCase(),
+              sub: "active plan",
+              isPlan: true,
             },
           ].map((stat, i) => (
-            <div key={i} className="bg-white rounded-2xl p-6 shadow-sm">
-              <p className="text-gray-500 text-sm">{stat.label}</p>
+            <div
+              key={i}
+              className={`rounded-2xl p-5 shadow-sm
+             ${
+               stat.highlight
+                 ? "bg-red-50 border-2 border-red-200"
+                 : "bg-white border border-gray-100"
+             }`}
+            >
+              <p className="text-gray-500 text-xs font-medium">{stat.label}</p>
               <p
-                className="text-3xl font-bold
-                            text-purple-700 mt-1 capitalize"
+                className={`text-2xl font-black mt-1
+               ${
+                 stat.highlight
+                   ? "text-red-600"
+                   : stat.isPlan
+                     ? "text-purple-700"
+                     : "text-gray-800"
+               }`}
               >
                 {stat.value}
               </p>
@@ -771,16 +1339,76 @@ export default function Dashboard() {
             </div>
           ))}
 
+          {/* Low Credits Warning */}
+          {(dashboard?.seller?.credits || 0) < 50 && (
+            <div
+              className="bg-red-50 border border-red-200
+                  rounded-2xl p-4 flex flex-col
+                  md:flex-row items-start
+                  md:items-center justify-between gap-3"
+            >
+              <div>
+                <p className="font-bold text-red-700 flex items-center gap-2">
+                  ⚠️ Credits Khatam Hone Wale Hain!
+                </p>
+                <p className="text-red-500 text-sm mt-0.5">
+                  Sirf {dashboard?.seller?.credits} credits baaki hain. Try-on
+                  band ho jayega!
+                </p>
+              </div>
+              <Link
+                to="/pricing"
+                className="bg-red-600 text-white px-5 py-2.5
+                 rounded-xl text-sm font-bold
+                 hover:bg-red-700 transition
+                 whitespace-nowrap flex-shrink-0"
+              >
+                Top-Up Now →
+              </Link>
+            </div>
+          )}
+
+          {/* Monthly Limit Warning */}
+          {(dashboard?.seller?.monthlyCreditsUsed || 0) >=
+            (dashboard?.seller?.monthlyCreditsLimit || 100) * 0.9 && (
+            <div
+              className="bg-orange-50 border border-orange-200
+                  rounded-2xl p-4 flex flex-col
+                  md:flex-row items-start
+                  md:items-center justify-between gap-3"
+            >
+              <div>
+                <p className="font-bold text-orange-700">
+                  📊 Monthly Limit Almost Reached!
+                </p>
+                <p className="text-orange-500 text-sm mt-0.5">
+                  {dashboard?.seller?.monthlyCreditsUsed}/
+                  {dashboard?.seller?.monthlyCreditsLimit} credits used this
+                  month.
+                </p>
+              </div>
+              <Link
+                to="/pricing"
+                className="bg-orange-600 text-white px-5 py-2.5
+                 rounded-xl text-sm font-bold
+                 hover:bg-orange-700 transition
+                 whitespace-nowrap flex-shrink-0"
+              >
+                Plan Upgrade Karen →
+              </Link>
+            </div>
+          )}
+
           {/* Analytics Link - Starter/Pro only */}
-          {seller?.plan === "free" && (
+          {seller?.plan.toLowerCase() === "free" && (
             <Link
               to="/analytics"
               className="col-span-1 md:col-span-3
-               bg-gradient-to-r from-purple-600
-               to-indigo-600 rounded-2xl p-4
-               text-white flex items-center
-               justify-between hover:opacity-90
-               transition shadow-lg shadow-purple-100"
+                bg-gradient-to-r from-purple-600
+                to-indigo-600 rounded-2xl p-4
+                text-white flex items-center
+                justify-between hover:opacity-90
+                transition shadow-lg shadow-purple-100"
             >
               <div>
                 <p className="font-bold">📊 Analytics Dashboard</p>
@@ -791,7 +1419,8 @@ export default function Dashboard() {
               <span className="text-2xl">→</span>
             </Link>
           )}
-          {seller?.plan !== "free" && (
+          {(seller?.plan.toLowerCase() === "pro" ||
+            seller?.plan === "elite") && (
             <Link
               to="/analytics"
               className="col-span-1 md:col-span-3
@@ -812,13 +1441,66 @@ export default function Dashboard() {
           )}
         </div>
 
+        {/* // Stats cards ke baad: */}
+        <Link
+          to="/credits"
+          className="flex items-center justify-between
+             bg-white rounded-2xl p-6 border  {/* p-4.5 से बढ़ाकर p-6 किया ताकि मोटाई बढ़िया लगे */}
+             border-gray-100 hover:border-purple-300
+             shadow-sm hover:shadow-lg hover:shadow-purple-500/5
+             transform hover:-translate-y-0.5
+             transition-all duration-500 ease-out group 
+             relative overflow-hidden pl-7"
+        >
+          {/* ⚡ अल्टीमेट होवर इफेक्ट: यह पट्टी होवर करने पर बाएं से दाएं पूरे बटन में रंग भर देगी */}
+          <span
+            className="absolute left-0 top-0 bottom-0 w-1.5 
+                   bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600
+                   group-hover:w-full transition-all duration-500 ease-in-out 
+                   origin-left opacity-100 group-hover:opacity-100"
+          ></span>
+
+          {/* लेफ्ट साइड - आइकॉन और टेक्स्ट (relative z-10 ताकि रंग इसके पीछे भरे, इसके ऊपर नहीं) */}
+          <div className="flex items-center gap-4 relative z-10">
+            {/* क्रेडिट कार्ड इमोजी - होवर होने पर रंग बदलने के साथ यह थोड़ा सा पॉप होगा */}
+            <span className="text-2xl filter drop-shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+              💳
+            </span>
+            <div className="space-y-0.5">
+              {/* टेक्स्ट का रंग होवर होने पर बहुत ही स्मूथली ग्रे से वाइट (White) हो जाएगा */}
+              <p
+                className="font-extrabold text-gray-800 text-sm tracking-wide 
+                   group-hover:text-white transition-colors duration-300"
+              >
+                Credit History
+              </p>
+              <p
+                className="text-gray-400 text-xs font-medium leading-normal
+                   group-hover:text-purple-100 transition-colors duration-300"
+              >
+                See how the credit balance was consumed
+              </p>
+            </div>
+          </div>
+
+          {/* राइट side - तीर का निशान जो होवर होने पर वाइट होकर आगे खिसकेगा */}
+          <span
+            className="text-gray-300 group-hover:text-white
+                   transform group-hover:translate-x-1.5
+                   transition-all duration-300 text-xl font-bold flex-shrink-0 relative z-10"
+          >
+            →
+          </span>
+        </Link>
+
         {/* Tabs */}
-        <div className="flex gap-4 mb-6 flex-wrap">
+        <div className="flex gap-4 mt-5 mb-6 flex-wrap">
           {[
             { key: "overview", label: "📊 Overview" },
             { key: "products", label: "👗 Products" },
             { key: "integration", label: "🔌 Integration" },
             { key: "orders", label: "📦 Orders" },
+            { key: "fabric", label: "🧵 Fabric Shop" },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -943,6 +1625,173 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
+
+            {/* Fabric Shop Link - Pro/Elite (100% Correct Enclosing Syntax) */}
+            {(seller?.plan?.toLowerCase() === "pro" ||
+              seller?.plan?.toLowerCase() === "elite" ||
+              dashboard?.plan?.toLowerCase() === "pro") && (
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100/80 space-y-4">
+                {/* हेडिंग और छोटा ब्यौरा */}
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <svg
+                      xmlns="http://w3.org"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      className="text-purple-600"
+                    >
+                      <path d="M4 12a8 8 0 0 1 16 0M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6" />
+                    </svg>
+                    <h2 className="text-base font-black text-gray-800 tracking-wide uppercase">
+                      Fabric Shop Link
+                    </h2>
+                  </div>
+                  <p className="text-gray-400 text-xs font-medium">
+                    Unstitched fabric customers ko share karo!
+                  </p>
+                </div>
+
+                {/* यूआरएल डिस्प्ले बॉक्स */}
+                <div className="bg-purple-50/40 border border-purple-100/30 rounded-xl p-3 font-mono text-xs text-purple-700 break-all select-all font-semibold">
+                  {window.location.origin}/fabric/
+                  {dashboard?.sellerId ||
+                    dashboard?.id ||
+                    seller?.sellerId ||
+                    "1780063620784"}
+                </div>
+
+                {/* एक्शन बटन्स ग्रिड */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* 1. कॉपी लिंक बटन */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const sellerId =
+                        dashboard?.sellerId ||
+                        dashboard?.id ||
+                        seller?.sellerId ||
+                        "1780063620784";
+                      const url = `${window.location.origin}/fabric/${sellerId}`;
+                      navigator.clipboard.writeText(url);
+
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                    className={`py-3 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm
+                   transform hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-300 cursor-pointer flex items-center justify-center gap-1.5
+                   ${
+                     copied
+                       ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+                       : "bg-purple-50 text-purple-700 hover:bg-purple-100/80 border border-purple-200/50"
+                   }`}
+                  >
+                    {copied ? (
+                      <>
+                        <svg
+                          xmlns="http://w3.org"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span className="normal-case">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          xmlns="http://w3.org"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
+                          <rect
+                            width="8"
+                            height="4"
+                            x="8"
+                            y="2"
+                            rx="1"
+                            ry="1"
+                          />
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                        </svg>
+                        <span>Copy Link</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* 2. ओपन शॉप बटन */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const sellerId =
+                        dashboard?.sellerId ||
+                        dashboard?.id ||
+                        seller?.sellerId ||
+                        "1780063620784";
+                      const url = `${window.location.origin}/fabric/${sellerId}`;
+                      window.open(url, "_blank", "noopener,noreferrer");
+                    }}
+                    className="bg-gradient-to-r from-purple-600 via-purple-600 to-indigo-600 text-white
+                   py-3 rounded-xl text-xs font-black uppercase tracking-wider shadow-md shadow-purple-500/10
+                   transform hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <svg
+                      xmlns="http://w3.org"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <path d="M15 3h6v6" />
+                      <path d="M10 14 21 3" />
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    </svg>
+                    <span>Open Shop</span>
+                  </button>
+                </div>
+                {/* 3. व्हाट्सएप शेयर बटन */}
+                <a
+                  href={
+                    "https://wa.me Fabric Shop dekhein! 🧵\n" +
+                    window.location.origin +
+                    "/fabric/" +
+                    (dashboard?.sellerId || dashboard?.id || "1780063620784")
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white
+                         py-3 rounded-xl text-xs font-black uppercase tracking-wider text-center
+                         shadow-md shadow-green-500/10 hover:shadow-green-500/30
+                         transform hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <svg
+                    xmlns="http://w3.org"
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                  </svg>
+                  <span>WhatsApp Par Share Karo</span>
+                </a>
+              </div>
+            )}
 
             {/* Shop Settings */}
             <div className="mt-6 pt-6 border-t">
@@ -1737,6 +2586,11 @@ export default function Dashboard() {
 
         {/* Orders Tab */}
         {activeTab === "orders" && <SellerOrders token={token} />}
+
+        {/* Fabric Tab */}
+        {activeTab === "fabric" && (
+          <FabricDashboard token={token} seller={seller} />
+        )}
 
         {/* Integration Tab */}
         {activeTab === "integration" && (

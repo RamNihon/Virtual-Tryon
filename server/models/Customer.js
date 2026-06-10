@@ -11,6 +11,18 @@ const customerSchema = new mongoose.Schema(
       enum: ["male", "female", "other"],
     },
     password: String,
+    measurements: {
+      chest: Number,
+      waist: Number,
+      hips: Number,
+      shoulder: Number,
+      sleeveLength: Number,
+      shirtLength: Number,
+      pantLength: Number,
+      thigh: Number,
+      neck: Number,
+      updatedAt: { type: Date, default: Date.now },
+    },
     addresses: [
       {
         label: String,

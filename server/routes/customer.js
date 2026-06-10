@@ -197,9 +197,9 @@ router.post("/orders", customerAuth, async (req, res) => {
       address,
       paymentMethod,
       quantity = 1,
-      selectedSize = ''
+      selectedSize = "",
     } = req.body;
-   
+
     const seller = await Seller.findOne({ sellerId });
     const product = await Product.findById(productId);
 
@@ -315,11 +315,14 @@ router.post("/orders/verify-payment", customerAuth, async (req, res) => {
 router.get("/orders", customerAuth, async (req, res) => {
   try {
     const orders = await Order.find({
-  customer: req.customerId
-})
-  .sort({ createdAt: -1 })
-  .populate('seller', 'name')
-  .populate('product', 'brandName description originalPrice highlights sizes');
+      customer: req.customerId,
+    })
+      .sort({ createdAt: -1 })
+      .populate("seller", "name")
+      .populate(
+        "product",
+        "brandName description originalPrice highlights sizes",
+      );
 
     res.json({ success: true, orders });
   } catch (error) {
@@ -350,6 +353,43 @@ router.post("/orders/:orderId/return", customerAuth, async (req, res) => {
   }
 });
 
+// Save Measurements
+router.post("/measurements", customerAuth, async (req, res) => {
+  try {
+    const measurements = {
+      ...req.body,
+      updatedAt: new Date(),
+    };
+    const customer = await Customer.findByIdAndUpdate(
+      req.customerId,
+      { measurements },
+      { new: true },
+    ).select("-password");
+
+    res.json({
+      success: true,
+      measurements: customer.measurements,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get Measurements
+router.get("/measurements", customerAuth, async (req, res) => {
+  try {
+    const customer = await Customer.findById(req.customerId).select(
+      "measurements",
+    );
+
+    res.json({
+      success: true,
+      measurements: customer.measurements || null,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 // Delete Account
 router.delete("/account", customerAuth, async (req, res) => {
   try {

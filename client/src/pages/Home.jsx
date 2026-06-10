@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useEffect } from 'react'
-import API_URL from '../api'
+import { useEffect } from "react";
+import API_URL from "../api";
 
 export default function Home() {
   const { token } = useAuth();
@@ -10,9 +10,9 @@ export default function Home() {
     async function wakeServer() {
       try {
         await fetch(`${API_URL}/`);
-        console.log('Server awake!');
+        console.log("Server awake!");
       } catch (e) {
-        console.log('Waking server...');
+        console.log("Waking server...");
       }
     }
 
@@ -462,6 +462,14 @@ export default function Home() {
                 color: "bg-purple-50",
                 iconBg: "bg-purple-100",
               },
+
+              {
+                icon: "🧵",
+                title: "Fabric to Garment",
+                desc: "Our Advance AI model turns unstitched fabric into a stitched shirt/kurta/pant!",
+                color: "bg-emerald-50",
+                iconBg: "bg-emerald-100",
+              },
               {
                 icon: "✨",
                 title: "AI Style Advisor",
@@ -480,8 +488,15 @@ export default function Home() {
                 icon: "🏪",
                 title: "Free Shop Page",
                 desc: "Don't have a website? No problem! Get your shop URL and add it to your Instagram bio or Anywhere!",
-                color: "bg-green-50",
-                iconBg: "bg-green-100",
+                color: "bg-yellow-50",
+                iconBg: "bg-yellow-100",
+              },
+              {
+                icon: "💳",
+                title: "Credit System",
+                desc: "Pay as you go! Pay for what you use. Top-up anytime!",
+                 color: "bg-pink-50",
+                iconBg: "bg-blue-100",
               },
               {
                 icon: "📱",
@@ -490,6 +505,7 @@ export default function Home() {
                 color: "bg-emerald-50",
                 iconBg: "bg-emerald-100",
               },
+
               {
                 icon: "📊",
                 title: "Analytics Dashboard",
@@ -549,136 +565,80 @@ export default function Home() {
             {[
               {
                 name: "Free",
+                emoji: "🆓",
                 price: "₹0",
-                period: "forever",
-                features: [
-                  "50 try-ons/month",
-                  "Basic shop page",
-                  "WhatsApp orders",
-                  "AI style advice",
-                ],
-                cta: "Start in Free",
-                link: "/register",
-                style: "border border-gray-200 bg-white",
+                credits: "100 credits",
+                limit: "~10 try-ons",
+                color: "border-gray-300",
+                btn: "bg-gray-800",
               },
               {
-                name: "Starter",
-                price: "₹1,999",
-                period: "/month",
-                features: [
-                  "500 try-ons/month",
-                  "Custom shop page",
-                  "Website widget",
-                  "AI style advice",
-                  "Priority support",
-                ],
-                cta: "Buy Starter",
-                link: "/pricing",
-                style: "bg-gradient-to-br from-purple-600 to-indigo-600",
-                popular: true,
+                name: "Basic",
+                emoji: "🚀",
+                price: "₹999",
+                credits: "1,500 credits",
+                limit: "~150 try-ons",
+                color: "border-blue-400",
+                btn: "bg-blue-600",
               },
               {
                 name: "Pro",
+                emoji: "💎",
+                price: "₹2,499",
+                credits: "3,500 credits",
+                limit: "Fabric shop + try-ons",
+                color: "border-purple-500",
+                btn: "bg-purple-700",
+                popular: true,
+              },
+              {
+                name: "Elite",
+                emoji: "👑",
                 price: "₹4,999",
-                period: "/month",
-                features: [
-                  "Unlimited try-ons",
-                  "Custom shop page",
-                  "Website widget",
-                  "AI style advice",
-                  "Analytics dashboard",
-                  "Priority support",
-                ],
-                cta: "Buy Pro!",
-                link: "/pricing",
-                style: "border border-gray-200 bg-white",
+                credits: "10,000 credits",
+                limit: "Everything unlimited",
+                color: "border-yellow-500",
+                btn: "bg-gradient-to-r from-yellow-500 to-orange-500",
               },
             ].map((plan, i) => (
               <div
                 key={i}
-                className={`${plan.style} rounded-3xl p-8
-                            relative hover:shadow-xl
-                            transition-all duration-300
-                            hover:-translate-y-2`}
+                className={`border-2 ${plan.color}
+             rounded-2xl p-6 text-center
+             relative hover:shadow-lg
+             transition-all hover:-translate-y-1`}
               >
                 {plan.popular && (
-                  <div
-                    className="absolute -top-4 left-1/2
-                                  -translate-x-1/2
-                                  bg-gradient-to-r from-yellow-400
-                                  to-orange-400 text-white
-                                  px-6 py-1.5 rounded-full
-                                  text-sm font-bold shadow-lg"
+                  <span
+                    className="absolute -top-3
+                     left-1/2 -translate-x-1/2
+                     bg-purple-700 text-white
+                     px-4 py-1 rounded-full text-sm
+                     font-bold"
                   >
-                    ⭐ Most Popular
-                  </div>
+                    ⭐ Popular
+                  </span>
                 )}
-
-                <h3
-                  className={`font-bold text-xl mb-1
-                                ${
-                                  plan.popular ? "text-white" : "text-gray-800"
-                                }`}
-                >
-                  {plan.name}
-                </h3>
-                <div className="flex items-end gap-1 mb-6">
-                  <span
-                    className={`text-4xl font-black
-                                   ${
-                                     plan.popular
-                                       ? "text-white"
-                                       : "text-gray-800"
-                                   }`}
-                  >
-                    {plan.price}
-                  </span>
-                  <span
-                    className={`text-sm mb-1
-                                   ${
-                                     plan.popular
-                                       ? "text-purple-200"
-                                       : "text-gray-400"
-                                   }`}
-                  >
-                    {plan.period}
-                  </span>
+                <div className="text-3xl mb-2">{plan.emoji}</div>
+                <h3 className="font-bold text-xl mb-1">{plan.name}</h3>
+                <p className="text-3xl font-black text-gray-800 mb-1">
+                  {plan.price}
+                </p>
+                <p className="text-xs text-gray-400 mb-2">/month</p>
+                <div className="bg-purple-50 rounded-xl py-2 px-3 mb-2">
+                  <p className="text-purple-700 font-bold text-sm">
+                    💳 {plan.credits}
+                  </p>
                 </div>
-
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((f, fi) => (
-                    <li
-                      key={fi}
-                      className={`flex items-center gap-2 text-sm
-                                 ${
-                                   plan.popular
-                                     ? "text-purple-100"
-                                     : "text-gray-600"
-                                 }`}
-                    >
-                      <span
-                        className={
-                          plan.popular ? "text-green-300" : "text-green-500"
-                        }
-                      >
-                        ✓
-                      </span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-
+                <p className="text-gray-500 text-sm mb-5">{plan.limit}</p>
                 <Link
-                  to={plan.link}
-                  className={`block text-center py-3 rounded-2xl
-                             font-semibold transition-all duration-300
-                             ${
-                               plan.popular
-                                 ? "bg-white text-purple-700 hover:bg-purple-50"
-                                 : "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90"
-                             }`}
+                  to="/pricing"
+                  className={`${plan.btn} text-white
+                px-6 py-3 rounded-full
+                font-semibold block
+                hover:opacity-90 transition`}
                 >
-                  {plan.cta}
+                  See Details →
                 </Link>
               </div>
             ))}

@@ -79,10 +79,11 @@ export default function Analytics() {
         >
           <div className="text-6xl mb-4">📊</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-3">
-            Analytics - Starter/Pro Only
+            Analytics - Basic/Pro/Elite Only
           </h2>
           <p className="text-gray-500 mb-6 leading-relaxed">
-            To view detailed analytics and graphs, get the Starter or Pro plan!
+            To view detailed analytics and graphs, get the Basic, Pro or Elite
+            plan!
           </p>
           <div className="bg-purple-50 rounded-2xl p-4 mb-6">
             <p className="text-purple-700 text-sm font-medium">
@@ -181,16 +182,31 @@ export default function Analytics() {
               color: "bg-green-50 border-green-100",
             },
             {
+              icon: "🧵",
+              label: "Fabric Generations",
+              value: stats.fabricGenCount || 0,
+              color: "bg-blue-50 border-blue-100",
+            },
+            {
+              icon: "✨",
+              label: "Fabric Try-Ons",
+              value: stats.fabricTryonCount || 0,
+              color: "bg-indigo-50 border-indigo-100",
+            },
+            {
               icon: "🔥",
               label: "This Week Try-Ons",
               value: stats.recentTryons || 0,
               color: "bg-orange-50 border-orange-100",
             },
             {
-              icon: "💰",
-              label: "This Week Orders",
-              value: stats.recentOrders || 0,
-              color: "bg-blue-50 border-blue-100",
+              icon: "💳",
+              label: "Credits Baaki",
+              value: stats.credits || 0,
+              color:
+                stats.credits < 50
+                  ? "bg-red-50 border-red-200"
+                  : "bg-emerald-50 border-emerald-100",
             },
           ].map((stat, i) => (
             <div

@@ -284,143 +284,92 @@ router.post("/settings", authMiddleware, async (req, res) => {
 });
 
 // Analytics route - dashboard route ke baad add karo
-router.get("/analytics", authMiddleware, async (req, res) => {
+router.get('/analytics', authMiddleware, async (req, res) => {
   try {
-    const seller = await Seller.findById(req.sellerId);
-    const products = await Product.find({
-      seller: req.sellerId,
-    });
+    const seller = await Seller.findById(req.sellerId)
+    const products = await Product.find({ seller: req.sellerId })
 
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const sevenDaysAgo = new Date()
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    // Try-on history - empty ho to bhi kaam kare
-    let recentTryons = [];
-    let totalOrders = 0;
-    let recentOrders = [];
+    let recentTryons = []
+    let totalOrders = 0
+    let recentOrders = []
+    let fabricGenCount = 0
+    let fabricTryonCount = 0
 
     try {
       recentTryons = await TryonHistory.find({
         seller: req.sellerId,
-        createdAt: { $gte: sevenDaysAgo },
-      });
-    } catch (e) {
-      console.log("TryonHistory error:", e.message);
-    }
+        createdAt: { $gte: sevenDaysAgo }
+      })
+    } catch (e) { console.log('TryonHistory err:', e.message) }
 
     try {
+      const OrderRequest = require('../models/OrderRequest')
       totalOrders = await OrderRequest.countDocuments({
-        seller: req.sellerId,
-      });
+        seller: req.sellerId
+      })
       recentOrders = await OrderRequest.find({
         seller: req.sellerId,
-        createdAt: { $gte: sevenDaysAgo },
-      });
-    } catch (e) {
-      console.log("OrderRequest error:", e.message);
-    }
+        createdAt: { $gte: sevenDaysAgo }
+      })
+    } catch (e) { console.log('OrderRequest err:', e.message) }
 
-    // Daily data - simple loop
-    const dailyData = [];
+    try {
+      const CreditTransaction = require('../models/CreditTransaction')
+      fabricGenCount = await CreditTransaction.countDocuments({
+        seller: req.sellerId,
+        action: 'fabricGen'
+      })
+      fabricTryonCount = await CreditTransaction.countDocuments({
+        seller: req.sellerId,
+        action: 'fabricTryon'
+      })
+    } catch (e) { console.log('CreditTransaction err:', e.message) }
+
+    // Daily data - SAHI LOOP
+    const dailyData = []
     for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      date.setHours(0, 0, 0, 0);
-      const nextDate = new Date(date);
-      nextDate.setDate(nextDate.getDate() + 1);
+      const date = new Date()
+      date.setDate(date.getDate() - i)
+      date.setHours(0, 0, 0, 0)
+      const nextDate = new Date(date)
+      nextDate.setDate(nextDate.getDate() + 1)
 
-      let tryons = 0;
-      let orders = 0;
-
-      try {
-        tryons = await TryonHistory.countDocuments({
-          seller: req.sellerId,
-          createdAt: { $gte: date, $lt: nextDate },
-        });
-        orders = await OrderRequest.countDocuments({
-          seller: req.sellerId,
-          createdAt: { $gte: date, $lt: nextDate },
-        });
-      } catch (e) {
-        // Silent fail - 0 hi rahega
-      }
-      // Fabric generation count
-      let fabricGenCount = 0;
-      let fabricTryonCount = 0;
+      let dayTryons = 0
+      let dayOrders = 0
 
       try {
-        const CreditTransaction = require("../models/CreditTransaction");
-
-        fabricGenCount = await CreditTransaction.countDocuments({
+        dayTryons = await TryonHistory.countDocuments({
           seller: req.sellerId,
-          action: "fabricGen",
-        });
+          createdAt: { $gte: date, $lt: nextDate }
+        })
+      } catch (e) { dayTryons = 0 }
 
-        fabricTryonCount = await CreditTransaction.countDocuments({
+      try {
+        const OrderRequest = require('../models/OrderRequest')
+        dayOrders = await OrderRequest.countDocuments({
           seller: req.sellerId,
-          action: "fabricTryon",
-        });
-
-        // Direct orders count
-        const directOrders = await Order.countDocuments({
-          seller: req.sellerId,
-          paymentStatus: "paid",
-        });
-
-        // Daily data mein fabric bhi add karo
-        for (let i = 0; i < dailyData.length; i++) {
-          const date = new Date();
-          date.setDate(date.getDate() - (6 - i));
-          date.setHours(0, 0, 0, 0);
-          const nextDate = new Date(date);
-          nextDate.setDate(nextDate.getDate() + 1);
-
-          const fabricGens = await CreditTransaction.countDocuments({
-            seller: req.sellerId,
-            action: "fabricGen",
-            createdAt: { $gte: date, $lt: nextDate },
-          });
-
-          dailyData[i].fabricGens = fabricGens;
-        }
-      } catch (e) {
-        console.log("Analytics extra data error:", e.message);
-      }
-
-      // Stats mein add karo:
-      res.json({
-        success: true,
-        stats: {
-          totalTryons: seller.tryonCount || 0,
-          totalProducts: products.length || 0,
-          recentTryons: recentTryons.length || 0,
-          totalOrders,
-          recentOrders: recentOrders.length || 0,
-          fabricGenCount, // ← Naya
-          fabricTryonCount, // ← Naya
-          plan: seller.plan,
-          credits: seller.credits || 0,
-          monthlyCreditsUsed: seller.monthlyCreditsUsed || 0,
-          monthlyCreditsLimit: seller.monthlyCreditsLimit || 100,
-        },
-        dailyData,
-        productTryons: [],
-      });
+          createdAt: { $gte: date, $lt: nextDate }
+        })
+      } catch (e) { dayOrders = 0 }
 
       dailyData.push({
-        date: date.toLocaleDateString("en-IN", {
-          day: "numeric",
-          month: "short",
+        date: date.toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'short'
         }),
-        tryons,
-        orders,
-      });
+        tryons: Number(dayTryons),
+        orders: Number(dayOrders),
+        fabricGens: 0
+      })
     }
 
-    res.json({
+    // console.log('Daily data:', JSON.stringify(dailyData))
+
+    // EK HI RES.JSON - BILKUL END MEIN
+    return res.json({
       success: true,
       stats: {
         totalTryons: seller.tryonCount || 0,
@@ -428,17 +377,22 @@ router.get("/analytics", authMiddleware, async (req, res) => {
         recentTryons: recentTryons.length || 0,
         totalOrders: totalOrders || 0,
         recentOrders: recentOrders.length || 0,
+        fabricGenCount: fabricGenCount || 0,
+        fabricTryonCount: fabricTryonCount || 0,
         plan: seller.plan,
-        tryonLimit: seller.tryonLimit,
+        credits: seller.credits || 0,
+        monthlyCreditsUsed: seller.monthlyCreditsUsed || 0,
+        monthlyCreditsLimit: seller.monthlyCreditsLimit || 100
       },
       dailyData,
-      productTryons: [],
-    });
+      productTryons: []
+    })
+
   } catch (error) {
-    console.error("Analytics error:", error);
-    res.status(500).json({ message: error.message });
+    console.error('Analytics error:', error)
+    return res.status(500).json({ message: error.message })
   }
-});
+})
 
 // Public route - koi bhi call kar sakta hai
 router.post("/track-order", async (req, res) => {

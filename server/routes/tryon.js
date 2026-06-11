@@ -150,20 +150,23 @@ router.post(
   ]),
   async (req, res) => {
     try {
-      // API Key se seller identify karo
       const apiKey = req.headers["x-api-key"];
-      const seller = await Seller.findOne({ apiKey });
 
+      if (!apiKey) {
+        return res.status(401).json({
+          message: "API key missing!",
+        });
+      }
+
+      const seller = await Seller.findOne({ apiKey });
       if (!seller) {
         return res.status(401).json({
           message: "Invalid API key!",
         });
       }
 
-      // Limit check karo
-      // Credit system check
+      // Credit check
       try {
-        await sendLimitWarningEmail(seller);
         await useCredits(Seller, seller._id, "readyTryon");
       } catch (creditError) {
         return res.status(403).json({
@@ -172,46 +175,38 @@ router.post(
         });
       }
 
-      const newCount = seller.tryonCount + 1;
-      const limitPercent = (newCount / seller.tryonLimit) * 100;
-
-      if (limitPercent >= 90) {
-        await sendLimitWarningEmail({
-          ...seller.toObject(),
-          tryonCount: newCount,
+      if (!req.files?.humanImage?.[0]) {
+        return res.status(400).json({
+          message: "Photo upload karo!",
         });
       }
 
-      console.log("📸 Images upload ho rahi hain...");
-
-      // Human image Cloudinary par upload karo
+      // Human image cloudinary par upload karo
       const humanUrl = await uploadToCloudinary(
-        req.files["humanImage"][0].buffer,
+        req.files.humanImage[0].buffer,
         "tryon/humans",
       );
 
-      // Garment image - file ya URL
-      let garmentUrl;
-      if (req.files["garmentImage"]) {
-        garmentUrl = await uploadToCloudinary(
-          req.files["garmentImage"][0].buffer,
-          "tryon/garments",
-        );
-      } else if (req.body.garmentUrl) {
-        garmentUrl = req.body.garmentUrl;
+      const garmentUrl = req.body.garmentUrl;
+
+      if (!garmentUrl) {
+        return res.status(400).json({
+          message: "Garment image URL missing!",
+        });
       }
 
-      console.log("✅ Cloudinary upload done!");
-      console.log("🤖 Replicate AI processing...");
+      console.log("🚀 IDM-VTON starting...");
+      console.log("Human URL:", humanUrl);
+      console.log("Garment URL:", garmentUrl);
 
-      // Replicate IDM-VTON call
+      // IDM-VTON run karo
       const output = await replicate.run(
         "cuuupid/idm-vton:906425dbca90663ff5427624839572cc56ea7d380343d13e2a4c4b09d3f0c30f",
         {
           input: {
             human_img: humanUrl,
             garm_img: garmentUrl,
-            garment_des: req.body.description || "clothing item",
+            garment_des: req.body.description || "clothing",
             is_checked: true,
             is_checked_crop: false,
             denoise_steps: 30,
@@ -219,6 +214,50 @@ router.post(
           },
         },
       );
+
+     // Neeche yeh add karo:
+console.log('RAW OUTPUT:', output)
+console.log('OUTPUT TYPE:', typeof output)
+console.log('IS ARRAY:', Array.isArray(output))
+
+// Output URL extract karo correctly:
+let resultUrl = ''
+if (typeof output === 'string') {
+  resultUrl = output
+} else if (Array.isArray(output)) {
+  resultUrl = output[0]
+} else if (output?.url) {
+  resultUrl = output.url
+} else {
+  // Replicate ReadableStream ho sakta hai!
+  resultUrl = String(output)
+}
+
+console.log('FINAL URL:', resultUrl)
+
+      // Cloudinary par save karo
+    let finalImageUrl = resultUrl
+try {
+  const imageResponse = await fetch(resultUrl)
+  if (imageResponse.ok) {
+    const arrayBuffer = await imageResponse.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
+    finalImageUrl = await uploadToCloudinary(
+      buffer,
+      'tryon/results'
+    )
+    console.log('✅ Saved to Cloudinary:', finalImageUrl)
+  }
+} catch (saveErr) {
+  console.log('⚠️ Cloudinary save failed:', saveErr.message)
+  // Original URL use karo fallback ke liye
+}
+
+      // Legacy count
+      await Seller.findByIdAndUpdate(seller._id, {
+        $inc: { tryonCount: 1 },
+      });
 
       console.log("🎉 Try-on result ready!");
       console.log("✨ Style advice le rahe hain...");
@@ -246,7 +285,7 @@ router.post(
 
       res.json({
         success: true,
-        resultImage: output,
+        resultImage: finalImageUrl,
         styleAdvice,
         humanImage: humanUrl,
         garmentImage: garmentUrl,
@@ -258,7 +297,7 @@ router.post(
         humanImage: humanUrl,
       });
     } catch (error) {
-      console.error("❌ Error:", error.message);
+      console.error("❌Tryon Error:", error.message);
       res.status(500).json({
         success: false,
         message: error.message,

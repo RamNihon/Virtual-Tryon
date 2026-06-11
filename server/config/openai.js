@@ -5,7 +5,7 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const CREDIT_COSTS = {
   readyTryon: 5, // IDM-VTON try-on
   fabricGen: 12, // GPT Image 2 fabric → garment
-  fabricTryon: 8, // IDM-VTON for fabric garment
+  fabricTryon: 20, // IDM-VTON for fabric garment
   styleAdvice: 1, // Claude style advice
 };
 
@@ -183,9 +183,85 @@ const generateGarmentFromFabric = async (
   return data.data[0].b64_json;
 };
 
+// server/config/openai.js mein
+// generateGarmentFromFabric ke baad add karo:
+
+const tryOnGarmentGPT = async (
+  humanImageBase64,
+  garmentImageUrl
+) => {
+  console.log('🚀 GPT Image 2 try-on starting...')
+
+  // Garment image download karo
+  const garmentResponse = await fetch(garmentImageUrl)
+  if (!garmentResponse.ok) {
+    throw new Error('Garment image download failed!')
+  }
+  const garmentArrayBuffer = await garmentResponse.arrayBuffer()
+  const garmentBuffer = Buffer.from(garmentArrayBuffer)
+
+  // Human image buffer
+  const humanBuffer = Buffer.from(humanImageBase64, 'base64')
+
+  // FormData banao
+  const FormData = require('form-data')
+  const formData = new FormData()
+
+  formData.append('model', 'gpt-image-2')
+  formData.append('prompt',
+    `Virtual try-on: Make this person wear the garment from the second image.
+    CRITICAL RULES:
+    - Keep the person's face EXACTLY identical - same skin tone, features, expression
+    - Keep the background EXACTLY the same
+    - Keep the person's pants/lower body same
+    - Only replace the upper body clothing with the provided garment
+    - Make the fit look natural and realistic
+    - Preserve hair, accessories, and all facial details perfectly`
+  )
+  formData.append('n', '1')
+  formData.append('size', '1024x1536')
+  formData.append('quality', 'medium')
+
+  // Images append karo
+  formData.append(
+    'image[]',
+    humanBuffer,
+    { filename: 'person.jpg', contentType: 'image/jpeg' }
+  )
+  formData.append(
+    'image[]',
+    garmentBuffer,
+    { filename: 'garment.jpg', contentType: 'image/jpeg' }
+  )
+
+  const response = await fetch(
+    'https://api.openai.com/v1/images/edits',
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        ...formData.getHeaders()
+      },
+      body: formData
+    }
+  )
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    console.log('GPT Image 2 error:', data)
+    throw new Error(data.error?.message || 'GPT Image 2 try-on failed!')
+  }
+
+  console.log('✅ GPT Image 2 try-on done!')
+  return data.data[0].b64_json
+}
+
 module.exports = {
   generateGarmentFromFabric,
+   tryOnGarmentGPT,
   useCredits,
+    getActionDescription,
   CREDIT_COSTS,
   MONTHLY_CAPS,
 };

@@ -40,7 +40,7 @@ export default function Analytics() {
     try {
       const res = await axios.get(`${API_URL}/api/seller/analytics`, {
         headers: { Authorization: `Bearer ${token}` },
-        timeout: 15000, // 15 second timeout
+        timeout: 25000, // 15 second timeout
       });
       if (res.data.success) {
         setData(res.data);
@@ -54,6 +54,8 @@ export default function Analytics() {
           totalProducts: 0,
           recentTryons: 0,
           totalOrders: 0,
+          fabricGenCount: 0,
+          fabricTryonCount: 0,
           recentOrders: 0,
           plan: seller?.plan,
           tryonLimit: seller?.tryonLimit,
@@ -229,11 +231,23 @@ export default function Analytics() {
           <h2 className="text-lg font-bold text-gray-800 mb-6">
             📈 Last 7 Days Activity
           </h2>
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={dailyData}>
+          <ResponsiveContainer width="100%" height={300} key={dailyData.length}>
+            <LineChart
+              data={dailyData}
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
-              <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 11, fill: "#6b7280" }}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: "#6b7280" }}
+                tickLine={false}
+                axisLine={false}
+                allowDecimals={false}
+              />
               <Tooltip
                 contentStyle={{
                   borderRadius: "12px",
@@ -247,16 +261,20 @@ export default function Analytics() {
                 dataKey="tryons"
                 stroke="#7C3AED"
                 strokeWidth={3}
-                dot={{ r: 5, fill: "#7C3AED" }}
+                dot={{ r: 4, fill: "#7C3AED", strokeWidth: 0 }}
+                activeDot={{ r: 6 }}
                 name="Try-Ons"
+                isAnimationActive={true}
               />
               <Line
                 type="monotone"
                 dataKey="orders"
                 stroke="#10b981"
                 strokeWidth={3}
-                dot={{ r: 5, fill: "#10b981" }}
+                dot={{ r: 4, fill: "#10b981", strokeWidth: 0 }}
+                activeDot={{ r: 6 }}
                 name="Orders"
+                isAnimationActive={true}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -270,11 +288,27 @@ export default function Analytics() {
           <h2 className="text-lg font-bold text-gray-800 mb-6">
             📊 Try-Ons vs Orders Comparison
           </h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={dailyData}>
+          <ResponsiveContainer
+            width="100%"
+            height={280}
+            key={"bar-" + dailyData.length}
+          >
+            <BarChart
+              data={dailyData}
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 11, fill: "#6b7280" }}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: "#6b7280" }}
+                tickLine={false}
+                axisLine={false}
+                allowDecimals={false}
+              />
               <Tooltip
                 contentStyle={{
                   borderRadius: "12px",
@@ -288,12 +322,14 @@ export default function Analytics() {
                 fill="#7C3AED"
                 name="Try-Ons"
                 radius={[6, 6, 0, 0]}
+                maxBarSize={50}
               />
               <Bar
                 dataKey="orders"
                 fill="#10b981"
                 name="Orders"
                 radius={[6, 6, 0, 0]}
+                maxBarSize={50}
               />
             </BarChart>
           </ResponsiveContainer>

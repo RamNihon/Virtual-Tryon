@@ -838,9 +838,23 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
     setTryonResult(null);
 
     try {
+      // generatedImage string hai check karo
+      const garmentUrl =
+        typeof generatedImage === "string"
+          ? generatedImage
+          : generatedImage?.url || "";
+
+      console.log("Garment URL being sent:", garmentUrl);
+
+      if (!garmentUrl || !garmentUrl.startsWith("http")) {
+        alert("Garment image URL invalid hai! Pehle garment generate karen.");
+        setTryonStep(false);
+        return;
+      }
+
       const formData = new FormData();
       formData.append("humanImage", humanImage);
-      formData.append("garmentImageUrl", generatedImage);
+      formData.append("garmentImageUrl", garmentUrl);
       formData.append("apiKey", apiKey);
       formData.append("productId", product._id);
 
@@ -1358,7 +1372,7 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
             )}
 
             {/* Try-On Result */}
-            {tryonResult && (
+            {tryonResult && typeof tryonResult === "string" && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <div className="flex-1 h-px bg-gray-100" />
@@ -1371,7 +1385,13 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
                 <img
                   src={tryonResult}
                   alt="Try-on result"
+                  style={{ display: "block", width: "100%" }}
                   className="w-full rounded-2xl shadow-lg"
+                  onLoad={() => console.log("✅ Fabric tryon image loaded!")}
+                  onError={(e) => {
+                    console.log("❌ Image failed:", e.target.src);
+                    e.target.style.display = "none";
+                  }}
                 />
 
                 {styleAdvice && (

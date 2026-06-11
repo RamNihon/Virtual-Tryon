@@ -247,6 +247,21 @@ router.post("/tryon", upload.single("humanImage"), async (req, res) => {
   try {
     const { garmentImageUrl, apiKey, productId } = req.body;
 
+
+    // garmentImageUrl string check karo
+const garmentUrl = typeof garmentImageUrl === 'string'
+  ? garmentImageUrl
+  : garmentImageUrl?.url || String(garmentImageUrl)
+
+console.log('Garment URL type:', typeof garmentImageUrl)
+console.log('Garment URL value:', garmentUrl)
+
+if (!garmentUrl || !garmentUrl.startsWith('http')) {
+  return res.status(400).json({
+    message: 'Valid garment image URL nahi mili!'
+  })
+}
+
     // Seller identify
     const seller = await Seller.findOne({ apiKey });
     if (!seller) {
@@ -284,7 +299,7 @@ router.post("/tryon", upload.single("humanImage"), async (req, res) => {
       {
         input: {
           human_img: humanUrl,
-          garm_img: garmentImageUrl,
+          garm_img: garmentUrl,
           garment_des: "clothing item",
           is_checked: true,
           is_checked_crop: false,
@@ -321,52 +336,113 @@ router.post("/tryon", upload.single("humanImage"), async (req, res) => {
     console.log("🎉 Fabric try-on done!");
 
     // Style advice (optional - 1 credit)
-    let styleAdvice = null;
-    try {
-      await useCredits(Seller, seller._id, "styleAdvice");
-      const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": process.env.CLAUDE_API_KEY,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: "claude-3-haiku-20240307",
-          max_tokens: 400,
-          messages: [
-            {
-              role: "user",
-              content: [
-                {
-                  type: "image",
-                  source: { type: "url", url: output },
-                },
-                {
-                  type: "text",
-                  text: `Tu ek expert fashion stylist hai.
+    let styleAdvice = null
+try {
+  await useCredits(Seller, seller._id, 'styleAdvice')
+
+  // Kaunsi key hai check karo
+  let styleEndpoint = ''
+  let styleHeaders = {}
+  let styleBody = {}
+
+  if (process.env.ANTHROPIC_API_KEY ||
+      process.env.CLAUDE_API_KEY) {
+    // Direct Anthropic
+    styleEndpoint = 'https://api.anthropic.com/v1/messages'
+    styleHeaders = {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.ANTHROPIC_API_KEY ||
+                   process.env.CLAUDE_API_KEY,
+      'anthropic-version': '2023-06-01'
+    }
+    styleBody = {
+      model: 'claude-haiku-4-5',
+      max_tokens: 300,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'url', url: resultImage }
+          },
+          {
+            type: 'text',
+            text: `Tu ek expert fashion stylist hai.
 Is try-on image ko dekh kar Hindi mein batao:
 
 1. 🎨 Color Rating: /10
 2. ✅ Kya yah achha lag raha hai
 3. 👖 Best combination (pant/bottom)
-4. ❌ Kya avoid karein
+4. ❌ Kya avoid karna chahiye
 5. 🎯 Kis occasion ke liye perfect
-6. 🎯 skin color kaisi hai and  skin color ke hisab se aur konse color combination achha dikhega
-7. 🎯 Aur kya accesories or hairstyle or other improvement kar sakte hain, taki bold and confident dikhen
+6. 🎯 skin color kaisi hai and  skin color ke hisab se aur konse color combination achha dikhega.
+7. ✨ aur konse dress combination achhe rahenge.
+8. 🎯 Aur kya hand accesories or hairstyle or other improvement kar sakte hain, taki confident and smart dikhen
 
-Short aur friendly jawab do!`,
-                },
-              ],
-            },
-          ],
-        }),
-      });
-      const data = await claudeRes.json();
-      styleAdvice = data.content?.[0]?.text;
-    } catch (e) {
-      console.log("Style advice skip:", e.message);
+Short aur friendly jawab den!`
+          }
+        ]
+      }]
     }
+  } else if (process.env.OPENROUTER_API_KEY) {
+    // OpenRouter
+    styleEndpoint = 'https://openrouter.ai/api/v1/chat/completions'
+    styleHeaders = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      'HTTP-Referer': process.env.FRONTEND_URL || 'http://localhost:3000'
+    }
+    styleBody = {
+      model: 'anthropic/claude-3-haiku',
+      max_tokens: 300,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image_url',
+            image_url: { url: resultImage }
+          },
+          {
+            type: 'text',
+            text: `Tu ek expert fashion stylist hai.
+Is try-on image ko dekh kar Hindi mein batao:
+
+1. 🎨 Color Rating: /10
+2. ✅ Kya yah achha lag raha hai
+3. 👖 Best combination (pant/bottom)
+4. ❌ Kya avoid karna chahiye
+5. 🎯 Kis occasion ke liye perfect
+6. 🎯 skin color kaisi hai and  skin color ke hisab se aur konse color combination achha dikhega.
+7. ✨ aur konse dress combination achhe rahenge.
+8. 🎯 Aur kya hand accesories or hairstyle or other improvement kar sakte hain, taki confident and smart dikhen
+
+Short aur friendly jawab den!`
+          }
+        ]
+      }]
+    }
+  }
+
+  if (styleEndpoint) {
+    const styleRes = await fetch(styleEndpoint, {
+      method: 'POST',
+      headers: styleHeaders,
+      body: JSON.stringify(styleBody)
+    })
+    const styleData = await styleRes.json()
+
+    // Response parse karo
+    if (styleData.content) {
+      // Anthropic format
+      styleAdvice = styleData.content?.[0]?.text || null
+    } else if (styleData.choices) {
+      // OpenRouter format
+      styleAdvice = styleData.choices?.[0]?.message?.content || null
+    }
+  }
+} catch (e) {
+  console.log('Style advice skip:', e.message)
+}
 
     // Legacy count
     await Seller.findByIdAndUpdate(seller._id, {
@@ -375,8 +451,8 @@ Short aur friendly jawab do!`,
 
     res.json({
       success: true,
-      resultImage: output,
-      styleAdvice,
+      resultImage: savedImageUrl,
+      styleAdvice :styleAdvice,
       humanImage: humanUrl,
     });
   } catch (error) {

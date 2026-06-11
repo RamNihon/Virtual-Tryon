@@ -3413,9 +3413,12 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
           "Content-Type": "multipart/form-data",
         },
       });
-      if (res.data.success) {
+      if (res.data.success && res.data.resultImage) {
         setTryonResult(res.data.resultImage);
         setStyleAdvice(res.data.styleAdvice);
+      } else {
+        console.log("❌ No resultImage in response!");
+        alert("Try-on result nahi mila! Dobara try karo.");
       }
     } catch {
       alert("Found an error! Please try again.");
@@ -3760,9 +3763,38 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
                       src={tryonResult}
                       alt="Try-on result"
                       className="max-w-full max-h-full
-                     object-contain rounded-2xl
-                     shadow-2xl"
+             object-contain rounded-2xl
+             shadow-2xl"
+                      onLoad={() => {
+                        console.log("✅ Result image loaded:", tryonResult);
+                      }}
+                      onError={(e) => {
+                        console.log("❌ Image failed to load:", tryonResult);
+                        // Fallback - direct link dikhao
+                        e.target.style.display = "none";
+                        document.getElementById(
+                          "tryon-fallback-link",
+                        ).style.display = "block";
+                      }}
                     />
+                    <div
+                      id="tryon-fallback-link"
+                      style={{ display: "none" }}
+                      className="text-center p-4"
+                    >
+                      <p className="text-white text-sm mb-3">
+                        Image load nahi hui. Yahan click karen:
+                      </p>
+                      <a
+                        href={tryonResult}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="bg-white text-purple-700 px-6 py-3
+               rounded-xl font-bold inline-block"
+                      >
+                        🔗 Result Dekhen (New Tab)
+                      </a>
+                    </div>
                   </div>
 
                   {/* Style Advice */}

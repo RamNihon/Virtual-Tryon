@@ -200,7 +200,7 @@ router.post(
       console.log("Garment URL:", garmentUrl);
 
       // IDM-VTON run karo
-      const output = await replicate.run(
+      const rawOutput = await replicate.run(
         "cuuupid/idm-vton:906425dbca90663ff5427624839572cc56ea7d380343d13e2a4c4b09d3f0c30f",
         {
           input: {
@@ -218,20 +218,46 @@ router.post(
      // Neeche yeh add karo:
 console.log('RAW OUTPUT:', output)
 console.log('OUTPUT TYPE:', typeof output)
-console.log('IS ARRAY:', Array.isArray(output))
 
-// Output URL extract karo correctly:
+// ReadableStream handle karo (Replicate new format)
 let resultUrl = ''
-if (typeof output === 'string') {
-  resultUrl = output
-} else if (Array.isArray(output)) {
-  resultUrl = output[0]
-} else if (output?.url) {
-  resultUrl = output.url
+
+if (typeof rawOutput === 'string') {
+  resultUrl = rawOutput
+} else if (Array.isArray(rawOutput)) {
+  const first = rawOutputt[0]
+resultUrl = typeof item === 'string' ? item
+    : (typeof item?.url === 'function' ? item.url()
+    : item?.url || String(item))
+} else if (rawOutput?.url) {
+  resultUrl = typeof rawOutput.url === 'function'
+    ? rawOutput.url()
+    : rawOutput.url
 } else {
-  // Replicate ReadableStream ho sakta hai!
-  resultUrl = String(output)
+  // ReadableStream - iterate karo
+  try {
+    let lastValue = ''
+    for await (const event of rawOutput) {
+      console.log('Stream event:', event)
+      lastValue = event
+    }
+    resultUrl = typeof lastValue === 'string'
+      ? lastValue
+      : (lastValue?.url ? lastValue.url() : String(lastValue))
+  } catch (e) {
+    console.log('Stream iteration error:', e.message)
+  }
 }
+
+console.log('Final result URL:', resultUrl)
+
+if (!resultUrl || !resultUrl.startsWith('http')) {
+  return res.status(500).json({
+    message: 'Try-on result URL nahi mili! Replicate issue.'
+  })
+}
+
+console.log('EXTRACTED URL:', resultUrl)
 
 console.log('FINAL URL:', resultUrl)
 
@@ -251,7 +277,7 @@ try {
   }
 } catch (saveErr) {
   console.log('⚠️ Cloudinary save failed:', saveErr.message)
-  // Original URL use karo fallback ke liye
+  finalImageUrl = resultUrl
 }
 
       // Legacy count
@@ -293,7 +319,7 @@ try {
 
       await TryonHistory.create({
         seller: seller._id,
-        resultImage: output,
+        resultImage: rawOutput,
         humanImage: humanUrl,
       });
     } catch (error) {

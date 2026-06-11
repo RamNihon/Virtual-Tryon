@@ -5,7 +5,7 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const CREDIT_COSTS = {
   readyTryon: 5, // IDM-VTON try-on
   fabricGen: 12, // GPT Image 2 fabric → garment
-  fabricTryon: 20, // IDM-VTON for fabric garment
+  fabricTryon: 8, // IDM-VTON for fabric garment
   styleAdvice: 1, // Claude style advice
 };
 

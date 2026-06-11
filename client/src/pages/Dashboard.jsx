@@ -749,11 +749,11 @@ function FabricDashboard({ token, seller }) {
                 className="text-sm font-medium
                                 text-gray-700 block mb-1.5"
               >
-                Price (₹) *
+                Total Fabric Bundle Price (₹) *
               </label>
               <input
                 type="number"
-                placeholder="Total price"
+                placeholder="Total bundle price"
                 value={form.price}
                 onChange={(e) =>
                   setForm({
@@ -789,6 +789,15 @@ function FabricDashboard({ token, seller }) {
                            focus:outline-none focus:border-purple-500"
               />
             </div>
+
+             {/* <div>
+              <label
+                className="text-sm font-medium
+                                text-gray-700 block mb-1.5"
+              >
+                You can fill any of Price fields , as per your wish (₹)
+              </label>
+            </div> */}
           </div>
 
           <div className="mt-4">

@@ -759,7 +759,7 @@ function FabricAnimation({ step }) {
         </div>
 
         <p className="text-gray-400 text-xs mt-4">
-          It will take 30-60 seconds 😊
+          It will take 30-60 seconds, Please wait patiently... 😊
         </p>
       </div>
     </div>
@@ -816,7 +816,15 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
         apiKey,
       });
 
-      setGeneratedImage(res.data.imageUrl);
+      // String check karke set karo
+      const imgUrl =
+        typeof res.data.imageUrl === "string"
+          ? res.data.imageUrl
+          : res.data.imageUrl?.url || String(res.data.imageUrl);
+
+      console.log("Generated image URL:", imgUrl);
+
+      setGeneratedImage(imgUrl);
     } catch (err) {
       const errMsg = err.response?.data?.message || "Error aaya!";
       setError(errMsg);
@@ -990,13 +998,19 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
             </div>
 
             {/* 3. PRICE TAG UI (Bold & Clear) */}
-            <div className="flex items-baseline gap-2.5 bg-purple-50/30 p-3 rounded-2xl border border-purple-100/30">
-              <span className="text-3xl font-black bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent drop-shadow-sm">
+
+            <div className="block gap-2.5 bg-purple-50/30 p-3 rounded-2xl border border-purple-100/30">
+              <p className="text-xs text-gray-500 mt-5">
+                Price of the entire fabric bundle
+              </p>
+              <span className="text-4xl font-black bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent drop-shadow-sm">
                 ₹{product.price}
               </span>
+              <br />
               {product.pricePerMeter > 0 && (
-                <span className="text-gray-400 text-xs font-semibold tracking-wide">
-                  / ₹{product.pricePerMeter} per meter
+                <span className="text-green-500 text-sm font-semibold tracking-wide mt-9">
+                  <span>Per Meter Price : </span>₹{product.pricePerMeter} per
+                  meter
                 </span>
               )}
             </div>
@@ -1390,7 +1404,18 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
                   onLoad={() => console.log("✅ Fabric tryon image loaded!")}
                   onError={(e) => {
                     console.log("❌ Image failed:", e.target.src);
+                    // Direct link show karo
                     e.target.style.display = "none";
+                    e.target.parentNode.insertAdjacentHTML(
+                      "afterend",
+                      `<div class="text-center p-4 bg-gray-50 rounded-2xl">
+        <p class="text-gray-500 text-sm mb-2">Image load nahi hui.</p>
+        <a href="${tryonResult}" target="_blank"
+           class="text-purple-600 underline text-sm font-bold">
+          🔗 Result Dekho (New Tab)
+        </a>
+      </div>`,
+                    );
                   }}
                 />
 

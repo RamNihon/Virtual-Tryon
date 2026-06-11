@@ -363,7 +363,7 @@ try {
         content: [
           {
             type: 'image',
-            source: { type: 'url', url: resultImage }
+            source: { type: 'url', url: savedImageUrl }
           },
           {
             type: 'text',
@@ -400,7 +400,7 @@ Short aur friendly jawab den!`
         content: [
           {
             type: 'image_url',
-            image_url: { url: resultImage }
+            image_url: { url: savedImageUrl }
           },
           {
             type: 'text',

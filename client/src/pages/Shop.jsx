@@ -139,7 +139,7 @@ function ShopNavbar({ shop, onLoginClick, onProfileClick }) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const features = [
-    "✨ Virtual Try-On",
+    "✨ Virtual Try-On( for uppper body dress only)",
     "🤖 AI Style Advice",
     "📱 Easy WhatsApp Orders",
     "📱 Easy Direct order",
@@ -1095,34 +1095,39 @@ function AddressManager({ customer, customerToken, loginCustomer }) {
   };
 
   const handleSave = async () => {
+    // 1. बुनियादी चेकिंग
     if (!form.fullName || !form.mobile || !form.addressLine1 || !form.pincode) {
       setMsg("❌ Zaroori fields bharo!");
       return;
     }
+
     try {
-      let res;
+      // 2. अगर यूजर पुराने एड्रेस को EDIT कर रहा है (editId मौजूद है)
       if (editId) {
-        res = await axios.put(
-          `${API_URL}/api/customer/address/${editId}`,
-          form,
-          { headers: { Authorization: `Bearer ${customerToken}` } },
-        );
-      } else {
-        res = await axios.post(`${API_URL}/api/customer/address`, form, {
+        // पहले पुराने एड्रेस को डिलीट मारेंगे (चूंकि बैकएंड में डिलीट राउट पहले से बना है)
+        await axios.delete(`${API_URL}/api/customer/address/${editId}`, {
           headers: { Authorization: `Bearer ${customerToken}` },
         });
       }
-      // read API response for user feedback
-      const saved = res?.data;
-      // Update customer context
+
+      // 3. अब नए या एडिटेड डेटा को सीधे POST कर देंगे (यह राउट बैकएंड में चालू है)
+      await axios.post(`${API_URL}/api/customer/address`, form, {
+        headers: { Authorization: `Bearer ${customerToken}` },
+      });
+
+      // 4. कस्टमर का प्रोफाइल डेटा दोबारा फेच करके स्टेट अपडेट करेंगे
       const profileRes = await axios.get(`${API_URL}/api/customer/profile`, {
         headers: { Authorization: `Bearer ${customerToken}` },
       });
+
+      // रिएक्ट की ग्लोबल स्टेट अपडेट करें
       loginCustomer(profileRes.data.customer, customerToken);
-      setMsg(saved?.message || "✅ Address saved successfully!");
+
+      setMsg("🎉 Address saved successfully!");
       setTimeout(() => setMsg(""), 3000);
       resetForm();
     } catch (e) {
+      console.error("Address Save Error:", e);
       setMsg("❌ Error aaya!");
     }
   };
@@ -1488,98 +1493,253 @@ function CustomerProfile({ shop, onClose }) {
         <div className="p-4">
           {/* Profile */}
           {activeSection === "profile" && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="font-bold text-gray-800">My Profile</h3>
+            <div className="w-full max-w-xl mx-auto space-y-5 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm">
+              {/* 1. शीर्ष हिस्सा (Header) - प्रोफाइल टाइटल और एडिट बटन */}
+              <div className="flex justify-between items-center pb-2.5 border-b border-gray-50">
+                <div className="flex items-center gap-2">
+                  <svg
+                    xmlns="http://w3.org"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    className="text-purple-600"
+                  >
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <h3 className="font-black text-gray-800 tracking-wide uppercase text-sm">
+                    My Profile
+                  </h3>
+                </div>
+
+                {/* एडवांस एडिट / कैंसल बटन */}
                 <button
                   onClick={() => setEditingProfile(!editingProfile)}
-                  className="text-purple-600 text-sm font-medium"
+                  className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer flex items-center gap-1 border
+                   ${
+                     editingProfile
+                       ? "bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100/70"
+                       : "bg-purple-50 text-purple-700 border-purple-100/50 hover:bg-purple-100"
+                   }`}
                 >
-                  {editingProfile ? "Cancel" : "✏️ Edit"}
+                  {editingProfile ? (
+                    <>
+                      <svg
+                        xmlns="http://w3.org"
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                      >
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                      <span>Cancel</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        xmlns="http://w3.org"
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z" />
+                      </svg>
+                      <span>Edit</span>
+                    </>
+                  )}
                 </button>
               </div>
-              {["name", "lastName", "mobile"].map((field) => (
-                <div key={field}>
-                  <label
-                    className="text-xs text-gray-400
-                                    capitalize block mb-1"
-                  >
-                    {field === "lastName"
-                      ? "Last Name"
-                      : field.charAt(0).toUpperCase() + field.slice(1)}
-                  </label>
-                  {editingProfile ? (
-                    <input
-                      type="text"
-                      value={profile[field]}
-                      onChange={(e) =>
-                        setProfile({
-                          ...profile,
-                          [field]: e.target.value,
-                        })
-                      }
-                      className="w-full border border-gray-200
-                                 rounded-xl px-4 py-2.5 text-sm
-                                 focus:outline-none
-                                 focus:border-purple-500"
-                    />
-                  ) : (
-                    <p
-                      className="text-gray-700 text-sm
-                                  bg-gray-50 rounded-xl px-4 py-2.5"
-                    >
-                      {profile[field] || "—"}
-                    </p>
-                  )}
-                </div>
-              ))}
+
+              {/* 2. इनपुट फ़ील्ड्स ग्रिड (Name, Last Name, Mobile) */}
+              <div className="space-y-4">
+                {["name", "lastName", "mobile"].map((field) => (
+                  <div key={field} className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block">
+                      {field === "lastName"
+                        ? "Last Name"
+                        : field.charAt(0).toUpperCase() + field.slice(1)}
+                    </label>
+
+                    {editingProfile ? (
+                      /* एडिटिंग मोड: प्रीमियम फोकस स्टेट इनपुट */
+                      <input
+                        type="text"
+                        value={profile[field] || ""}
+                        onChange={(e) =>
+                          setProfile({
+                            ...profile,
+                            [field]: e.target.value,
+                          })
+                        }
+                        className="w-full border border-gray-200 bg-gray-50/30 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800
+                         focus:outline-none focus:border-purple-500 focus:bg-white focus:shadow-md focus:shadow-purple-500/5 transition-all duration-200"
+                      />
+                    ) : (
+                      /* व्यू मोड: क्लीन रीड-ओनली कार्ड */
+                      <p className="text-gray-800 text-sm font-bold bg-gray-50/60 border border-gray-100 rounded-xl px-4 py-3">
+                        {profile[field] || "—"}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* 3. जेंडर सिलेक्शन और सेव बटन (केवल एडिटिंग मोड में) */}
               {editingProfile && (
-                <>
-                  <div>
-                    <label className="text-xs text-gray-400 mb-2 block">
+                <div className="space-y-5 pt-2 animate-fadeIn">
+                  {/* जेंडर चयन बॉक्स */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block">
                       Gender
                     </label>
-                    <div className="flex gap-2">
+                    <div className="grid grid-cols-3 gap-2.5">
                       {["male", "female", "other"].map((g) => (
                         <button
                           key={g}
-                          onClick={() =>
-                            setProfile({
-                              ...profile,
-                              gender: g,
-                            })
-                          }
-                          className={`flex-1 py-2 rounded-xl text-sm
-                                     font-medium capitalize transition
-                                     border
-                                     ${
-                                       profile.gender === g
-                                         ? "bg-purple-600 text-white border-purple-600"
-                                         : "border-gray-200 text-gray-600"
-                                     }`}
+                          type="button"
+                          onClick={() => setProfile({ ...profile, gender: g })}
+                          className={`py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 border flex items-center justify-center gap-1.5 leading-none cursor-pointer transform active:scale-95
+                           ${
+                             profile.gender === g
+                               ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-transparent shadow-md shadow-purple-500/20"
+                               : "border-gray-200 bg-white text-gray-600 hover:border-purple-300 hover:text-purple-700"
+                           }`}
                         >
-                          {g === "male" ? "👨" : g === "female" ? "👩" : "🧑"}{" "}
-                          {g}
+                          {/* जेंडर के हिसाब से कस्टमाइज्ड लाइन आइकॉन */}
+                          {g === "male" && (
+                            <svg
+                              xmlns="http://w3.org"
+                              width="13"
+                              height="13"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                            >
+                              <circle cx="10" cy="14" r="5" />
+                              <path d="M14 10l7-7M16 3h5v5" />
+                            </svg>
+                          )}
+                          {g === "female" && (
+                            <svg
+                              xmlns="http://w3.org"
+                              width="13"
+                              height="13"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                            >
+                              <circle cx="12" cy="9" r="5" />
+                              <path d="M12 14v7M9 18h6" />
+                            </svg>
+                          )}
+                          {g === "other" && (
+                            <svg
+                              xmlns="http://w3.org"
+                              width="13"
+                              height="13"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                            >
+                              <circle cx="12" cy="12" r="10" />
+                              <path d="M12 8v8M8 12h8" />
+                            </svg>
+                          )}
+                          <span>{g}</span>
                         </button>
                       ))}
                     </div>
                   </div>
+
+                  {/* मुख्य सेव बटन (मैजिकल शाइन और रोटेटिंग स्पिनर के साथ) */}
                   <button
                     onClick={saveProfile}
                     disabled={loading}
-                    className="w-full bg-purple-600 text-white
-                               py-3 rounded-xl font-bold
-                               hover:bg-purple-700 transition"
+                    className={`w-full py-3.5 rounded-xl text-xs font-black uppercase tracking-widest text-white transition-all duration-300 relative overflow-hidden flex items-center justify-center gap-2
+                     ${
+                       loading
+                         ? "bg-gradient-to-r from-gray-300 to-gray-400 cursor-not-allowed shadow-none"
+                         : "bg-gradient-to-r from-purple-600 via-purple-600 to-indigo-600 shadow-md shadow-purple-500/10 hover:shadow-lg hover:shadow-purple-500/30 hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
+                     }`}
                   >
-                    {loading ? "⏳..." : "💾 Save"}
+                    {loading ? (
+                      <>
+                        {/* लोडिंग व्हील स्पिनर */}
+                        <svg
+                          className="animate-spin h-4 w-4 text-white"
+                          xmlns="http://w3.org"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 0 1 4 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        <span>Saving Changes...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          xmlns="http://w3.org"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
+                          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                          <polyline points="17 21 17 13 7 13 7 21" />
+                          <polyline points="7 3 7 8 15 8" />
+                        </svg>
+                        <span>Save Profile</span>
+                      </>
+                    )}
                   </button>
+
+                  {/* प्रोफाइल मैसेज/सक्सेस अलर्ट बॉक्स */}
                   {profileMsg && (
-                    <p className="text-sm text-center">{profileMsg}</p>
+                    <div
+                      className={`p-3 rounded-xl text-xs font-bold text-center border animate-pulse [animation-duration:3s]
+                          ${
+                            profileMsg.toLowerCase().includes("error") ||
+                            profileMsg.toLowerCase().includes("fail")
+                              ? "bg-rose-50 border-rose-100 text-rose-600"
+                              : "bg-emerald-50 border-emerald-100 text-emerald-700"
+                          }`}
+                    >
+                      {profileMsg}
+                    </div>
                   )}
-                </>
+                </div>
               )}
             </div>
           )}
+
           {/* Measurements */}
           {activeSection === "measurements" && (
             <div className="space-y-4">
@@ -1779,85 +1939,189 @@ function CustomerProfile({ shop, onClose }) {
           )}
 
           {/* Addresses */}
+          {/* Addresses सेक्शन - इसे एक प्रीमियम पैरेंट विजेट में रैप किया गया है */}
           {activeSection === "addresses" && (
-            <AddressManager
-              customer={customer}
-              customerToken={customerToken}
-              loginCustomer={loginCustomer}
-            />
+            <div className="w-full max-w-xl mx-auto space-y-4 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm animate-fadeIn">
+              <div className="flex items-center gap-2 pb-2.5 border-b border-gray-50 mb-2">
+                <svg
+                  xmlns="http://w3.org"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  className="text-purple-600"
+                >
+                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                <h3 className="font-black text-gray-800 tracking-wide uppercase text-sm">
+                  Saved Addresses
+                </h3>
+              </div>
+
+              <AddressManager
+                customer={customer}
+                customerToken={customerToken}
+                loginCustomer={loginCustomer}
+              />
+            </div>
           )}
-          {/* Account */}
+
+          {/* Account Settings सेक्शन (Logout & Danger Zone) */}
           {activeSection === "account" && (
-            <div className="space-y-4">
-              <h3 className="font-bold text-gray-800">My Account</h3>
-              <button
-                onClick={() => {
-                  logoutCustomer();
-                  onClose();
-                }}
-                className="w-full border-2 border-gray-200
-                           text-gray-600 py-3 rounded-xl
-                           font-semibold hover:bg-gray-50"
-              >
-                🚪 Logout
-              </button>
-              <button
-                onClick={async () => {
-                  if (
-                    !window.confirm(
-                      "Are you sure you want to delete your account?",
-                    )
-                  )
-                    return;
-                  try {
-                    await axios.delete(`${API_URL}/api/customer/account`, {
-                      headers: { Authorization: `Bearer ${customerToken}` },
-                    });
+            <div className="w-full max-w-xl mx-auto space-y-6 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm animate-fadeIn">
+              {/* हेडिंग */}
+              <div className="flex items-center gap-2 pb-2.5 border-b border-gray-50">
+                <svg
+                  xmlns="http://w3.org"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  className="text-purple-600"
+                >
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+                <h3 className="font-black text-gray-800 tracking-wide uppercase text-sm">
+                  Account Settings
+                </h3>
+              </div>
+
+              {/* बटन्स कंटेनर */}
+              <div className="space-y-3">
+                {/* 1. लॉगआउट बटन (क्लीन और मॉडर्न लुक) */}
+                <button
+                  onClick={() => {
                     logoutCustomer();
                     onClose();
-                  } catch (e) {
-                    alert("Error!");
-                  }
-                }}
-                className="w-full bg-red-50 border-2 border-red-200
-                           text-red-600 py-3 rounded-xl font-semibold
-                           hover:bg-red-100"
-              >
-                🗑️ Delete Account
-              </button>
+                  }}
+                  className="w-full border border-gray-200 text-gray-700 py-3.5 rounded-xl
+                   text-xs font-black uppercase tracking-wider bg-white shadow-sm
+                   hover:bg-gray-50 hover:border-gray-300 transform hover:-translate-y-0.5 
+                   active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <svg
+                    xmlns="http://w3.org"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                  <span>Logout Session</span>
+                </button>
+
+                {/* 2. डेंजर ज़ोन: डिलीट अकाउंट बटन (प्रीमियम रेड अलर्ट थीम) */}
+                <div className="pt-2 border-t border-gray-100 mt-4">
+                  <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-2 block pl-1">
+                    Danger Zone
+                  </p>
+                  <button
+                    onClick={async () => {
+                      if (
+                        !window.confirm(
+                          "Are you sure you want to delete your account? This action cannot be undone.",
+                        )
+                      )
+                        return;
+                      try {
+                        await axios.delete(`${API_URL}/api/customer/account`, {
+                          headers: { Authorization: `Bearer ${customerToken}` },
+                        });
+                        logoutCustomer();
+                        onClose();
+                      } catch (e) {
+                        // पुराना डिफ़ॉल्ट अलर्ट बॉक्स सेफ रखा है
+                        alert("Error deleting account!");
+                      }
+                    }}
+                    className="w-full bg-rose-50/60 border border-rose-200 text-rose-600 py-3.5 rounded-xl 
+                     text-xs font-black uppercase tracking-wider shadow-sm
+                     hover:bg-rose-100 hover:border-rose-300 hover:shadow-md hover:shadow-rose-500/5
+                     transform hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <svg
+                      xmlns="http://w3.org"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      <line x1="10" y1="11" x2="10" y2="17" />
+                      <line x1="14" y1="11" x2="14" y2="17" />
+                    </svg>
+                    <span>Delete Account Permanently</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
           {/* Help */}
           {activeSection === "help" && (
-            <div className="space-y-4">
-              <h3 className="font-bold text-gray-800">Help Center</h3>
-              <textarea
-                rows={4}
-                placeholder="Write your query..."
-                className="w-full border border-gray-200
-                           rounded-xl p-3 text-sm
-                           focus:outline-none
-                           focus:border-purple-500 resize-none"
-              />
+            <div className="w-full max-w-xl mx-auto space-y-5 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm">
+              {/* 1. क्लीन एडवांस हेडर */}
+              <div className="flex items-center gap-2 pb-2.5 border-b border-gray-50">
+                <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                <h3 className="font-black text-gray-800 tracking-wide uppercase text-xs">
+                  Help Center & Support
+                </h3>
+              </div>
+
+              {/* 2. प्रीमियम इनपुट बॉक्स (ग्लास इफेक्ट और सॉफ्ट शैडो के साथ) */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pl-1">
+                  Describe Your Issue
+                </label>
+                <textarea
+                  rows={4}
+                  placeholder="How can we help you today? Write your message here..."
+                  className="w-full border border-gray-200 bg-gray-50/40 rounded-xl p-4 text-sm font-semibold text-gray-800 resize-none
+                             focus:outline-none focus:border-purple-500 focus:bg-white focus:shadow-md focus:shadow-purple-500/5 transition-all duration-200"
+                />
+              </div>
+
+              {/* 3. सबमिट बटन (अल्टीमेट पर्पल-इंडिगो ग्रेडिएंट और हैप्टिक क्लिक) */}
               <button
-                className="w-full bg-purple-600 text-white
-                                 py-3 rounded-xl font-bold
-                                 hover:bg-purple-700"
+                className="w-full bg-gradient-to-r from-purple-600 via-purple-600 to-indigo-600 text-white
+                           py-3.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-md shadow-purple-500/10
+                           hover:shadow-lg hover:shadow-purple-500/30 transform hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 cursor-pointer"
               >
-                📩 Submit
+                Submit Query
               </button>
+
+              {/* 4. व्हाट्सएप सपोर्ट (सुपर प्रीमियम नियन ग्रीन कस्टमाइजेशन) */}
               {shop?.whatsapp && (
-                <a
-                  href={`https://wa.me/${shop.whatsapp}?text=Hi, I need help.`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block w-full bg-green-500 text-white
-                             py-3 rounded-xl font-bold text-center
-                             hover:bg-green-600"
-                >
-                  📱 WhatsApp Support
-                </a>
+                <div className="pt-3 border-t border-gray-100 mt-2">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block pl-1">
+                    Instant Live Chat
+                  </p>
+                  <a
+                    href={`https://wa.me{shop.whatsapp}?text=Hi, I need help.`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white
+                               py-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-center
+                               shadow-md shadow-green-500/10 hover:shadow-green-500/30
+                               transform hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-200 cursor-pointer"
+                  >
+                    Chat On WhatsApp
+                  </a>
+                </div>
               )}
             </div>
           )}
@@ -3384,8 +3648,28 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
   const [humanPreview, setHumanPreview] = useState(null);
   const [tryonLoading, setTryonLoading] = useState(false);
   const [tryonResult, setTryonResult] = useState(null);
+  const [zoomScale, setZoomScale] = useState(1); // 1 = normal, 2 = zoomed
   const [styleAdvice, setStyleAdvice] = useState(null);
 
+  const handleDownloadImage = async (imageUrl) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `tryon-${product?.name || "result"}-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Download error:", error);
+      // अगर fetch ब्लॉक होता है तो डायरेक्ट न्यू टैब में खोलने का बैकअप
+      window.open(imageUrl, "_blank");
+    }
+  };
   const handleImage = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -3620,6 +3904,10 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
                   <span className="font-bold">Tip:</span> Seedhi khadi photo
                   (Front-face portrait) best result deti hai!
                 </p>
+                <p className="text-xs font-medium text-red-700 leading-relaxed">
+                  <span className="font-bold">Note:</span> The Try-on feature is
+                  currently working only for the upper body!
+                </p>
               </div>
             </div>
 
@@ -3730,57 +4018,82 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
             {tryonResult && (
               <div>
                 {/* Fullscreen Result */}
-                <div
-                  className="fixed inset-0 bg-black z-50
-                    flex flex-col"
-                >
+                <div className="fixed inset-0 bg-black z-50 flex flex-col">
                   {/* Header */}
-                  <div
-                    className="flex justify-between items-center
-                      px-4 py-3 bg-black bg-opacity-80"
-                  >
+                  {/* Header */}
+                  <div className="flex justify-between items-center px-4 py-3 bg-neutral-900 border-b border-white/10 z-50 w-full relative">
                     <div>
-                      <p className="text-white font-bold">🎉 Try-On Result!</p>
-                      <p className="text-gray-400 text-xs">{product?.name}</p>
+                      <p className="text-white font-bold text-sm sm:text-base">
+                        🎉 Try-On Result !
+                      </p>
+                      <p className="text-gray-400 text-xs">
+                        {product?.name || "shirt"}
+                      </p>
                     </div>
+
+                    {/* एक्शन बटन्स - राइट साइड में बिल्कुल साफ़ दिखेंगे */}
+                    <div className="flex items-center gap-2 sm:gap-4 ml-auto mr-2">
+                      {/* ज़ूम बटन */}
+                      <button
+                        onClick={() =>
+                          setZoomScale((prev) => (prev === 1 ? 1.8 : 1))
+                        }
+                        className="px-2.5 py-1.5 rounded-lg bg-white/20 text-white text-xs font-bold hover:bg-white/30 transition-all active:scale-95"
+                      >
+                        {zoomScale === 1 ? "🔍 Zoom In" : "🔎 Zoom Out"}
+                      </button>
+
+                      {/* डाउनलोड बटन */}
+                      <button
+                        onClick={() => handleDownloadImage(tryonResult)}
+                        className="px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-bold hover:bg-green-700 transition-all shadow-md active:scale-95 flex items-center gap-1"
+                      >
+                        📥 Download
+                      </button>
+                    </div>
+
+                    {/* बंद करने का बटन */}
                     <button
-                      onClick={() => setTryonResult(null)}
-                      className="w-9 h-9 rounded-full bg-white
-                     bg-opacity-20 flex items-center
-                     justify-center text-white
-                     hover:bg-opacity-30 transition"
+                      onClick={() => {
+                        setTryonResult(null);
+                        setZoomScale(1);
+                      }}
+                      className="w-8 h-8 sm:w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition font-bold text-sm"
                     >
                       ✕
                     </button>
                   </div>
 
-                  {/* Result Image - Fullscreen */}
-                  <div
-                    className="flex-1 flex items-center
-                      justify-center p-4 overflow-hidden"
-                  >
+                  {/* Result Image - Fullscreen Container with Scroll Support for Zoom */}
+                  <div className="flex-1 flex items-center justify-center p-4 overflow-auto bg-neutral-950 select-none">
                     <img
                       src={tryonResult}
                       alt="Try-on result"
-                      className="max-w-full max-h-full
-             object-contain rounded-2xl
-             shadow-2xl"
+                      style={{
+                        transform: `scale(${zoomScale})`,
+                        cursor: zoomScale === 1 ? "zoom-in" : "zoom-out",
+                      }}
+                      onClick={() =>
+                        setZoomScale((prev) => (prev === 1 ? 2 : 1))
+                      }
+                      className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl transition-transform duration-300 ease-out origin-center"
                       onLoad={() => {
                         console.log("✅ Result image loaded:", tryonResult);
                       }}
                       onError={(e) => {
                         console.log("❌ Image failed to load:", tryonResult);
-                        // Fallback - direct link dikhao
                         e.target.style.display = "none";
-                        document.getElementById(
+                        const fallback = document.getElementById(
                           "tryon-fallback-link",
-                        ).style.display = "block";
+                        );
+                        if (fallback) fallback.style.display = "block";
                       }}
                     />
+
                     <div
                       id="tryon-fallback-link"
                       style={{ display: "none" }}
-                      className="text-center p-4"
+                      className="text-center p-4 absolute"
                     >
                       <p className="text-white text-sm mb-3">
                         Image load nahi hui. Yahan click karen:
@@ -3789,8 +4102,7 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
                         href={tryonResult}
                         target="_blank"
                         rel="noreferrer"
-                        className="bg-white text-purple-700 px-6 py-3
-               rounded-xl font-bold inline-block"
+                        className="bg-white text-purple-700 px-6 py-3 rounded-xl font-bold inline-block"
                       >
                         🔗 Result Dekhen (New Tab)
                       </a>

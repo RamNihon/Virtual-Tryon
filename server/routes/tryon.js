@@ -141,6 +141,7 @@ Short aur friendly jawab do!`,
   }
 };
 
+// This is tron.js code
 // ─── Main Try-On Route ─────────────────────
 router.post(
   "/",
@@ -196,8 +197,8 @@ router.post(
       }
 
       console.log("🚀 IDM-VTON starting...");
-      console.log("Human URL:", humanUrl);
-      console.log("Garment URL:", garmentUrl);
+      // console.log("Human URL:", humanUrl);
+      // console.log("Garment URL:", garmentUrl);
 
       // IDM-VTON run karo
       const rawOutput = await replicate.run(
@@ -215,70 +216,87 @@ router.post(
         },
       );
 
-     // Neeche yeh add karo:
-console.log('RAW OUTPUT:', output)
-console.log('OUTPUT TYPE:', typeof output)
+      // Neeche yeh add karo:
+      console.log("RAW OUTPUT:", rawOutput);
+      console.log("OUTPUT TYPE:", typeof rawOutput);
 
-// ReadableStream handle karo (Replicate new format)
-let resultUrl = ''
+      // ReadableStream handle karo (Replicate new format)
+      // ReadableStream handle karo (Replicate new format)
+      let resultUrl = "";
 
-if (typeof rawOutput === 'string') {
-  resultUrl = rawOutput
-} else if (Array.isArray(rawOutput)) {
-  const first = rawOutputt[0]
-resultUrl = typeof item === 'string' ? item
-    : (typeof item?.url === 'function' ? item.url()
-    : item?.url || String(item))
-} else if (rawOutput?.url) {
-  resultUrl = typeof rawOutput.url === 'function'
-    ? rawOutput.url()
-    : rawOutput.url
-} else {
-  // ReadableStream - iterate karo
-  try {
-    let lastValue = ''
-    for await (const event of rawOutput) {
-      console.log('Stream event:', event)
-      lastValue = event
-    }
-    resultUrl = typeof lastValue === 'string'
-      ? lastValue
-      : (lastValue?.url ? lastValue.url() : String(lastValue))
-  } catch (e) {
-    console.log('Stream iteration error:', e.message)
-  }
-}
+      if (typeof rawOutput === "string") {
+        resultUrl = rawOutput;
+      } else if (Array.isArray(rawOutput)) {
+        const first = rawOutput[0];
+        // अगर array का पहला एलिमेंट object है और उसमें url प्रॉपर्टी है
+        if (first && typeof first === "object" && first.url) {
+          resultUrl = typeof first.url === "function" ? first.url() : first.url;
+        } else {
+          resultUrl = String(first);
+        }
+      } else if (rawOutput && typeof rawOutput === "object") {
+        // 👈 यहाँ आपके एरर का मुख्य फिक्स है:
+        // अगर पूरा rawOutput ही एक URL object है (जैसा कि आपके टर्मिनल में दिख रहा है)
+        if (rawOutput.url) {
+          resultUrl =
+            typeof rawOutput.url === "function"
+              ? rawOutput.url()
+              : rawOutput.url;
+        } else if (rawOutput.pathname || rawOutput.href) {
+          // अगर object में direct 'url' नहीं है पर pathname/href है
+          resultUrl =
+            rawOutput.href || `https://replicate.delivery${rawOutput.pathname}`;
+        } else {
+          // बैकअप के लिए अगर कोई और फ़ॉर्मेट हो
+          resultUrl = String(rawOutput);
+        }
+      } else {
+        // ReadableStream - iterate karo
+        try {
+          let lastValue = "";
+          for await (const event of rawOutput) {
+            console.log("Stream event:", event);
+            lastValue = event;
+          }
 
-console.log('Final result URL:', resultUrl)
+          if (lastValue && typeof lastValue === "object") {
+            resultUrl = lastValue.url
+              ? typeof lastValue.url === "function"
+                ? lastValue.url()
+                : lastValue.url
+              : String(lastValue);
+          } else {
+            resultUrl = String(lastValue);
+          }
+        } catch (e) {
+          console.log("Stream iteration error:", e.message);
+        }
+      }
 
-if (!resultUrl || !resultUrl.startsWith('http')) {
-  return res.status(500).json({
-    message: 'Try-on result URL nahi mili! Replicate issue.'
-  })
-}
+      // अगर ऊपर से फिर भी Object रह गया हो, तो string में कन्वर्ट करने का फाइनल सेफ्टी चेक
+      if (resultUrl && typeof resultUrl === "object") {
+        resultUrl = resultUrl.href || resultUrl.toString();
+      }
 
-console.log('EXTRACTED URL:', resultUrl)
+      console.log("EXTRACTED URL:", resultUrl);
 
-console.log('FINAL URL:', resultUrl)
+      console.log("FINAL URL:", resultUrl);
 
       // Cloudinary par save karo
-    let finalImageUrl = resultUrl
-try {
-  const imageResponse = await fetch(resultUrl)
-  if (imageResponse.ok) {
-    const arrayBuffer = await imageResponse.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+      let finalImageUrl = resultUrl;
+      try {
+        const imageResponse = await fetch(resultUrl);
+        if (imageResponse.ok) {
+          const arrayBuffer = await imageResponse.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
 
-    finalImageUrl = await uploadToCloudinary(
-      buffer,
-      'tryon/results'
-    )
-    console.log('✅ Saved to Cloudinary:', finalImageUrl)
-  }
-} catch (saveErr) {
-  console.log('⚠️ Cloudinary save failed:', saveErr.message)
-  finalImageUrl = resultUrl
-}
+          finalImageUrl = await uploadToCloudinary(buffer, "tryon/results");
+          console.log("✅ Saved to Cloudinary:", finalImageUrl);
+        }
+      } catch (saveErr) {
+        console.log("⚠️ Cloudinary save failed:", saveErr.message);
+        finalImageUrl = resultUrl;
+      }
 
       // Legacy count
       await Seller.findByIdAndUpdate(seller._id, {
@@ -291,14 +309,23 @@ try {
       // Style Advice - Jo .env mein key ho wahi use hogi
       let styleAdvice = null;
 
-      if (process.env.CLAUDE_API_KEY) {
-        // Direct Anthropic use karo
-        console.log("Using: Direct Anthropic Claude");
-        styleAdvice = await getStyleAdviceClaude(output);
-      } else if (process.env.OPENROUTER_API_KEY) {
-        // OpenRouter use karo
-        console.log("Using: OpenRouter Claude");
-        styleAdvice = await getStyleAdviceOpenRouter(output);
+      try {
+        if (process.env.CLAUDE_API_KEY) {
+          // Direct Anthropic use karo
+          console.log("Using: Direct Anthropic Claude");
+          styleAdvice = await getStyleAdviceClaude(finalImageUrl);
+        } else if (process.env.OPENROUTER_API_KEY) {
+          // OpenRouter use karo - (👈 यहाँ सही फंक्शन का नाम बदल दिया है)
+          console.log("Using: OpenRouter Claude");
+          styleAdvice = await getStyleAdviceOpenRouter(finalImageUrl);
+        }
+      } catch (adviceErr) {
+        // अगर API में कोई एरर आता है, तो यहाँ दिखेगा पर आपका मुख्य रिस्पॉन्स नहीं रुकेगा
+        console.log(
+          "⚠️ Style Advice fail hua par result image safe hai:",
+          adviceErr.message,
+        );
+        styleAdvice = "Style advice is temporary unavailable.";
       }
 
       // Try-on count badhao
@@ -319,7 +346,7 @@ try {
 
       await TryonHistory.create({
         seller: seller._id,
-        resultImage: rawOutput,
+        resultImage: finalImageUrl,
         humanImage: humanUrl,
       });
     } catch (error) {

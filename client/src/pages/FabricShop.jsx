@@ -1009,8 +1009,21 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
               <br />
               {product.pricePerMeter > 0 && (
                 <span className="text-green-500 text-sm font-semibold tracking-wide mt-9">
-                  <span>Per Meter Price : </span>₹{product.pricePerMeter} per
-                  meter
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-50/60 border border-purple-100 shadow-sm mt-1 transition-all duration-300 hover:shadow-md hover:bg-purple-50">
+                    {/* एक छोटा सा प्राइस टैग या स्केल आइकॉन जैसा विजुअल */}
+                    <span className="flex items-center justify-center w-4 h-4 text-purple-500 text-xs">
+                      🏷️
+                    </span>
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Per Meter Price:
+                    </span>
+                    <span className="text-base font-black bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent drop-shadow-sm tracking-tight">
+                      ₹{product.pricePerMeter}
+                    </span>
+                    <span className="text-[10px] font-extrabold text-purple-600 bg-purple-100/80 px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                      / Mtr
+                    </span>
+                  </div>
                 </span>
               )}
             </div>

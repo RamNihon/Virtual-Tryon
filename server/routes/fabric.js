@@ -367,7 +367,7 @@ try {
           },
           {
             type: 'text',
-            text: `Tu ek expert fashion stylist hai.
+            text: `aap ek expert fashion stylist hai.
 Is try-on image ko dekh kar Hindi mein batao:
 
 1. 🎨 Color Rating: /10
@@ -404,7 +404,7 @@ Short aur friendly jawab den!`
           },
           {
             type: 'text',
-            text: `Tu ek expert fashion stylist hai.
+            text: `aap ek expert fashion stylist hai.
 Is try-on image ko dekh kar Hindi mein batao:
 
 1. 🎨 Color Rating: /10

@@ -404,7 +404,7 @@ Short aur friendly jawab den!`
           },
           {
             type: 'text',
-            text: `aap ek expert fashion stylist hai.
+            text: `Tum ek expert fashion stylist hai.
 Is try-on image ko dekh kar Hindi mein batao:
 
 1. 🎨 Color Rating: /10
@@ -442,6 +442,7 @@ Short aur friendly jawab den!`
   }
 } catch (e) {
   console.log('Style advice skip:', e.message)
+   console.error('❌ Style advice error details:', e);
 }
 
     // Legacy count

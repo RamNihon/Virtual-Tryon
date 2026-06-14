@@ -661,5 +661,6 @@ module.exports = {
   sendLimitWarningEmail,
   sendLoginAlertEmail,
   sendContactEmail,
+  sendEmail,
   sendOrderNotificationEmail,
 };

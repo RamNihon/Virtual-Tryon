@@ -895,37 +895,14 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
                         rounded-t-3xl md:rounded-3xl
                         max-h-screen overflow-y-auto shadow-2xl"
         >
-          {/* 1. ADVANCE HEADER (Sticky) */}
-          <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-white/80 backdrop-blur-md rounded-t-3xl sticky top-0 z-10">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2">
-                {/* फैब्रिक रोल का छोटा सा प्रीमियम आइकॉन */}
-                <svg
-                  xmlns="http://w3.org"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  className="text-purple-600"
-                >
-                  <path d="M4 12a8 8 0 0 1 16 0M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6" />
-                </svg>
-                <h2 className="text-lg font-black text-gray-800 tracking-wide">
-                  {product.name}
-                </h2>
-              </div>
-              <p className="text-xs font-semibold text-purple-600/80 bg-purple-50 px-2 py-0.5 rounded-md inline-block">
-                {product.fabricType}
-              </p>
-            </div>
-
-            {/* मॉडर्न क्लोज़ बटन */}
-            <button
-              onClick={onClose}
-              className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 border border-gray-200/40 transform active:scale-95 transition-all duration-200 cursor-pointer"
-            >
+          {/* ─── 1. ADVANCE FIXED HEADER BAR (लाइन 898) ─── */}
+        <div
+          className="flex justify-between items-center p-5 border-b border-gray-100 
+                     bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm"
+        >
+          {/* टाइटल और फैब्रिक टाइप */}
+          <div className="space-y-0.5 max-w-[70vw]">
+            <div className="flex items-center gap-2">
               <svg
                 xmlns="http://w3.org"
                 width="16"
@@ -934,14 +911,59 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2.5"
+                className="text-purple-600 flex-shrink-0"
               >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
+                <path d="M4 12a8 8 0 0 1 16 0M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6" />
               </svg>
-            </button>
+              <h2 className="text-sm font-extrabold text-gray-800 tracking-tight truncate">
+                {product.name}
+              </h2>
+            </div>
+            
+            {product.fabricType && (
+              <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 bg-purple-50 px-2 py-0.5 rounded-md inline-block">
+                {product.fabricType}
+              </span>
+            )}
           </div>
 
-          <div className="p-5 space-y-6">
+          {/* अट्रैक्टिव क्लोज बटन - विथ होवर, टच रोटेशन एंड एब्सोल्यूट रिस्पॉन्स */}
+          <button
+            onClick={onClose}
+            className="w-9 h-9 rounded-xl bg-gray-50 hover:bg-red-50 
+                       border border-gray-200/60 hover:border-red-100
+                       flex items-center justify-center text-gray-400 hover:text-red-500
+                       font-bold flex-shrink-0 shadow-sm hover:shadow-md
+                       transform active:scale-90 hover:rotate-90
+                       transition-all duration-300 ease-out cursor-pointer"
+            title="Close Modal"
+          >
+            <svg
+              xmlns="http://w3.org"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              className="transition-transform duration-300"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        {/* ─── 2. ADVANCE SCROLLABLE CONTENT BODY START (लाइन 944) ─── */}
+        {/* अब नीचे की सारी इमेजेस और बटन्स इसके अंदर स्क्रॉल होंगे, जिससे हेडर हमेशा टॉप पर लॉक रहेगा */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-6 pb-24 
+                        [&::-webkit-scrollbar]:w-1.5
+                        [&::-webkit-scrollbar-track]:bg-transparent
+                        [&::-webkit-scrollbar-thumb]:bg-purple-500/10
+                        hover:[&::-webkit-scrollbar-thumb]:bg-purple-500/30
+                        [&::-webkit-scrollbar-thumb]:rounded-full"
+        >
+
             {/* 2. PREMIUM FABRIC IMAGES SECTION */}
             <div className="space-y-3">
               <div className="flex items-center gap-1.5">
@@ -1220,35 +1242,42 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
                 onClick={() => setZoomImage(null)}
               >
                 {/* Top bar */}
+                {/* ─── ULTRA-ADVANCE TOP HEADER BAR ─── */}
                 <div
-                  className="flex justify-between items-center
-                    p-4 bg-black bg-opacity-80"
+                  className="flex justify-between items-center px-4 py-3 bg-neutral-900/90 backdrop-blur-md border-b border-white/5 z-10 w-full"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <p className="text-white font-semibold">
-                    ✨ AI Generated Garment
-                  </p>
-                  <div className="flex gap-3">
-                    {/* Download button */}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-white font-black text-xs sm:text-sm tracking-tight flex items-center gap-1.5">
+                      <span className="text-amber-400 animate-pulse text-sm">
+                        ✨
+                      </span>{" "}
+                      AI Generated Garment
+                    </p>
+                  </div>
 
+                  {/* एक्शन्स कंटेनर - जो कभी नहीं दबेंगे */}
+                  <div className="flex items-center gap-2.5 ml-auto flex-shrink-0">
+                    {/* एडवांस डाउनलोड बटन - इन्लाइन स्टाइल के साथ ताकि बैकग्राउंड पर्पल ही रहे */}
                     <a
                       href={zoomImage}
-                      download="ai-garment.jpg"
+                      download={`ai-garment-${Date.now()}.jpg`}
                       target="_blank"
                       rel="noreferrer"
-                      className="bg-white text-gray-800 px-4 py-2
-                     rounded-full text-sm font-bold
-                     hover:bg-gray-100 transition"
+                      style={{
+                        backgroundColor: "#7c3aed",
+                      }} /* 👈 ज़बरदस्ती पर्पल बैकग्राउंड लॉक कर दिया */
+                      className="text-white px-3.5 py-2 rounded-xl text-xs font-black tracking-wide transition-all shadow-lg shadow-purple-500/20 active:scale-95 flex items-center gap-1 flex-shrink-0 hover:brightness-110"
                     >
-                      ⬇️ Download
+                      <span>📥</span> Download
                     </a>
+
+                    {/* एनिमेटेड क्लोज बटन - विथ रिस्पॉन्सिव एक्टिव एनीमेशन */}
                     <button
                       onClick={() => setZoomImage(null)}
-                      className="bg-white bg-opacity-20 text-white
-                     w-10 h-10 rounded-full flex items-center
-                     justify-center hover:bg-opacity-30"
+                      className="bg-white/10 text-white w-9 h-9 rounded-xl flex items-center justify-center font-bold flex-shrink-0 cursor-pointer border border-white/5 transition-all duration-300 hover:bg-red-500 hover:rotate-90 active:scale-75 active:rotate-180"
                     >
-                      ✕
+                      <span className="text-xs block leading-none">✕</span>
                     </button>
                   </div>
                 </div>
@@ -1351,7 +1380,7 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
                                         items-center justify-center
                                         text-gray-300"
                         >
-                          Upload your photo
+                          Image Preview
                         </div>
                       )}
                     </div>
@@ -1425,7 +1454,7 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
         <p class="text-gray-500 text-sm mb-2">Image load nahi hui.</p>
         <a href="${tryonResult}" target="_blank"
            class="text-purple-600 underline text-sm font-bold">
-          🔗 Result Dekho (New Tab)
+          🔗 See Results (New Tab)
         </a>
       </div>`,
                     );

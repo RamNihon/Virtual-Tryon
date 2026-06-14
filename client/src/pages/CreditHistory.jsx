@@ -168,7 +168,7 @@ export default function CreditHistory() {
         {/* Filter Tabs */}
         <div className="flex gap-2 mb-5">
           {[
-            { key: "all", label: "📋 Sab" },
+            { key: "all", label: "📋 All" },
             { key: "debit", label: "📤 Used" },
             { key: "credit", label: "📥 Added" },
           ].map((f) => (

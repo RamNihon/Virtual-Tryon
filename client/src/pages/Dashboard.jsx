@@ -790,7 +790,7 @@ function FabricDashboard({ token, seller }) {
               />
             </div>
 
-             {/* <div>
+            {/* <div>
               <label
                 className="text-sm font-medium
                                 text-gray-700 block mb-1.5"
@@ -1506,10 +1506,10 @@ export default function Dashboard() {
         <div className="flex gap-4 mt-5 mb-6 flex-wrap">
           {[
             { key: "overview", label: "📊 Overview" },
-            { key: "products", label: "👗 Products" },
-            { key: "integration", label: "🔌 Integration" },
-            { key: "orders", label: "📦 Orders" },
             { key: "fabric", label: "🧵 Fabric Shop" },
+            { key: "products", label: "👗 Products" },
+            { key: "orders", label: "📦 Orders" },
+            { key: "integration", label: "🔌 Integration" },
           ].map((tab) => (
             <button
               key={tab.key}

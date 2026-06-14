@@ -3,10 +3,13 @@ const router = express.Router();
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const Seller = require("../models/seller");
-const passport = require('../config/passport')
-const jwt = require('jsonwebtoken')
-const { sendWelcomeEmail, sendResetPasswordEmail } = require("../config/email");
-
+const passport = require("../config/passport");
+const jwt = require("jsonwebtoken");
+const {
+  sendWelcomeEmail,
+  sendResetPasswordEmail,
+  sendEmail,
+} = require("../config/email");
 
 // ─── Forgot Password ──────────────────────
 router.post("/forgot-password", async (req, res) => {
@@ -49,7 +52,7 @@ router.post("/forgot-password", async (req, res) => {
       resetPasswordExpiry: expiry,
     });
 
-     res.json({
+    res.json({
       success: true,
       message: "Reset link has been sent to your gmail!",
     });
@@ -58,13 +61,10 @@ router.post("/forgot-password", async (req, res) => {
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
     // Email bhejo
-    await sendResetPasswordEmail(seller, resetUrl).catch(err => {
-      console.log('Email send error:', err.message)
-    })
-
-   
-  }
-   catch (error) {
+    await sendResetPasswordEmail(seller, resetUrl).catch((err) => {
+      console.log("Email send error:", err.message);
+    });
+  } catch (error) {
     console.error("Forgot password error:", error);
     res.status(500).json({ message: error.message });
   }
@@ -125,35 +125,37 @@ router.post("/contact", async (req, res) => {
       });
     }
 
-    // Admin ko email bhejo
-    const nodemailer = require("nodemailer");
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    // Admin ko email bhejo (Using your official working Brevo helper)
+    console.log("📨 Sending contact us mail using email.js helper...");
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
-      to: process.env.EMAIL_USER,
-      subject: `📩 Contact Form: ${subject} - ${name}`,
-      html: `
-        <h2>New Contact Form Submission</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Subject:</strong> ${subject}</p>
-        <p><strong>Message:</strong></p>
-        <p>${message}</p>
-      `,
-    });
+    const adminHtml = `
+      <div style="font-family: Arial, sans-serif; padding: 25px; color: #333; background: #f9f9f9; border-radius: 16px; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaea;">
+        <h2 style="color: #7C3AED; margin-top: 0; font-size: 20px; border-bottom: 2px solid #f3f4f6; padding-bottom: 10px;">
+          📩 New Contact Form Submission
+        </h2>
+        <p style="margin: 10px 0;"><strong style="color: #4b5563;">Name:</strong> ${name}</p>
+        <p style="margin: 10px 0;"><strong style="color: #4b5563;">Email:</strong> ${email}</p>
+        <p style="margin: 10px 0;"><strong style="color: #4b5563;">Subject:</strong> ${subject}</p>
+        <div style="margin-top: 20px; background: white; padding: 15px; border-radius: 12px; border-left: 4px solid #7C3AED; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+          <p style="margin: 0; font-weight: bold; color: #1f2937; margin-bottom: 8px;">Message:</p>
+          <p style="margin: 0; color: #6b7280; line-height: 1.6; font-size: 14px;">${message}</p>
+        </div>
+      </div>
+    `;
+
+    // 💡 आपके इम्पोर्टेड ईमेल हेल्पर को कॉल किया: यह सीधा एडमिन (EMAIL_USER) को मेल भेज देगा!
+    await sendEmail(
+      process.env.EMAIL_USER,
+      `📩 Contact Form: ${subject} - ${name}`,
+      adminHtml,
+    );
 
     res.json({
       success: true,
       message: "Message Received!",
     });
   } catch (error) {
+    console.error("❌ Auth Contact Mail Error:", error.message);
     res.status(500).json({ message: error.message });
   }
 });
@@ -161,17 +163,19 @@ router.post("/contact", async (req, res) => {
 // Google Login Routes:
 
 // Google par redirect karo
-router.get('/google',
-  passport.authenticate('google', {
-    scope: ['profile', 'email']
-  })
-)
+router.get(
+  "/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+  }),
+);
 
 // Google callback
-router.get('/google/callback',
-  passport.authenticate('google', {
+router.get(
+  "/google/callback",
+  passport.authenticate("google", {
     session: false,
-    failureRedirect: `${process.env.FRONTEND_URL}/login?error=google_failed`
+    failureRedirect: `${process.env.FRONTEND_URL}/login?error=google_failed`,
   }),
   async (req, res) => {
     try {
@@ -179,8 +183,8 @@ router.get('/google/callback',
       const token = jwt.sign(
         { sellerId: req.user._id },
         process.env.JWT_SECRET,
-        { expiresIn: '7d' }
-      )
+        { expiresIn: "7d" },
+      );
 
       // Seller data
       const sellerData = {
@@ -190,19 +194,18 @@ router.get('/google/callback',
         apiKey: req.user.apiKey,
         plan: req.user.plan,
         tryonCount: req.user.tryonCount,
-        tryonLimit: req.user.tryonLimit
-      }
+        tryonLimit: req.user.tryonLimit,
+      };
 
       // Frontend par redirect karo
       // Token URL mein pass karo
-      const redirectUrl = `${process.env.FRONTEND_URL}/auth/google/success?token=${token}&seller=${encodeURIComponent(JSON.stringify(sellerData))}`
+      const redirectUrl = `${process.env.FRONTEND_URL}/auth/google/success?token=${token}&seller=${encodeURIComponent(JSON.stringify(sellerData))}`;
 
-      res.redirect(redirectUrl)
-
+      res.redirect(redirectUrl);
     } catch (error) {
-      res.redirect(`${process.env.FRONTEND_URL}/login?error=server_error`)
+      res.redirect(`${process.env.FRONTEND_URL}/login?error=server_error`);
     }
-  }
-)
+  },
+);
 
 module.exports = router;

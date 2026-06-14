@@ -77,7 +77,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <a
-                  href="virtualtryon.service@gmail.com"
+                  href="mailto:virtualtryon.service@gmail.com"
                   className="hover:text-white transition"
                 >
                   Email Support
@@ -85,7 +85,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="https://wa.me/919801227970"
+                  href="https://wa.me/+919801227970"
                   target="_blank"
                   rel="noreferrer"
                   className="hover:text-white transition"

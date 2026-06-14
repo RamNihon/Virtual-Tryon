@@ -234,75 +234,104 @@ function ShopNavbar({ shop, onLoginClick, onProfileClick }) {
               </>
             )}
           </div>
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden text-white text-2xl"
-          >
-            {menuOpen ? "✕" : "☰"}
-          </button>
-        </div>
-        {menuOpen && (
-          <div
-            className="md:hidden mt-3 pt-3
-                          border-t border-purple-500 space-y-2"
-          >
-            {customer ? (
-              <>
-                <button
-                  onClick={() => {
-                    onProfileClick();
-                    setMenuOpen(false);
-                  }}
-                  className="block w-full text-left
-                             text-white text-sm px-2 py-1.5"
-                >
-                  👤 My Account ({customer.name})
-                </button>
-                <button
-                  onClick={logoutCustomer}
-                  className="block w-full text-left
-                             text-white text-sm px-2 py-1.5"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={() => {
-                    onLoginClick("login");
-                    setMenuOpen(false);
-                  }}
-                  className="block w-full text-left
-                             text-white text-sm px-2 py-1.5"
-                >
-                  Login
-                </button>
-                <button
-                  onClick={() => {
-                    onLoginClick("register");
-                    setMenuOpen(false);
-                  }}
-                  className="block w-full text-left
-                             text-white text-sm px-2 py-1.5"
-                >
-                  Register
-                </button>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-      <div
-        className="bg-gradient-to-r from-indigo-600
-                      to-purple-600 py-2 px-4 text-center"
-      >
-        <p className="text-white text-sm font-medium min-h-6">
-          {displayText}
-          <span className="animate-pulse">|</span>
-        </p>
-      </div>
-    </div>
+  {/* --- 1. ANIMATED HAMBURGER BUTTON --- */}
+<button
+  onClick={() => setMenuOpen(!menuOpen)}
+  className="md:hidden relative w-10 h-10 flex flex-col items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 transition-all duration-300 focus:outline-none z-50 group border border-white/5 cursor-pointer"
+  aria-label="Toggle Menu"
+>
+  <div className="w-5 h-3.5 flex flex-col justify-between relative">
+    {/* टॉप लाइन */}
+    <span
+      className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 transform origin-center ${
+        menuOpen ? "rotate-45 translate-y-[6px]" : ""
+      }`}
+    ></span>
+    
+    {/* मिडिल line */}
+    <span
+      className={`w-full h-0.5 bg-white rounded-full transition-all duration-200 transform ${
+        menuOpen ? "opacity-0 scale-x-0" : ""
+      }`}
+    ></span>
+    
+    {/* बॉटम लाइन */}
+    <span
+      className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 transform origin-center ${
+        menuOpen ? "-rotate-45 -translate-y-[6px]" : ""
+      }`}
+    ></span>
+  </div>
+</button>
+
+</div>
+
+{/* --- 2. ADVANCE PREMIUM DROPDOWN MENU --- */}
+{menuOpen && (
+  <div
+    className="md:hidden mt-3 p-2 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/10 space-y-1 shadow-xl shadow-purple-950/20 animate-in fade-in slide-in-from-top-3 duration-300"
+  >
+    {customer ? (
+      <>
+        <button
+          onClick={() => {
+            onProfileClick();
+            setMenuOpen(false);
+          }}
+          className="flex items-center gap-2.5 w-full text-left text-white text-sm font-semibold px-3 py-2.5 rounded-xl hover:bg-white/10 active:bg-white/20 transition-all"
+        >
+          <span>👤</span> My Account
+        </button>
+        <button
+          onClick={() => {
+            logoutCustomer();
+            setMenuOpen(false);
+          }}
+          className="flex items-center gap-2.5 w-full text-left text-pink-200 text-sm font-semibold px-3 py-2.5 rounded-xl hover:bg-red-500/10 active:bg-red-500/20 transition-all"
+        >
+          <span>🔓</span> Logout
+        </button>
+      </>
+    ) : (
+      <>
+        <button
+          onClick={() => {
+            onLoginClick("login");
+            setMenuOpen(false);
+          }}
+          className="flex items-center gap-2.5 w-full text-left text-white text-sm font-semibold px-3 py-2.5 rounded-xl hover:bg-white/10 active:bg-white/20 transition-all"
+        >
+          <span>🔑</span> Login
+        </button>
+        <button
+          onClick={() => {
+            onLoginClick("register");
+            setMenuOpen(false);
+          }}
+          className="flex items-center gap-2.5 w-full text-left text-white text-sm font-semibold px-3 py-2.5 rounded-xl hover:bg-white/10 active:bg-white/20 transition-all"
+        >
+          <span>📝</span> Register
+        </button>
+      </>
+    )}
+  </div>
+)}
+</div>
+
+{/* --- 3. PREMIUM RUNNING TICKER BAR --- */}
+<div
+  className="bg-gradient-to-r from-indigo-700 via-purple-600 to-indigo-700 py-2.5 px-4 text-center border-t border-white/5 relative overflow-hidden"
+>
+  {/* बैकग्राउंड शाइन इफ़ेक्ट */}
+  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-shimmery"></div>
+  
+  <p className="text-white text-xs sm:text-sm font-bold tracking-wide min-h-6 flex items-center justify-center gap-1 drop-shadow-sm relative z-10">
+    <span>{displayText}</span>
+    <span className="w-1.5 h-3.5 bg-white/80 rounded-sm animate-pulse inline-block ml-0.5"></span>
+  </p>
+</div>
+</div>
+
   );
 }
 
@@ -1384,6 +1413,8 @@ function CustomerProfile({ shop, onClose }) {
     gender: customer?.gender || "",
   });
   const [editingProfile, setEditingProfile] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+
   const [loading, setLoading] = useState(false);
 
   const fetchOrders = useCallback(async () => {
@@ -1440,38 +1471,109 @@ function CustomerProfile({ shop, onClose }) {
   ];
 
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-60
-                    z-50 flex justify-end"
-    >
-      <div
-        className="bg-white w-full md:w-96
-                      max-h-screen overflow-y-auto shadow-2xl"
-      >
+    <div>
+      {/* ─── 1. सबसे बाहरी बैकड्रॉप / रैपर ─── */}
+      <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-end">
+        
+        {/* ─── 2. मुख्य साइडबार पैरेंट कंटेनर ─── */}
         <div
-          className="bg-gradient-to-r from-purple-600
-                        to-indigo-600 p-5 text-white"
+          className="bg-white w-full md:w-[600px] md:min-w-[420px]
+                     h-screen flex flex-col shadow-2xl
+                     rounded-t-[2rem] md:rounded-l-[2rem] md:rounded-tr-none
+                     overflow-hidden transition-all duration-300 ease-in-out"
+          onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-xl font-bold">{customer?.name}</p>
-              <p className="text-purple-200 text-sm">{customer?.email}</p>
+
+
+
+        {/* ─── PREMIUM ADVANCE HEADER SECTION ─── */}
+        <div
+          className="bg-gradient-to-br from-indigo-700 via-purple-600 to-pink-600 
+                     p-6 text-white relative overflow-hidden 
+                     border-b border-white/10 shadow-lg flex-shrink-0"
+        >
+          {/* बैकग्राउंड में अट्रैक्टिव एब्सट्रैक्ट यूआई ग्लो (Decorative Element) */}
+          <div className="absolute -top-12 -right-12 w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+          <div className="absolute -bottom-8 -left-12 w-28 h-28 bg-pink-500/20 rounded-full blur-xl pointer-events-none"></div>
+
+          <div className="flex justify-between items-center relative z-10 gap-4">
+            {/* यूजर इन्फो - विथ एवतार या फर्स्ट लेटर बैच */}
+            <div className="flex items-center gap-3.5 min-w-0 flex-1">
+              {/* सुंदर राउंडेड प्रोफाइल आइकॉन/बैच */}
+              <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center font-black text-lg text-white shadow-inner flex-shrink-0 backdrop-blur-sm">
+                {customer?.name ? customer.name.charAt(0).toUpperCase() : "👤"}
+              </div>
+              
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-lg font-black text-white tracking-tight truncate">
+                    {customer?.name || "Guest User"}
+                  </p>
+                  <span className="text-[9px] font-extrabold text-white bg-emerald-500 px-1.5 py-0.5 rounded-md uppercase tracking-wider shadow-sm flex-shrink-0">
+                    Active
+                  </span>
+                </div>
+                <p className="text-purple-200/90 text-xs truncate mt-0.5 font-medium tracking-wide">
+                  {customer?.email || "No email connected"}
+                </p>
+              </div>
             </div>
-            <button
-              onClick={onClose}
-              className="text-white text-xl w-8 h-8
-                         bg-white bg-opacity-20 rounded-full
-                         flex items-center justify-center"
-            >
-              ✕
-            </button>
+
+            {/* ✕ (Close) बटन - अब यह कभी हाइड नहीं होगा */}
+         {/* ✕ (Close) बटन - जो मोबाइल एम्यूलेटर, असली फोन और लैपटॉप हर जगह 100% घूमेगा */}
+<button
+  onClick={() => {
+    setIsClosing(true);
+    // 300ms के एनीमेशन के बाद onClose फंक्शन चलेगा ताकि घूमता हुआ साफ़ दिखे
+    setTimeout(() => {
+      onClose();
+      setIsClosing(false);
+    }, 300);
+  }}
+  className={`w-10 h-10 rounded-xl bg-white/10 
+             border border-white/10 
+             flex items-center justify-center text-white
+             font-medium shadow-inner flex-shrink-0
+             backdrop-blur-md cursor-pointer
+             transition-all duration-300 ease-out group
+             hover:bg-red-500 hover:border-red-400 hover:rotate-90
+             active:scale-75
+             ${isClosing ? "rotate-180 bg-red-600 scale-75" : ""}`}
+  title="Close Profile"
+>
+  <span className="text-sm font-bold tracking-normal leading-none block transition-transform duration-300 group-hover:scale-110">
+    ✕
+  </span>
+</button>
+
           </div>
         </div>
 
-        <div
-          className="flex overflow-x-auto p-3 gap-2
-                        border-b bg-gray-50"
+        {/* ─── SCROLLABLE CONTENT AREA START (इसके नीचे के टैब्स और फॉर्म यहाँ आएंगे) ─── */}
+               {/* ─── SCROLLABLE CONTENT AREA START ─── */}
+        <div className="flex-1 overflow-y-auto 
+                        [&::-webkit-scrollbar]:w-1.5
+                        [&::-webkit-scrollbar-track]:bg-transparent
+                        [&::-webkit-scrollbar-thumb]:bg-purple-500/20
+                        hover:[&::-webkit-scrollbar-thumb]:bg-purple-500/40
+                        [&::-webkit-scrollbar-thumb]:rounded-full
+                        transition-all duration-200"
         >
+
+
+
+                {/* ─── ULTRA-ADVANCE RESPONSIVE TABS BAR ─── */}
+        <div
+          className="flex overflow-x-auto p-3 gap-2 border-b bg-gray-50
+                     md:pb-4
+                     [&::-webkit-scrollbar]:h-1
+                     [&::-webkit-scrollbar-track]:bg-transparent
+                     [&::-webkit-scrollbar-thumb]:bg-purple-500/20
+                     hover:[&::-webkit-scrollbar-thumb]:bg-purple-700/50
+                     [&::-webkit-scrollbar-thumb]:rounded-full
+                     transition-all duration-200"
+        >
+
           {menuItems.map((item) => (
             <button
               key={item.key}
@@ -2111,7 +2213,7 @@ function CustomerProfile({ shop, onClose }) {
                     Instant Live Chat
                   </p>
                   <a
-                    href={`https://wa.me{shop.whatsapp}?text=Hi, I need help.`}
+                    href={`https://wa.me${shop.whatsapp}?text=Hi, I need help.`}
                     target="_blank"
                     rel="noreferrer"
                     className="block w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white
@@ -2127,6 +2229,8 @@ function CustomerProfile({ shop, onClose }) {
           )}
         </div>
       </div>
+    </div>
+    </div>
     </div>
   );
 }
@@ -3151,36 +3255,69 @@ function ProductModal({ product, shop, onClose, onTryOn, onOrder }) {
                     justify-center p-0 md:p-4"
       onClick={onClose}
     >
-      <div
-        className="bg-white w-full md:max-w-lg
-                      rounded-t-3xl md:rounded-3xl
-                      max-h-screen overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
+            {/* इनर पॉपअप बॉक्स - अब यह मोबाइल पर फुलस्क्रीन रहेगा और लैपटॉप पर सेंटर्ड रहेगा */}
         <div
-          className="flex justify-between items-center
-                p-5 border-b bg-white
-                rounded-t-3xl"
+          className="bg-white w-full md:max-w-lg 
+                     rounded-t-3xl md:rounded-3xl 
+                     h-full md:max-h-[90vh] 
+                     flex flex-col overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
         >
-          <h2
-            className="text-sm font-semibold text-gray-600
-                         truncate max-w-xs"
-          >
-            {product.brandName && (
-              <span className="text-purple-600">{product.brandName} · </span>
-            )}
-            {product.name}
-          </h2>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-100
-                       flex items-center justify-center
-                       text-gray-500 flex-shrink-0"
-          >
-            ✕
-          </button>
-        </div>
+          {/* ─── FIXED HEADER (यह हमेशा टॉप पर जमा रहेगा, मोबाइल पर कभी नहीं छुपेगा) ─── */}
+         <div
+  className="flex justify-between items-center
+             px-5 py-4 border-b border-gray-100/80 
+             bg-white/80 backdrop-blur-md
+             rounded-t-3xl md:rounded-t-3xl
+             sticky top-0 z-50 
+             transition-all duration-300"
+>
+  {/* ब्रांड और नेम का अट्रैक्टिव सेक्शन */}
+  <div className="flex flex-col gap-0.5 max-w-[75vw]">
+    {product.brandName ? (
+      <div className="flex items-center gap-1.5">
+        <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded-md">
+          {product.brandName}
+        </span>
+        <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+        <span className="text-[11px] font-medium text-emerald-600 flex items-center gap-0.5">
+          ✨ Premium
+        </span>
+      </div>
+    ) : (
+      <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md w-max">
+        Collection
+      </span>
+    )}
+    
+    <h2 className="text-sm font-extrabold text-gray-800 tracking-tight truncate mt-0.5">
+      {product.name}
+    </h2>
+  </div>
+
+  {/* अट्रैक्टिव क्लोज बटन - विथ होवर एंड एक्टिव स्टेट */}
+  <button
+    onClick={onClose}
+    className="w-9 h-9 rounded-full bg-gray-50 hover:bg-red-50 
+               border border-gray-100 hover:border-red-100
+               flex items-center justify-center
+               text-gray-400 hover:text-red-500
+               font-bold flex-shrink-0
+               shadow-sm hover:shadow-md
+               transform active:scale-90 hover:rotate-90
+               transition-all duration-300 ease-out"
+    title="Close"
+  >
+    <span className="text-xs transition-transform duration-300">✕</span>
+  </button>
+</div>
+
+
+          {/* ─── SCROLLABLE CONTENT BODY START ─── */}
+          {/* नोट: इसके नीचे की बाकी सब चीजें (जैसे Images, Thumbnail Strip, Pricing) अब इस स्क्रॉल बॉक्स के अंदर स्मूथली स्क्रॉल होंगी */}
+
+          <div className="flex-1 overflow-y-auto">
+
 
         {/* Images */}
         <div className="relative">
@@ -3637,7 +3774,9 @@ function ProductModal({ product, shop, onClose, onTryOn, onOrder }) {
             </button>
           </div>
         </div>
+      
       )}
+    </div>
     </div>
   );
 }
@@ -4292,7 +4431,7 @@ export default function Shop() {
       const res = await axios.get(`${API_URL}/api/seller/shop/${sellerId}`);
       setShop(res.data.shop);
       setProducts(res.data.products);
-      console.log("Shop apiKey:", res.data.shop?.apiKey);
+      // console.log("Shop apiKey:", res.data.shop?.apiKey);
     } catch {
       setError("Shop nahi mili!");
     } finally {

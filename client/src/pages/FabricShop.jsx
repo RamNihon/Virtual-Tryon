@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import axios from "axios";
-import API_URL from "../api";
-// eslint-disable-next-line
-import { useCustomer } from "../context/CustomerContext";
+import { useState, useEffect, useRef } from 'react'
+import { useParams } from 'react-router-dom'
+import axios from 'axios'
+import API_URL from '../api'
+import { useCustomer } from '../context/CustomerContext'
+import VoiceAssistant, { speakText } from '../components/VoiceAssistant'
 
 // ─── Garment Labels ───────────────────────
 const GARMENT_LABELS = {
@@ -685,20 +685,50 @@ function StitchingCalculator({ product, onClose, measurements }) {
 // ─── Loading Animation ────────────────────
 function FabricAnimation({ step }) {
   const steps = [
-    { emoji: "🧵", text: "Fabric is being analyzed..." },
+     { emoji: "🧵", text: "Fabric is being analyzed..." },
     { emoji: "✂️", text: "AI is stitching..." },
     { emoji: "👔", text: "Garment is being prepared..." },
-    { emoji: "✨", text: "Final touches..." },
-  ];
-  const [index, setIndex] = useState(0);
+    { emoji: "✨", text: "Final touches..." }
+  ]
+
+const tryonSteps = [
+  { emoji: '📸', text: 'Uploading your portrait photo...' },
+  { emoji: '🤖', text: 'AI engine processing...' },
+  { emoji: '👗', text: 'Fitting garment to your body...' },
+  { emoji: '🎉', text: 'Generating your final result...' }
+];
+
+
+  const activeSteps = step === 'tryon' ? tryonSteps : steps
+  const [index, setIndex] = useState(0)
+  const spokenRef = useRef(new Set())
 
   useEffect(() => {
+    // Pehla step immediately bolo
+    if (!spokenRef.current.has(0)) {
+      speakText(activeSteps[0].text, 'hi')
+      spokenRef.current.add(0)
+    }
+
     const t = setInterval(() => {
-      setIndex((p) => (p === steps.length - 1 ? 0 : p + 1));
-    }, 2000);
-    return () => clearInterval(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      setIndex(p => {
+        const next = p === activeSteps.length - 1 ? 0 : p + 1
+        // Har step par voice
+        if (!spokenRef.current.has(next)) {
+          speakText(activeSteps[next].text, 'en')
+          spokenRef.current.add(next)
+        }
+        return next
+      })
+    }, 2000)
+
+    return () => {
+      clearInterval(t)
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      spokenRef.current.clear()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step])
 
   return (
     <div
@@ -885,16 +915,18 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
         <FabricAnimation step={generating ? "generate" : "tryon"} />
       )}
 
-      <div
-        className="fixed inset-0 bg-black bg-opacity-75
-                      z-40 flex items-end md:items-center
-                      justify-center p-0 md:p-4"
-      >
+       {/* ─── 1. सबसे बाहरी बैकड्रॉप ओवरले (लाइन 888) ─── */}
+      <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex justify-end items-end md:items-center justify-center p-0 md:p-4">
+        
+        {/* ─── 2. मुख्य मोडल कंटेनर (लाइन 893) ─── */}
+        {/* पुराना max-h-screen और overflow-y-auto हटाकर इसे h-screen और flex-col में लॉक कर दिया है */}
         <div
-          className="bg-white w-full md:max-w-2xl
-                        rounded-t-3xl md:rounded-3xl
-                        max-h-screen overflow-y-auto shadow-2xl"
+          className="bg-white w-full md:max-w-2xl 
+                     h-screen md:h-auto md:max-h-[92vh] 
+                     flex flex-col overflow-hidden 
+                     rounded-t-3xl md:rounded-3xl shadow-2xl"
         >
+
           {/* ─── 1. ADVANCE FIXED HEADER BAR (लाइन 898) ─── */}
         <div
           className="flex justify-between items-center p-5 border-b border-gray-100 
@@ -2007,7 +2039,7 @@ export default function FabricShop() {
       </div>
 
       {/* Product Detail Modal */}
-      {selectedProduct && (
+     {selectedProduct && (
         <FabricProductModal
           product={selectedProduct}
           shop={shop}
@@ -2015,6 +2047,13 @@ export default function FabricShop() {
           onClose={() => setSelectedProduct(null)}
         />
       )}
+
+      {/* Voice Assistant */}
+      <VoiceAssistant
+        pageType="fabric"
+        shopName={shop?.name || ''}
+        language="hi"
+      />
     </div>
-  );
+  )
 }

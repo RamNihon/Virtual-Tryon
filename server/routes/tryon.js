@@ -188,13 +188,34 @@ router.post(
         "tryon/humans",
       );
 
-      const garmentUrl = req.body.garmentUrl;
+   const garmentUrl = req.body.garmentUrl
+const garmentDesc = req.body.description || 'upper_body'
 
-      if (!garmentUrl) {
-        return res.status(400).json({
-          message: "Garment image URL missing!",
-        });
-      }
+if (!garmentUrl) {
+  return res.status(400).json({
+    message: 'Garment image URL missing!'
+  })
+}
+
+// Garment type determine karo
+let garmentType = 'upper body shirt clothing'
+let isCrop = false
+
+if (garmentDesc.includes('lower_body').toLowerCase() ||
+    garmentDesc.includes('Pant').toLowerCase() ||
+    garmentDesc.includes('Trouser').toLowerCase() ||
+    garmentDesc.includes('Bottom').toLowerCase()) {
+  garmentType = 'lower body pants trousers'
+  isCrop = true
+} else if (garmentDesc.includes('dress').toLowerCase()) {
+  garmentType = 'full body dress'
+  isCrop = false
+} else if (garmentDesc.includes('upper_body')) {
+  garmentType = 'upper body shirt top clothing'
+  isCrop = false
+}
+
+console.log('Garment type detected:', garmentType)
 
       console.log("🚀 IDM-VTON starting...");
       // console.log("Human URL:", humanUrl);
@@ -207,7 +228,7 @@ router.post(
           input: {
             human_img: humanUrl,
             garm_img: garmentUrl,
-            garment_des: req.body.description || "clothing",
+            garment_des: garmentType,
             is_checked: true,
             is_checked_crop: false,
             denoise_steps: 30,

@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import API_URL from "../api";
 import { useCustomer } from "../context/CustomerContext";
+import VoiceAssistant, { speakText } from '../components/VoiceAssistant'
 
 // Shared status color classes (used for badges across the page)
 const STATUS_COLORS = {
@@ -2237,21 +2238,41 @@ function CustomerProfile({ shop, onClose }) {
 
 // ─── Loading Animation ────────────────────
 function TryOnAnimation() {
-  const MESSAGES = [
+ const MESSAGES = [
     { emoji: "📸", text: "Photo is getting uploaded..." },
     { emoji: "🤖", text: "AI is working..." },
     { emoji: "👗", text: "Cloth is getting fitted..." },
     { emoji: "✨", text: "Style advice is generating..." },
     { emoji: "🎨", text: "Result is getting ready..." },
-  ];
-  const [index, setIndex] = useState(0);
+  ]
+  const [index, setIndex] = useState(0)
+  const spokenRef = useRef(new Set())
+
   useEffect(() => {
+    // Pehla message bolo
+    if (!spokenRef.current.has(0)) {
+      speakText(MESSAGES[0].text, 'hi')
+      spokenRef.current.add(0)
+    }
+
     const t = setInterval(() => {
-      setIndex((p) => (p === MESSAGES.length - 1 ? 0 : p + 1));
-    }, 1800);
-    return () => clearInterval(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      setIndex(p => {
+        const next = p === MESSAGES.length - 1 ? 0 : p + 1
+        if (!spokenRef.current.has(next)) {
+          speakText(MESSAGES[next].text, 'en')
+          spokenRef.current.add(next)
+        }
+        return next
+      })
+    }, 1800)
+
+    return () => {
+      clearInterval(t)
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      spokenRef.current.clear()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div
@@ -2302,7 +2323,7 @@ function TryOnAnimation() {
           ))}
         </div>
         <p className="text-gray-400 text-xs mt-4">
-          It will take 20-30 seconds 😊
+          It will take 20-30 seconds, Please wait... 😊
         </p>
       </div>
     </div>
@@ -3828,7 +3849,10 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
       const formData = new FormData();
       formData.append("humanImage", humanImage);
       formData.append("garmentUrl", product.imageUrl); // imageUrl sahi hai
-      formData.append("description", product.category || "upper_body");
+    // Category sahi se bhejo
+const category = product.category || 'upper_body'
+formData.append("description", category)
+console.log('Sending category:', category)
 
       const res = await axios.post(`${API_URL}/api/tryon`, formData, {
         headers: {
@@ -4872,6 +4896,14 @@ export default function Shop() {
       {showProfile && (
         <CustomerProfile shop={shop} onClose={() => setShowProfile(false)} />
       )}
+
+{/* Voice Assistant */}
+      <VoiceAssistant
+        pageType="shop"
+        shopName={shop?.name || ''}
+        language="hi"
+      />
+
     </div>
   );
 }

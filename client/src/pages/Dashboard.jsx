@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import SupportBot from '../components/SupportBot';
 import API_URL from "../api";
 import { ExternalLink } from "lucide-react";
 
@@ -2707,6 +2708,10 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+      {/* Support Bot */}
+      <SupportBot />
+
+      
     </div>
-  );
+  )
 }

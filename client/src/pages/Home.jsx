@@ -3,6 +3,8 @@ import { useAuth } from "../context/AuthContext";
 import { useEffect } from "react";
 import API_URL from "../api";
 
+import VoiceAssistant from '../components/VoiceAssistant';
+
 export default function Home() {
   const { token } = useAuth();
 
@@ -836,6 +838,12 @@ export default function Home() {
           </div>
         </div>
       </div>
+      {/* Voice Assistant */}
+            <VoiceAssistant
+              pageType="home"
+              shopName={'merchant'}
+              language="hi"
+            />
     </div>
   );
 }

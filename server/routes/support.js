@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const SupportChat = require('../models/SupportChat')
-const Seller = require('../models/Seller')
+const Seller = require('../models/seller')
 const { authMiddleware } = require('./seller')
 const { sendContactEmail } = require('../config/email')
 

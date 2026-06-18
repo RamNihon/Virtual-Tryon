@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
-import { useParams } from 'react-router-dom'
-import axios from 'axios'
-import API_URL from '../api'
-import { useCustomer } from '../context/CustomerContext'
-import VoiceAssistant, { speakText } from '../components/VoiceAssistant'
+import { useState, useEffect, useRef } from "react";
+import { useParams } from "react-router-dom";
+import axios from "axios";
+import API_URL from "../api";
+import { useCustomer } from "../context/CustomerContext";
+import VoiceAssistant, { speakText } from "../components/VoiceAssistant";
 
 // ─── Garment Labels ───────────────────────
 const GARMENT_LABELS = {
@@ -685,50 +685,49 @@ function StitchingCalculator({ product, onClose, measurements }) {
 // ─── Loading Animation ────────────────────
 function FabricAnimation({ step }) {
   const steps = [
-     { emoji: "🧵", text: "Fabric is being analyzed..." },
+    { emoji: "🧵", text: "Fabric is being analyzed..." },
     { emoji: "✂️", text: "AI is stitching..." },
     { emoji: "👔", text: "Garment is being prepared..." },
-    { emoji: "✨", text: "Final touches..." }
-  ]
+    { emoji: "✨", text: "Final touches..." },
+  ];
 
-const tryonSteps = [
-  { emoji: '📸', text: 'Uploading your portrait photo...' },
-  { emoji: '🤖', text: 'AI engine processing...' },
-  { emoji: '👗', text: 'Fitting garment to your body...' },
-  { emoji: '🎉', text: 'Generating your final result...' }
-];
+  const tryonSteps = [
+    { emoji: "📸", text: "Uploading your portrait photo..." },
+    { emoji: "🤖", text: "AI engine processing..." },
+    { emoji: "👗", text: "Fitting garment to your body..." },
+    { emoji: "🎉", text: "Generating your final result..." },
+  ];
 
-
-  const activeSteps = step === 'tryon' ? tryonSteps : steps
-  const [index, setIndex] = useState(0)
-  const spokenRef = useRef(new Set())
+  const activeSteps = step === "tryon" ? tryonSteps : steps;
+  const [index, setIndex] = useState(0);
+  const spokenRef = useRef(new Set());
 
   useEffect(() => {
     // Pehla step immediately bolo
     if (!spokenRef.current.has(0)) {
-      speakText(activeSteps[0].text, 'hi')
-      spokenRef.current.add(0)
+      speakText(activeSteps[0].text, "hi");
+      spokenRef.current.add(0);
     }
 
     const t = setInterval(() => {
-      setIndex(p => {
-        const next = p === activeSteps.length - 1 ? 0 : p + 1
+      setIndex((p) => {
+        const next = p === activeSteps.length - 1 ? 0 : p + 1;
         // Har step par voice
         if (!spokenRef.current.has(next)) {
-          speakText(activeSteps[next].text, 'en')
-          spokenRef.current.add(next)
+          speakText(activeSteps[next].text, "en");
+          spokenRef.current.add(next);
         }
-        return next
-      })
-    }, 2000)
+        return next;
+      });
+    }, 2000);
 
     return () => {
-      clearInterval(t)
+      clearInterval(t);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      spokenRef.current.clear()
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step])
+      spokenRef.current.clear();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   return (
     <div
@@ -909,15 +908,26 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
     }
   };
 
+  useEffect(() => {
+    // मोबाइल ब्राउज़र के ओवरफ्लो को पूरी तरह लॉक करें
+    document.body.style.overflow = "hidden";
+    // document.body.style.height = "100vh";
+
+    // 🔓 Cleanup Function: जब मोडल बंद (onClose) होगा, तो स्क्रॉलिंग वापस नॉर्मल हो जाएगी
+    return () => {
+      document.body.style.overflow = "unset";
+      // document.body.style.height = "unset";
+    };
+  }, []);
+
   return (
     <>
       {(generating || tryonStep) && (
         <FabricAnimation step={generating ? "generate" : "tryon"} />
       )}
 
-       {/* ─── 1. सबसे बाहरी बैकड्रॉप ओवरले (लाइन 888) ─── */}
+      {/* ─── 1. सबसे बाहरी बैकड्रॉप ओवरले (लाइन 888) ─── */}
       <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex justify-end items-end md:items-center justify-center p-0 md:p-4">
-        
         {/* ─── 2. मुख्य मोडल कंटेनर (लाइन 893) ─── */}
         {/* पुराना max-h-screen और overflow-y-auto हटाकर इसे h-screen और flex-col में लॉक कर दिया है */}
         <div
@@ -926,76 +936,75 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
                      flex flex-col overflow-hidden 
                      rounded-t-3xl md:rounded-3xl shadow-2xl"
         >
-
           {/* ─── 1. ADVANCE FIXED HEADER BAR (लाइन 898) ─── */}
-        <div
-          className="flex justify-between items-center p-5 border-b border-gray-100 
+          <div
+            className="flex justify-between items-center p-5 border-b border-gray-100 
                      bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm"
-        >
-          {/* टाइटल और फैब्रिक टाइप */}
-          <div className="space-y-0.5 max-w-[70vw]">
-            <div className="flex items-center gap-2">
-              <svg
-                xmlns="http://w3.org"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                className="text-purple-600 flex-shrink-0"
-              >
-                <path d="M4 12a8 8 0 0 1 16 0M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6" />
-              </svg>
-              <h2 className="text-sm font-extrabold text-gray-800 tracking-tight truncate">
-                {product.name}
-              </h2>
-            </div>
-            
-            {product.fabricType && (
-              <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 bg-purple-50 px-2 py-0.5 rounded-md inline-block">
-                {product.fabricType}
-              </span>
-            )}
-          </div>
+          >
+            {/* टाइटल और फैब्रिक टाइप */}
+            <div className="space-y-0.5 max-w-[70vw]">
+              <div className="flex items-center gap-2">
+                <svg
+                  xmlns="http://w3.org"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  className="text-purple-600 flex-shrink-0"
+                >
+                  <path d="M4 12a8 8 0 0 1 16 0M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6" />
+                </svg>
+                <h2 className="text-sm font-extrabold text-gray-800 tracking-tight truncate">
+                  {product.name}
+                </h2>
+              </div>
 
-          {/* अट्रैक्टिव क्लोज बटन - विथ होवर, टच रोटेशन एंड एब्सोल्यूट रिस्पॉन्स */}
-          <button
-            onClick={onClose}
-            className="w-9 h-9 rounded-xl bg-gray-50 hover:bg-red-50 
+              {product.fabricType && (
+                <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 bg-purple-50 px-2 py-0.5 rounded-md inline-block">
+                  {product.fabricType}
+                </span>
+              )}
+            </div>
+
+            {/* अट्रैक्टिव क्लोज बटन - विथ होवर, टच रोटेशन एंड एब्सोल्यूट रिस्पॉन्स */}
+            <button
+              onClick={onClose}
+              className="w-9 h-9 rounded-xl bg-gray-50 hover:bg-red-50 
                        border border-gray-200/60 hover:border-red-100
                        flex items-center justify-center text-gray-400 hover:text-red-500
                        font-bold flex-shrink-0 shadow-sm hover:shadow-md
                        transform active:scale-90 hover:rotate-90
                        transition-all duration-300 ease-out cursor-pointer"
-            title="Close Modal"
-          >
-            <svg
-              xmlns="http://w3.org"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              className="transition-transform duration-300"
+              title="Close Modal"
             >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
+              <svg
+                xmlns="http://w3.org"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                className="transition-transform duration-300"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
 
-        {/* ─── 2. ADVANCE SCROLLABLE CONTENT BODY START (लाइन 944) ─── */}
-        {/* अब नीचे की सारी इमेजेस और बटन्स इसके अंदर स्क्रॉल होंगे, जिससे हेडर हमेशा टॉप पर लॉक रहेगा */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-6 pb-24 
+          {/* ─── 2. ADVANCE SCROLLABLE CONTENT BODY START (लाइन 944) ─── */}
+          {/* अब नीचे की सारी इमेजेस और बटन्स इसके अंदर स्क्रॉल होंगे, जिससे हेडर हमेशा टॉप पर लॉक रहेगा */}
+          <div
+            className="flex-1 overflow-y-auto p-5 space-y-6 pb-24 
                         [&::-webkit-scrollbar]:w-1.5
                         [&::-webkit-scrollbar-track]:bg-transparent
                         [&::-webkit-scrollbar-thumb]:bg-purple-500/10
                         hover:[&::-webkit-scrollbar-thumb]:bg-purple-500/30
                         [&::-webkit-scrollbar-thumb]:rounded-full"
-        >
-
+          >
             {/* 2. PREMIUM FABRIC IMAGES SECTION */}
             <div className="space-y-3">
               <div className="flex items-center gap-1.5">
@@ -2039,7 +2048,7 @@ export default function FabricShop() {
       </div>
 
       {/* Product Detail Modal */}
-     {selectedProduct && (
+      {selectedProduct && (
         <FabricProductModal
           product={selectedProduct}
           shop={shop}
@@ -2051,9 +2060,9 @@ export default function FabricShop() {
       {/* Voice Assistant */}
       <VoiceAssistant
         pageType="fabric"
-        shopName={shop?.name || ''}
+        shopName={shop?.name || ""}
         language="hi"
       />
     </div>
-  )
+  );
 }

@@ -83,7 +83,7 @@ export default function Footer() {
                   Email Support
                 </a>
               </li>
-              <li>
+              {/* <li>
                 <a
                   href="https://wa.me/+919801227970"
                   target="_blank"
@@ -92,7 +92,7 @@ export default function Footer() {
                 >
                   WhatsApp Support
                 </a>
-              </li>
+              </li> */}
               <li>
                 <Link to="/contact" className="hover:text-white transition">
                   Contact Us

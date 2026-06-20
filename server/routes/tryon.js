@@ -188,8 +188,8 @@ router.post(
         "tryon/humans",
       );
 
-   const garmentUrl = req.body.garmentUrl
-const garmentDesc = req.body.description || 'upper_body'
+const garmentUrl = req.body.garmentUrl
+const garmentDesc = (req.body.description || 'upper_body').toLowerCase()
 
 if (!garmentUrl) {
   return res.status(400).json({
@@ -197,25 +197,55 @@ if (!garmentUrl) {
   })
 }
 
-// Garment type determine karo
+// ─── Garment Category Detection ───────────
+// Lower body keywords
+const lowerKeywords = [
+  'lower_body', 'lower body', 'pant', 'pants',
+  'trouser', 'trousers', 'jeans', 'bottom',
+  'legging', 'leggings', 'skirt', 'shorts',
+  'pajama', 'dhoti', 'lungi', 'salwar'
+]
+
+// Upper body keywords
+const upperKeywords = [
+  'upper_body', 'upper body', 'shirt', 'tshirt',
+  't-shirt', 'top', 'blouse', 'jacket', 'sweater',
+  'hoodie', 'kurta', 'kurti', 'coat', 'blazer',
+  'polo', 'tank', 'vest', 'saree', 'dupatta'
+]
+
+// Dress keywords
+const dressKeywords = [
+  'dress', 'frock', 'gown', 'jumpsuit',
+  'salwar_suit', 'salwar suit', 'suit'
+]
+
 let garmentType = 'upper body shirt clothing'
 let isCrop = false
+let isLower = false
 
-if (garmentDesc.includes('lower_body').toLowerCase() ||
-    garmentDesc.includes('Pant').toLowerCase() ||
-    garmentDesc.includes('Trouser').toLowerCase() ||
-    garmentDesc.includes('Bottom').toLowerCase()) {
-  garmentType = 'lower body pants trousers'
+const isLowerBody = lowerKeywords.some(k =>
+  garmentDesc.includes(k)
+)
+const isDress = dressKeywords.some(k =>
+  garmentDesc.includes(k)
+)
+
+if (isLowerBody) {
+  garmentType = 'pants trousers lower body bottoms'
   isCrop = true
-} else if (garmentDesc.includes('dress').toLowerCase()) {
+} else if (isDress) {
   garmentType = 'full body dress'
   isCrop = false
-} else if (garmentDesc.includes('upper_body')) {
-  garmentType = 'upper body shirt top clothing'
+} else {
+  garmentType = 'upper body shirt'
   isCrop = false
 }
 
-console.log('Garment type detected:', garmentType)
+console.log(`Final garment_des: "${garmentType}", isCrop: ${isCrop}`)
+
+console.log(`Category: "${garmentDesc}" → ${garmentType}`)
+console.log(`isCrop: ${isCrop}`)
 
       console.log("🚀 IDM-VTON starting...");
       // console.log("Human URL:", humanUrl);

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
-import SupportBot from '../components/SupportBot';
+import SupportBot from "../components/SupportBot";
 import API_URL from "../api";
 import { ExternalLink } from "lucide-react";
 
@@ -524,6 +524,7 @@ function FabricDashboard({ token, seller }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [addMsg, setAddMsg] = useState("");
   const [addLoading, setAddLoading] = useState(false);
+
   // eslint-disable-next-line
   const [generatingFor, setGeneratingFor] = useState(null);
 
@@ -534,7 +535,42 @@ function FabricDashboard({ token, seller }) {
     fabricType: "",
     description: "",
     availableGarments: [],
+    brand: "",
+    material: "",
+    occasion: "any",
+    pattern: "solid",
+    colors: [],
   });
+
+  const COLOR_OPTIONS = [
+    { value: "Red", hex: "#EF4444" },
+    { value: "Blue", hex: "#3B82F6" },
+    { value: "Green", hex: "#22C55E" },
+    { value: "Yellow", hex: "#EAB308" },
+    { value: "Orange", hex: "#F97316" },
+    { value: "Purple", hex: "#A855F7" },
+    { value: "Pink", hex: "#EC4899" },
+    { value: "Black", hex: "#1F2937" },
+    { value: "White", hex: "#F9FAFB" },
+    { value: "Grey", hex: "#9CA3AF" },
+    { value: "Brown", hex: "#92400E" },
+    { value: "Cream", hex: "#FEF3C7" },
+    { value: "Navy", hex: "#1E3A5F" },
+    { value: "Maroon", hex: "#7F1D1D" },
+    { value: "Teal", hex: "#0D9488" },
+    { value: "Gold", hex: "#D97706" },
+    { value: "Silver", hex: "#CBD5E1" },
+    { value: "Multi", hex: "linear-gradient(135deg,#EF4444,#3B82F6,#22C55E)" },
+  ];
+
+  const toggleColor = (color) => {
+    setForm((prev) => ({
+      ...prev,
+      colors: prev.colors.includes(color)
+        ? prev.colors.filter((c) => c !== color)
+        : [...prev.colors, color],
+    }));
+  };
   const [fabricImages, setFabricImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
 
@@ -603,6 +639,12 @@ function FabricDashboard({ token, seller }) {
       form.availableGarments.forEach((g) =>
         formData.append("availableGarments", g),
       );
+      // Naye fields add karo
+      formData.append("brand", form.brand);
+      formData.append("material", form.material);
+      formData.append("occasion", form.occasion);
+      formData.append("pattern", form.pattern);
+      formData.append("colors", JSON.stringify(form.colors));
 
       await axios.post(`${API_URL}/api/fabric/products`, formData, {
         headers: {
@@ -620,6 +662,11 @@ function FabricDashboard({ token, seller }) {
         fabricType: "",
         description: "",
         availableGarments: [],
+        brand: "",
+        material: "",
+        occasion: "any",
+        pattern: "solid",
+        colors: [],
       });
       setFabricImages([]);
       setImagePreviews([]);
@@ -708,7 +755,7 @@ function FabricDashboard({ token, seller }) {
               </label>
               <input
                 type="text"
-                placeholder="Like: German Silk, Cotton..."
+                placeholder="Like: German Silk, Premium Khadi Cotton, Pure Banarasi Silk..."
                 value={form.name}
                 onChange={(e) =>
                   setForm({
@@ -731,7 +778,7 @@ function FabricDashboard({ token, seller }) {
               </label>
               <input
                 type="text"
-                placeholder="Like: Silk, Cotton, Linen..."
+                placeholder="Like: Denim, Jersey, Muslin, Linen..."
                 value={form.fabricType}
                 onChange={(e) =>
                   setForm({
@@ -810,7 +857,7 @@ function FabricDashboard({ token, seller }) {
             </label>
             <textarea
               rows={2}
-              placeholder="Fabric ke baare mein batao..."
+              placeholder="Fabric ke baare mein likhen..."
               value={form.description}
               onChange={(e) =>
                 setForm({
@@ -823,6 +870,129 @@ function FabricDashboard({ token, seller }) {
                          focus:outline-none focus:border-purple-500
                          resize-none"
             />
+
+            {/* Color Selection */}
+            <div className="mt-4">
+              <label className="text-sm font-medium text-gray-700 block mb-2">
+                🎨 Available Colors
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {COLOR_OPTIONS.map((color) => (
+                  <button
+                    key={color.value}
+                    type="button"
+                    onClick={() => toggleColor(color.value)}
+                    title={color.value}
+                    className={`w-8 h-8 rounded-full border-4 transition-all
+                   ${
+                     form.colors.includes(color.value)
+                       ? "border-purple-600 scale-110"
+                       : "border-transparent hover:border-gray-300"
+                   }`}
+                    style={{
+                      background: color.hex.startsWith("linear")
+                        ? color.hex
+                        : color.hex,
+                    }}
+                  >
+                    {form.colors.includes(color.value) && (
+                      <span
+                        className="text-xs text-white font-bold
+                           drop-shadow-md"
+                      >
+                        ✓
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+              {form.colors.length > 0 && (
+                <p className="text-xs text-purple-600 mt-1">
+                  Selected: {form.colors.join(", ")}
+                </p>
+              )}
+            </div>
+
+            {/* Brand + Material */}
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">
+                  🏷️ Brand Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Raymond, Grasim, Siyaram..."
+                  value={form.brand}
+                  onChange={(e) => setForm({ ...form, brand: e.target.value })}
+                  className="w-full border border-purple-200 bg-white
+                 rounded-xl px-3 py-2 text-sm
+                 focus:outline-none focus:border-purple-500"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">
+                  🧶 Material
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Cotton, Wool, Silk, Nylon, Polyester"
+                  value={form.material}
+                  onChange={(e) =>
+                    setForm({ ...form, material: e.target.value })
+                  }
+                  className="w-full border border-purple-200 bg-white
+                 rounded-xl px-3 py-2 text-sm
+                 focus:outline-none focus:border-purple-500"
+                />
+              </div>
+            </div>
+
+            {/* Occasion + Pattern */}
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">
+                  🎭 Occasion
+                </label>
+                <select
+                  value={form.occasion}
+                  onChange={(e) =>
+                    setForm({ ...form, occasion: e.target.value })
+                  }
+                  className="w-full border border-purple-200 bg-white
+                 rounded-xl px-3 py-2 text-sm
+                 focus:outline-none focus:border-purple-500"
+                >
+                  <option value="any">Any / All</option>
+                  <option value="casual">👕 Casual</option>
+                  <option value="formal">👔 Formal</option>
+                  <option value="wedding">💍 Wedding</option>
+                  <option value="festival">🪔 Festival</option>
+                  <option value="party">🎉 Party</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">
+                  🔷 Pattern
+                </label>
+                <select
+                  value={form.pattern}
+                  onChange={(e) =>
+                    setForm({ ...form, pattern: e.target.value })
+                  }
+                  className="w-full border border-purple-200 bg-white
+                 rounded-xl px-3 py-2 text-sm
+                 focus:outline-none focus:border-purple-500"
+                >
+                  <option value="solid">⬛ Solid</option>
+                  <option value="stripes">〓 Stripes</option>
+                  <option value="checks">▦ Checks</option>
+                  <option value="floral">🌸 Floral</option>
+                  <option value="geometric">🔷 Geometric</option>
+                  <option value="printed">🖨️ Printed</option>
+                  <option value="other">✨ Other</option>
+                </select>
+              </div>
+            </div>
           </div>
 
           {/* Garment Types */}
@@ -939,11 +1109,11 @@ function FabricDashboard({ token, seller }) {
                          hover:shadow-md transition-all"
             >
               {/* Fabric Image */}
-              <div className="relative h-48 bg-gray-50">
+              <div className="relative h-64 bg-gray-50">
                 <img
                   src={product.fabricImageUrl}
                   alt={product.name}
-                  className="w-full h-48 object-cover"
+                  className="w-full h-64 object-cover"
                 />
                 <div className="absolute top-3 right-3">
                   <span
@@ -2710,8 +2880,6 @@ export default function Dashboard() {
       </div>
       {/* Support Bot */}
       <SupportBot />
-
-      
     </div>
-  )
+  );
 }

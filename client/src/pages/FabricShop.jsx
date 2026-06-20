@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import API_URL from "../api";
@@ -694,6 +694,7 @@ function FabricAnimation({ step }) {
   const tryonSteps = [
     { emoji: "📸", text: "Uploading your portrait photo..." },
     { emoji: "🤖", text: "AI engine processing..." },
+    { emoji: "👔", text: "Garment is being analyzed..." },
     { emoji: "👗", text: "Fitting garment to your body..." },
     { emoji: "🎉", text: "Generating your final result..." },
   ];
@@ -705,7 +706,7 @@ function FabricAnimation({ step }) {
   useEffect(() => {
     // Pehla step immediately bolo
     if (!spokenRef.current.has(0)) {
-      speakText(activeSteps[0].text, "hi");
+      speakText(activeSteps[0].text, "en");
       spokenRef.current.add(0);
     }
 
@@ -719,7 +720,7 @@ function FabricAnimation({ step }) {
         }
         return next;
       });
-    }, 2000);
+    }, 3000);
 
     return () => {
       clearInterval(t);
@@ -730,10 +731,11 @@ function FabricAnimation({ step }) {
   }, [step]);
 
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-75
-                    z-50 flex items-center justify-center
-                    backdrop-blur-sm"
+     <div
+    style={{ zIndex: 99999 }}
+    className="fixed inset-0 bg-black bg-opacity-75
+               flex items-center justify-center
+               backdrop-blur-sm"
     >
       <div
         className="bg-white rounded-3xl p-10 text-center
@@ -831,10 +833,15 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
     const cached = getCachedPreview(garmentType);
     if (cached) {
       setSelectedGarment(garmentType);
-      setGeneratedImage(cached.imageUrl);
+      setGeneratedImage(
+        typeof cached.imageUrl === "string"
+          ? cached.imageUrl
+          : String(cached.imageUrl),
+      );
       return;
     }
 
+    // Generating start - button disable hoga
     setGenerating(true);
     setSelectedGarment(garmentType);
 
@@ -894,6 +901,8 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
       formData.append("garmentImageUrl", garmentUrl);
       formData.append("apiKey", apiKey);
       formData.append("productId", product._id);
+      // Garment type bhi bhejo taki lower/upper detect ho sake
+      formData.append("garmentType", selectedGarment || "");
 
       const res = await axios.post(`${API_URL}/api/fabric/tryon`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -932,7 +941,7 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
         {/* पुराना max-h-screen और overflow-y-auto हटाकर इसे h-screen और flex-col में लॉक कर दिया है */}
         <div
           className="bg-white w-full md:max-w-2xl 
-                     h-screen md:h-auto md:max-h-[92vh] 
+                     h-[100svh] md:h-auto md:max-h-[92vh] 
                      flex flex-col overflow-hidden 
                      rounded-t-3xl md:rounded-3xl shadow-2xl"
         >
@@ -941,31 +950,65 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
             className="flex justify-between items-center p-5 border-b border-gray-100 
                      bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm"
           >
-            {/* टाइटल और फैब्रिक टाइप */}
-            <div className="space-y-0.5 max-w-[70vw]">
-              <div className="flex items-center gap-2">
+            {/* 🏷️ टाइटल, ब्रांड और फैब्रिक टाइप (Ultra-Luxury Stacked Layout) */}
+            <div className="space-y-2 max-w-[70vw] animate-fadeIn">
+              {/* 1. मुख्य फैब्रिक का नाम (जैसे GERMAN) - सबसे ऊपर बड़ा और बोल्ड */}
+              <div className="flex items-center gap-2 group">
+                {/* हैंगर आइकॉन */}
                 <svg
                   xmlns="http://w3.org"
-                  width="16"
-                  height="16"
+                  width="15"
+                  height="15"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2.5"
-                  className="text-purple-600 flex-shrink-0"
+                  className="text-purple-600 flex-shrink-0 transition-transform duration-300 group-hover:rotate-12"
                 >
                   <path d="M4 12a8 8 0 0 1 16 0M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6" />
                 </svg>
-                <h2 className="text-sm font-extrabold text-gray-800 tracking-tight truncate">
+                <h2 className="text-sm font-black text-gray-800 tracking-tight uppercase">
                   {product.name}
                 </h2>
               </div>
 
-              {product.fabricType && (
-                <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 bg-purple-50 px-2 py-0.5 rounded-md inline-block">
-                  {product.fabricType}
-                </span>
-              )}
+              {/* 2. ब्रांड और फैब्रिक टाइप पिल्स - अगली लाइन में (Next Line Grid) */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                {/* ब्रांड नेम (जैसे RAYMOND) - अगली लाइन में बड़ा और सॉलिड पर्पल लुक */}
+                {product.brand && (
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white bg-gradient-to-r from-purple-600 to-indigo-600 px-2.5 py-0.5 rounded-md inline-flex items-center gap-1 shadow-md shadow-purple-500/10 transform hover:scale-105 transition-transform cursor-pointer">
+                    {/* ब्रांड के लिए बारीक वाइट रीटेल टैग आइकॉन */}
+                    <svg
+                      xmlns="http://w3.org"
+                      width="9"
+                      height="9"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      className="text-white/90"
+                    >
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                      <line
+                        x1="7"
+                        y1="7"
+                        x2="7.01"
+                        y2="7"
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span>{product.brand}</span>
+                  </span>
+                )}
+
+                {/* फैब्रिक टाइप पिल (जैसे SILK) - ब्रांड के ठीक बगल में क्लीन लुक */}
+                {product.fabricType && (
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-700 bg-slate-50 border border-slate-200/60 px-2 py-0.5 rounded-md inline-flex items-center shadow-sm">
+                    {product.fabricType}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* अट्रैक्टिव क्लोज बटन - विथ होवर, टच रोटेशन एंड एब्सोल्यूट रिस्पॉन्स */}
@@ -1190,73 +1233,99 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
                 {product.availableGarments?.map((garment) => {
                   const cached = getCachedPreview(garment);
                   const isSelected = selectedGarment === garment;
+                  // Yeh button disable hoga jab YEH garment generate ho raha ho
+                  const isThisGenerating = generating && isSelected;
 
                   return (
                     <button
                       key={garment}
-                      onClick={() => handleGenerateGarment(garment)}
+                      onClick={() => {
+                        if (generating) return; // किसी भी जेनरेशन के समय क्लिक ब्लॉक
+                        handleGenerateGarment(garment);
+                      }}
+                      disabled={generating}
                       className={`relative p-3.5 rounded-xl text-xs font-bold transition-all duration-300
-                     flex flex-col justify-between items-start gap-2 shadow-sm overflow-hidden
-                     transform active:scale-[0.97] group cursor-pointer border-2
-                     ${
-                       isSelected
-                         ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-transparent shadow-md shadow-purple-500/20"
-                         : "bg-white text-gray-700 border-gray-100 hover:border-purple-400 hover:shadow-md hover:shadow-purple-500/5"
-                     }`}
+             flex flex-col justify-between items-start gap-2 shadow-sm overflow-hidden
+             transform active:scale-[0.97] group cursor-pointer border-2 text-left
+             ${
+               isSelected && !isThisGenerating
+                 ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-transparent shadow-md shadow-purple-500/20"
+                 : isThisGenerating
+                   ? "bg-gradient-to-r from-purple-500 to-indigo-500 text-white border-transparent animate-pulse"
+                   : generating
+                     ? "bg-gray-50 text-gray-400 border-gray-100 opacity-50 cursor-not-allowed shadow-none"
+                     : "bg-white text-gray-700 border-gray-100 hover:border-purple-400 hover:shadow-md hover:shadow-purple-500/5"
+             }`}
                     >
-                      {/* बटन का मुख्य टेक्स्ट */}
-                      <span className="tracking-wide relative z-10 transition-transform duration-300 group-hover:translate-x-0.5">
-                        {GARMENT_LABELS[garment]}
-                      </span>
-
-                      {/* कंडीशन के आधार पर स्टेटस पिल्स (Status Pills) */}
-                      {cached ? (
-                        // 1. अगर प्रीव्यू पहले से कैश्ड (Cached) है - सुरक्षित ग्रीन पिल
-                        <div
-                          className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider relative z-10
-                            ${isSelected ? "bg-white/20 text-white" : "bg-emerald-50 text-emerald-600"}`}
-                        >
-                          <svg
-                            xmlns="http://w3.org"
-                            width="10"
-                            height="10"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M20 6 9 17l-5-5" />
-                          </svg>
-                          <span>Ready</span>
+                      {isThisGenerating ? (
+                        /* 1. STATUS: यह गार्मेट जनरेट हो रहा है - प्रीमियम रोटेटिंग लोडर */
+                        <div className="flex items-center gap-2 py-1.5 relative z-10">
+                          <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                          <span className="text-xs font-black uppercase tracking-wider">
+                            Generating...
+                          </span>
                         </div>
                       ) : (
-                        // 2. अगर नया जनरेट करना है - क्रेडिट्स काउंट पिल (गोल्डन/नियोन लुक)
-                        <div
-                          className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider relative z-10 transition-all duration-300
-                            ${isSelected ? "bg-white/20 text-white/90" : "bg-amber-50 text-amber-600 group-hover:bg-amber-100"}`}
-                        >
-                          <svg
-                            xmlns="http://w3.org"
-                            width="10"
-                            height="10"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className={isSelected ? "" : "text-amber-500"}
+                        /* 2. STATUS: नॉर्मल या रेडी मोड */
+                        <>
+                          {/* बटन का मुख्य टेक्स्ट */}
+                          <span
+                            className={`tracking-wide relative z-10 transition-transform duration-300 
+                       ${generating ? "" : "group-hover:translate-x-0.5"}`}
                           >
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                          </svg>
-                          <span>12 credits</span>
-                        </div>
+                            {GARMENT_LABELS[garment]}
+                          </span>
+
+                          {/* कंडीशन के आधार पर स्टेटस पिल्स (Status Pills) */}
+                          {cached ? (
+                            /* A. अगर प्रीव्यू पहले से कैश्ड (Cached) है - सुरक्षित ग्रीन पिल */
+                            <div
+                              className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider relative z-10
+            ${isSelected ? "bg-white/20 text-white" : "bg-emerald-50 text-emerald-600"}`}
+                            >
+                              <svg
+                                xmlns="http://w3.org"
+                                width="10"
+                                height="10"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M20 6 9 17l-5-5" />
+                              </svg>
+                              <span>Ready</span>
+                            </div>
+                          ) : (
+                            /* B. अगर नया जनरेट करना है - क्रेडिट्स काउंट पिल (गोल्डन/नियोन लुक) */
+                            <div
+                              className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider relative z-10 transition-all duration-300
+            ${isSelected ? "bg-white/20 text-white/90" : "bg-amber-50 text-amber-600 " + (generating ? "" : "group-hover:bg-amber-100")}`}
+                            >
+                              <svg
+                                xmlns="http://w3.org"
+                                width="10"
+                                height="10"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className={isSelected ? "" : "text-amber-500"}
+                              >
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                              </svg>
+                              <span>12 credits</span>
+                            </div>
+                          )}
+                        </>
                       )}
 
                       {/* एक्टिव बटन के ऊपर से गुजरने वाली बहुत ही हल्की रिफ्लेक्टिव लाइट वेव */}
-                      {isSelected && (
+                      {isSelected && !isThisGenerating && (
                         <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></span>
                       )}
                     </button>
@@ -1453,6 +1522,18 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
                     />
                   </label>
 
+{(selectedGarment === 'pant' ||
+  selectedGarment === 'salwar_suit' ||
+  selectedGarment === 'salwar') && (
+  <div className="bg-amber-50 border border-amber-200
+                  rounded-xl p-3 mb-3">
+    <p className="text-amber-700 text-xs font-medium">
+      ⚠️ For lower body garments, Upload a straight, Full-body photo. For best results, Your entire body should be in the frame.
+    </p>
+  </div>
+)} 
+
+
                   <button
                     onClick={handleTryOn}
                     disabled={!humanImage || tryonStep}
@@ -1589,6 +1670,15 @@ export default function FabricShop() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  // Advanced filters
+  const [selectedColors, setSelectedColors] = useState([]);
+  const [selectedBrand, setSelectedBrand] = useState("");
+  const [selectedOccasion, setSelectedOccasion] = useState("all");
+  const [selectedPattern, setSelectedPattern] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
+  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
+  const [filterMeta, setFilterMeta] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
   const [textIndex, setTextIndex] = useState(0);
   const [displayText, setDisplayText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -1665,23 +1755,84 @@ export default function FabricShop() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayText, isDeleting, textIndex]);
 
-  useEffect(() => {
-    const fetchShop = async () => {
+  const fetchShop = useCallback(
+    async (filters = {}) => {
       try {
-        const res = await axios.get(`${API_URL}/api/fabric/shop/${sellerId}`);
+        const params = new URLSearchParams();
+        if (filters.color) params.append("color", filters.color);
+        if (filters.brand) params.append("brand", filters.brand);
+        if (filters.occasion && filters.occasion !== "all") {
+          params.append("occasion", filters.occasion);
+        }
+        if (filters.pattern && filters.pattern !== "all") {
+          params.append("pattern", filters.pattern);
+        }
+        if (filters.sort) params.append("sort", filters.sort);
+        if (filters.minPrice) params.append("minPrice", filters.minPrice);
+        if (filters.maxPrice) params.append("maxPrice", filters.maxPrice);
+
+        const queryString = params.toString();
+        const url = `${API_URL}/api/fabric/shop/${sellerId}${queryString ? "?" + queryString : ""}`;
+
+        const res = await axios.get(url);
         setShop(res.data.shop);
         setProducts(res.data.products);
-      } catch {
+        if (res.data.filterMeta) {
+          setFilterMeta(res.data.filterMeta);
+        }
+      } catch (error) {
         setError("Fabric shop nahi mili!");
       } finally {
         setLoading(false);
       }
-    };
+    },
+    [sellerId],
+  );
 
+  useEffect(() => {
     if (sellerId) {
       fetchShop();
     }
-  }, [sellerId]);
+  }, [sellerId, fetchShop]);
+
+  const applyFilters = () => {
+    setLoading(true);
+    fetchShop({
+      color: selectedColors.join(","),
+      brand: selectedBrand,
+      occasion: selectedOccasion,
+      pattern: selectedPattern,
+      sort: sortBy,
+      minPrice: priceRange.min,
+      maxPrice: priceRange.max,
+    });
+    setShowFilters(false);
+  };
+
+  const resetFilters = () => {
+    setSelectedColors([]);
+    setSelectedBrand("");
+    setSelectedOccasion("all");
+    setSelectedPattern("all");
+    setSortBy("newest");
+    setPriceRange({ min: "", max: "" });
+    setLoading(true);
+    fetchShop({});
+  };
+
+  const toggleColorFilter = (color) => {
+    setSelectedColors((prev) =>
+      prev.includes(color) ? prev.filter((c) => c !== color) : [...prev, color],
+    );
+  };
+
+  const activeFilterCount = [
+    selectedColors.length > 0,
+    selectedBrand !== "",
+    selectedOccasion !== "all",
+    selectedPattern !== "all",
+    priceRange.min !== "" || priceRange.max !== "",
+  ].filter(Boolean).length;
 
   const garmentTypes = [
     "all",
@@ -1815,37 +1966,311 @@ export default function FabricShop() {
       {/* Products Section */}
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Search + Filter */}
+        {/* Search + Filter Bar */}
         <div className="space-y-3 mb-6">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder=" Search Fabric.."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-white border border-gray-200
-                         rounded-2xl px-5 py-3 pl-12 text-sm
-                         focus:outline-none focus:border-purple-400
-                         focus:ring-2 focus:ring-purple-100
-                         transition shadow-sm"
-            />
-            <span
-              className="absolute left-4 top-1/2
-                             -translate-y-1/2 text-gray-400"
+          {/* Search + Filter Toggle Row */}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder="Search any Fabrics"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full bg-white border border-gray-200
+                   rounded-2xl px-5 py-3 pl-10 text-sm
+                   focus:outline-none focus:border-purple-400
+                   focus:ring-2 focus:ring-purple-100
+                   transition shadow-sm"
+              />
+              <span
+                className="absolute left-3 top-1/2 -translate-y-1/2
+                       text-gray-400"
+              >
+                🔍
+              </span>
+            </div>
+
+            {/* Filter Toggle Button */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-4 py-2.5
+                 rounded-2xl text-sm font-semibold
+                 transition shadow-sm border-2
+                 ${
+                   showFilters || activeFilterCount > 0
+                     ? "bg-purple-600 text-white border-purple-600"
+                     : "bg-white text-gray-600 border-gray-200"
+                 }`}
             >
-              🔍
-            </span>
+              <span>⚙️</span>
+              Filter
+              {activeFilterCount > 0 && (
+                <span
+                  className="bg-white text-purple-600 text-xs
+                         font-black w-5 h-5 rounded-full
+                         flex items-center justify-center"
+                >
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+
+            {/* Sort Dropdown */}
+            <select
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                setLoading(true);
+                fetchShop({
+                  color: selectedColors.join(","),
+                  brand: selectedBrand,
+                  occasion: selectedOccasion,
+                  pattern: selectedPattern,
+                  sort: e.target.value,
+                  minPrice: priceRange.min,
+                  maxPrice: priceRange.max,
+                });
+              }}
+              className="bg-white border-2 border-gray-200 rounded-2xl
+                 px-3 py-2.5 text-sm font-medium text-gray-700
+                 focus:outline-none focus:border-purple-400
+                 cursor-pointer shadow-sm"
+            >
+              <option value="newest">🕐 Sort- Newest</option>
+              <option value="price_asc">💰 Low to High</option>
+              <option value="price_desc">💎 High to Low</option>
+              <option value="name_asc">🔤 A to Z</option>
+            </select>
           </div>
 
+          {/* Advanced Filter Panel */}
+          {showFilters && (
+            <div
+              className="bg-white rounded-2xl border-2
+                    border-purple-100 p-5 shadow-lg space-y-5"
+            >
+              <div className="flex justify-between items-center">
+                <h3 className="font-bold text-gray-800">🎯 Advanced Filters</h3>
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={resetFilters}
+                    className="text-xs text-red-500 font-semibold
+                       hover:underline"
+                  >
+                    ✕ Clear All
+                  </button>
+                )}
+              </div>
+
+              {/* Color Filter */}
+              {filterMeta?.colors?.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">
+                    🎨 Color
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {filterMeta.colors.map((color) => {
+                      const colorMap = {
+                        Red: "#EF4444",
+                        Blue: "#3B82F6",
+                        Green: "#22C55E",
+                        Yellow: "#EAB308",
+                        Orange: "#F97316",
+                        Purple: "#A855F7",
+                        Pink: "#EC4899",
+                        Black: "#1F2937",
+                        White: "#F3F4F6",
+                        Grey: "#9CA3AF",
+                        Brown: "#92400E",
+                        Cream: "#FEF3C7",
+                        Navy: "#1E3A5F",
+                        Maroon: "#7F1D1D",
+                        Teal: "#0D9488",
+                        Gold: "#D97706",
+                      };
+                      const isSelected = selectedColors.includes(color);
+                      return (
+                        <button
+                          key={color}
+                          onClick={() => toggleColorFilter(color)}
+                          className={`flex items-center gap-1.5 px-3 py-1.5
+                             rounded-full text-xs font-semibold
+                             border-2 transition-all
+                             ${
+                               isSelected
+                                 ? "border-purple-600 bg-purple-50 text-purple-700"
+                                 : "border-gray-200 text-gray-600 hover:border-gray-400"
+                             }`}
+                        >
+                          <span
+                            className="w-3 h-3 rounded-full border border-gray-200"
+                            style={{ background: colorMap[color] || "#888" }}
+                          />
+                          {color}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Brand Filter */}
+              {filterMeta?.brands?.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">
+                    🏷️ Brand
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setSelectedBrand("")}
+                      className={`px-3 py-1.5 rounded-full text-xs
+                         font-semibold border-2 transition
+                         ${
+                           selectedBrand === ""
+                             ? "border-purple-600 bg-purple-50 text-purple-700"
+                             : "border-gray-200 text-gray-600"
+                         }`}
+                    >
+                      All Brands
+                    </button>
+                    {filterMeta.brands.map((brand) => (
+                      <button
+                        key={brand}
+                        onClick={() =>
+                          setSelectedBrand(selectedBrand === brand ? "" : brand)
+                        }
+                        className={`px-3 py-1.5 rounded-full text-xs
+                           font-semibold border-2 transition
+                           ${
+                             selectedBrand === brand
+                               ? "border-purple-600 bg-purple-50 text-purple-700"
+                               : "border-gray-200 text-gray-600"
+                           }`}
+                      >
+                        {brand}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Occasion Filter */}
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-2">
+                  🎭 Occasion
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { v: "all", l: "🛍️ All" },
+                    { v: "casual", l: "👕 Casual" },
+                    { v: "formal", l: "👔 Formal" },
+                    { v: "wedding", l: "💍 Wedding" },
+                    { v: "festival", l: "🪔 Festival" },
+                    { v: "party", l: "🎉 Party" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.v}
+                      onClick={() => setSelectedOccasion(opt.v)}
+                      className={`px-3 py-1.5 rounded-full text-xs
+                         font-semibold border-2 transition
+                         ${
+                           selectedOccasion === opt.v
+                             ? "border-purple-600 bg-purple-50 text-purple-700"
+                             : "border-gray-200 text-gray-600"
+                         }`}
+                    >
+                      {opt.l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Pattern Filter */}
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-2">
+                  🔷 Pattern
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { v: "all", l: "✨ All" },
+                    { v: "solid", l: "⬛ Solid" },
+                    { v: "stripes", l: "〓 Stripes" },
+                    { v: "checks", l: "▦ Checks" },
+                    { v: "floral", l: "🌸 Floral" },
+                    { v: "printed", l: "🖨️ Printed" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.v}
+                      onClick={() => setSelectedPattern(opt.v)}
+                      className={`px-3 py-1.5 rounded-full text-xs
+                         font-semibold border-2 transition
+                         ${
+                           selectedPattern === opt.v
+                             ? "border-purple-600 bg-purple-50 text-purple-700"
+                             : "border-gray-200 text-gray-600"
+                         }`}
+                    >
+                      {opt.l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Price Range */}
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-2">
+                  💰 Price Range (₹)
+                </p>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="number"
+                    placeholder={`Min (${filterMeta?.priceRange?.min || 0})`}
+                    value={priceRange.min}
+                    onChange={(e) =>
+                      setPriceRange((p) => ({ ...p, min: e.target.value }))
+                    }
+                    className="flex-1 border border-gray-200 rounded-xl
+                       px-3 py-2 text-sm focus:outline-none
+                       focus:border-purple-400"
+                  />
+                  <span className="text-gray-400 text-sm">—</span>
+                  <input
+                    type="number"
+                    placeholder={`Max (${filterMeta?.priceRange?.max || ""})`}
+                    value={priceRange.max}
+                    onChange={(e) =>
+                      setPriceRange((p) => ({ ...p, max: e.target.value }))
+                    }
+                    className="flex-1 border border-gray-200 rounded-xl
+                       px-3 py-2 text-sm focus:outline-none
+                       focus:border-purple-400"
+                  />
+                </div>
+              </div>
+
+              {/* Apply Button */}
+              <button
+                onClick={applyFilters}
+                className="w-full bg-gradient-to-r from-purple-600
+                   to-indigo-600 text-white py-3 rounded-2xl
+                   font-bold text-sm hover:opacity-90 transition"
+              >
+                🎯 Apply Filters
+              </button>
+            </div>
+          )}
+
+          {/* Garment Type Quick Filter (jo pehle tha) */}
           <div className="flex gap-2 overflow-x-auto pb-1">
             <button
               onClick={() => setFilter("all")}
               className={`flex-shrink-0 px-4 py-2 rounded-full
-                         text-sm font-medium transition
-                         ${
-                           filter === "all"
-                             ? "bg-purple-600 text-white"
-                             : "bg-white text-gray-600 border border-gray-200"
-                         }`}
+                 text-sm font-medium transition
+                 ${
+                   filter === "all"
+                     ? "bg-purple-600 text-white"
+                     : "bg-white text-gray-600 border border-gray-200"
+                 }`}
             >
               🛍️ All
             </button>
@@ -1854,17 +2279,53 @@ export default function FabricShop() {
                 key={g}
                 onClick={() => setFilter(g)}
                 className={`flex-shrink-0 px-4 py-2 rounded-full
-                           text-sm font-medium transition whitespace-nowrap
-                           ${
-                             filter === g
-                               ? "bg-purple-600 text-white"
-                               : "bg-white text-gray-600 border border-gray-200"
-                           }`}
+                   text-sm font-medium transition whitespace-nowrap
+                   ${
+                     filter === g
+                       ? "bg-purple-600 text-white"
+                       : "bg-white text-gray-600 border border-gray-200"
+                   }`}
               >
                 {GARMENT_LABELS[g] || g}
               </button>
             ))}
           </div>
+
+          {/* Active filters display */}
+          {activeFilterCount > 0 && (
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-xs text-gray-400">Active:</span>
+              {selectedColors.map((c) => (
+                <span
+                  key={c}
+                  className="bg-purple-100 text-purple-700 text-xs
+                     px-2 py-1 rounded-full flex items-center gap-1"
+                >
+                  {c}
+                  <button
+                    onClick={() => toggleColorFilter(c)}
+                    className="hover:text-red-500"
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+              {selectedBrand && (
+                <span
+                  className="bg-purple-100 text-purple-700 text-xs
+                         px-2 py-1 rounded-full flex items-center gap-1"
+                >
+                  {selectedBrand}
+                  <button
+                    onClick={() => setSelectedBrand("")}
+                    className="hover:text-red-500"
+                  >
+                    ✕
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {filtered.length === 0 ? (
@@ -1953,40 +2414,58 @@ export default function FabricShop() {
                     </div>
                   </div>
 
-                  <div className="p-4">
-                    <h3
-                      className="font-bold text-gray-800 text-sm
-                                   truncate mb-1"
-                    >
-                      {product.name}
-                    </h3>
-                    {product.fabricType && (
-                      <p className="text-gray-400 text-xs mb-2">
-                        {product.fabricType}
-                      </p>
-                    )}
+                  <div className="p-4 space-y-2">
+  {/* 1. Product Name - Always capitalized */}
+  <h3 className="font-bold text-gray-800 text-base truncate capitalize">
+    {product.name}
+  </h3>
 
-                    <p className="text-purple-600 font-black text-lg mb-2">
-                      ₹{product.price}
-                    </p>
+  {/* 2. Brand Name Tag */}
+  {product.brand ? (
+    <div>
+      <span className="inline-block bg-gray-100 text-gray-600 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+      {product.brand}
+      </span>
+    </div>
+  ) : (
+    /* Invisible placeholder taaki spacing na bigde agar brand na ho */
+    <div className="h-[21px]"></div>
+  )}
 
-                    {/* Available garments */}
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {product.availableGarments?.slice(0, 3).map((g) => (
-                        <span
-                          key={g}
-                          className="text-xs bg-purple-50 text-purple-600
-                                     px-1.5 py-0.5 rounded-lg"
-                        >
-                          {GARMENT_LABELS[g]?.split(" ").slice(1).join(" ")}
-                        </span>
-                      ))}
-                      {(product.availableGarments?.length || 0) > 3 && (
-                        <span className="text-xs text-gray-400">
-                          +{product.availableGarments.length - 3}
-                        </span>
-                      )}
-                    </div>
+  {/* 3. Fabric Type */}
+  {product.fabricType ? (
+    <p className="text-gray-400 text-xs capitalize truncate">
+      {product.fabricType}
+    </p>
+  ) : (
+    /* Invisible placeholder for consistent alignment */
+    <p className="text-transparent text-xs">None</p>
+  )}
+
+  {/* 4. Price Section */}
+  <p className="text-purple-600 font-black text-lg pt-1">
+    ₹{product.price}
+  </p>
+
+  {/* 5. Available Garments Badges */}
+  <div className="flex flex-wrap gap-1 h-5 overflow-hidden">
+    {product.availableGarments?.slice(0, 3).map((g, i) => (
+      <span
+        key={i}
+        className="text-xs bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded-lg font-medium whitespace-nowrap"
+      >
+        {GARMENT_LABELS[g]?.split(" ").slice(1).join(" ")}
+      </span>
+    ))}
+    
+    {(product.availableGarments?.length || 0) > 3 && (
+      <span className="text-xs text-gray-400 self-center pl-1">
+        +{product.availableGarments.length - 3}
+      </span>
+    )}
+  </div>
+
+
 
                     <button
                       className="w-full py-3.5 rounded-2xl font-black text-sm tracking-wider text-white

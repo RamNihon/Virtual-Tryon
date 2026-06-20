@@ -69,6 +69,19 @@ router.post(
         availableGarments = [availableGarments];
       }
 
+      // Colors parse karo
+      let colors = [];
+      if (req.body.colors) {
+        try {
+          colors =
+            typeof req.body.colors === "string"
+              ? JSON.parse(req.body.colors)
+              : req.body.colors;
+        } catch (e) {
+          colors = [req.body.colors];
+        }
+      }
+
       const product = await FabricProduct.create({
         seller: req.sellerId,
         name: req.body.name,
@@ -79,6 +92,11 @@ router.post(
         fabricImages: imageUrls,
         fabricImageUrl: imageUrls[0],
         availableGarments: availableGarments || ["shirt_full"],
+        colors: colors || [],
+        brand: req.body.brand || "",
+        material: req.body.material || "",
+        occasion: req.body.occasion || "any",
+        pattern: req.body.pattern || "solid",
       });
 
       res.json({ success: true, product });
@@ -114,11 +132,83 @@ router.get("/shop/:sellerId", async (req, res) => {
       });
     }
 
-    const products = await FabricProduct.find({
+    // Query build karo
+    const query = {
       seller: seller._id,
       isActive: true,
       inStock: true,
-    }).sort({ createdAt: -1 });
+    };
+
+    // Color filter
+    if (req.query.color) {
+      query.colors = {
+        $in: [new RegExp(req.query.color, "i")],
+      };
+    }
+
+    // Brand filter
+    if (req.query.brand) {
+      query.brand = new RegExp(req.query.brand, "i");
+    }
+
+    // Material filter
+    if (req.query.material) {
+      query.material = new RegExp(req.query.material, "i");
+    }
+
+    // Occasion filter
+    if (req.query.occasion && req.query.occasion !== "all") {
+      query.occasion = req.query.occasion;
+    }
+
+    // Pattern filter
+    if (req.query.pattern && req.query.pattern !== "all") {
+      query.pattern = req.query.pattern;
+    }
+
+    // Price range filter
+    if (req.query.minPrice || req.query.maxPrice) {
+      query.price = {};
+      if (req.query.minPrice) {
+        query.price.$gte = parseFloat(req.query.minPrice);
+      }
+      if (req.query.maxPrice) {
+        query.price.$lte = parseFloat(req.query.maxPrice);
+      }
+    }
+
+    // Sort
+    let sortOption = { createdAt: -1 }; // Default: newest
+    if (req.query.sort === "price_asc") sortOption = { price: 1 };
+    if (req.query.sort === "price_desc") sortOption = { price: -1 };
+    if (req.query.sort === "name_asc") sortOption = { name: 1 };
+    if (req.query.sort === "newest") sortOption = { createdAt: -1 };
+
+    const products = await FabricProduct.find(query).sort(sortOption);
+
+    // Unique values for filter dropdowns
+    const allProducts = await FabricProduct.find({
+      seller: seller._id,
+      isActive: true,
+    });
+
+    const filterMeta = {
+      colors: [...new Set(allProducts.flatMap((p) => p.colors || []))].filter(
+        Boolean,
+      ),
+      brands: [...new Set(allProducts.map((p) => p.brand).filter(Boolean))],
+      materials: [
+        ...new Set(allProducts.map((p) => p.material).filter(Boolean)),
+      ],
+      priceRange: {
+        min: Math.min(...allProducts.map((p) => p.price)),
+        max: Math.max(...allProducts.map((p) => p.price)),
+      },
+      occasions: [
+        ...new Set(allProducts.map((p) => p.occasion).filter(Boolean)),
+      ],
+      patterns: [...new Set(allProducts.map((p) => p.pattern).filter(Boolean))],
+    };
 
     res.json({
       success: true,
@@ -130,6 +220,7 @@ router.get("/shop/:sellerId", async (req, res) => {
         upiId: seller.upiId || "",
       },
       products,
+      filterMeta,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -247,20 +338,20 @@ router.post("/tryon", upload.single("humanImage"), async (req, res) => {
   try {
     const { garmentImageUrl, apiKey, productId } = req.body;
 
-
     // garmentImageUrl string check karo
-const garmentUrl = typeof garmentImageUrl === 'string'
-  ? garmentImageUrl
-  : garmentImageUrl?.url || String(garmentImageUrl)
+    const garmentUrl =
+      typeof garmentImageUrl === "string"
+        ? garmentImageUrl
+        : garmentImageUrl?.url || String(garmentImageUrl);
 
-console.log('Garment URL type:', typeof garmentImageUrl)
-console.log('Garment URL value:', garmentUrl)
+    console.log("Garment URL type:", typeof garmentImageUrl);
+    console.log("Garment URL value:", garmentUrl);
 
-if (!garmentUrl || !garmentUrl.startsWith('http')) {
-  return res.status(400).json({
-    message: 'Valid garment image URL nahi mili!'
-  })
-}
+    if (!garmentUrl || !garmentUrl.startsWith("http")) {
+      return res.status(400).json({
+        message: "Valid garment image URL nahi mili!",
+      });
+    }
 
     // Seller identify
     const seller = await Seller.findOne({ apiKey });
@@ -290,6 +381,53 @@ if (!garmentUrl || !garmentUrl.startsWith('http')) {
 
     console.log("📸 Fabric try-on started...");
 
+    // Fabric ke liye bhi garment type detect karo
+    const fabricDesc = (req.body.garmentType || "").toLowerCase();
+
+    const fabricLowerKeywords = [
+      "pant",
+      "pants",
+      "trouser",
+      "trousers",
+      "jeans",
+      "salwar",
+      "bottom",
+      "lower",
+      "skirt",
+      "legging",
+    ];
+    const fabricDressKeywords = [
+      "dress",
+      "salwar_suit",
+      "salwar suit",
+      "suit",
+      "gown",
+      "jumpsuit",
+    ];
+
+    let fabricGarmentType = "upper body shirt clothing";
+    let fabricIsCrop = false;
+
+    const isFabricLower = fabricLowerKeywords.some((k) =>
+      fabricDesc.includes(k),
+    );
+    const isFabricDress = fabricDressKeywords.some((k) =>
+      fabricDesc.includes(k),
+    );
+
+    if (isFabricLower) {
+      fabricGarmentType = "lower body pants trousers";
+      fabricIsCrop = true;
+    } else if (isFabricDress) {
+      fabricGarmentType = "full body dress outfit";
+      fabricIsCrop = false;
+    } else {
+      fabricGarmentType = "upper body shirt top clothing";
+      fabricIsCrop = false;
+    }
+
+    console.log("Fabric garment type:", fabricGarmentType);
+
     // Human image upload
     const humanUrl = await uploadToCloudinary(req.file.buffer, "fabric/humans");
 
@@ -300,13 +438,13 @@ if (!garmentUrl || !garmentUrl.startsWith('http')) {
         input: {
           human_img: humanUrl,
           garm_img: garmentUrl,
-          garment_des: "clothing item",
+          garment_des: fabricGarmentType,
           is_checked: true,
-          is_checked_crop: false,
+          is_checked_crop: fabricIsCrop,
           denoise_steps: 30,
           seed: 42,
         },
-      }
+      },
     );
 
     // Replicate URL ko Cloudinary par save karo
@@ -318,17 +456,17 @@ if (!garmentUrl || !garmentUrl.startsWith('http')) {
 
       savedImageUrl = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
-          { folder: 'fabric/tryons' },
+          { folder: "fabric/tryons" },
           (error, result) => {
             if (error) reject(error);
             else resolve(result.secure_url);
-          }
+          },
         );
         stream.end(buffer);
       });
-      console.log('✅ Tryon saved to Cloudinary!');
+      console.log("✅ Tryon saved to Cloudinary!");
     } catch (saveError) {
-      console.log('Cloudinary save error:', saveError.message);
+      console.log("Cloudinary save error:", saveError.message);
       // Fallback: original URL use karo
       savedImageUrl = output;
     }
@@ -336,38 +474,38 @@ if (!garmentUrl || !garmentUrl.startsWith('http')) {
     console.log("🎉 Fabric try-on done!");
 
     // Style advice (optional - 1 credit)
-    let styleAdvice = null
-try {
-  await useCredits(Seller, seller._id, 'styleAdvice')
+    let styleAdvice = null;
+    try {
+      await useCredits(Seller, seller._id, "styleAdvice");
 
-  // Kaunsi key hai check karo
-  let styleEndpoint = ''
-  let styleHeaders = {}
-  let styleBody = {}
+      // Kaunsi key hai check karo
+      let styleEndpoint = "";
+      let styleHeaders = {};
+      let styleBody = {};
 
-  if (process.env.ANTHROPIC_API_KEY ||
-      process.env.CLAUDE_API_KEY) {
-    // Direct Anthropic
-    styleEndpoint = 'https://api.anthropic.com/v1/messages'
-    styleHeaders = {
-      'Content-Type': 'application/json',
-      'x-api-key': process.env.ANTHROPIC_API_KEY ||
-                   process.env.CLAUDE_API_KEY,
-      'anthropic-version': '2023-06-01'
-    }
-    styleBody = {
-      model: 'claude-haiku-4-5',
-      max_tokens: 300,
-      messages: [{
-        role: 'user',
-        content: [
-          {
-            type: 'image',
-            source: { type: 'url', url: savedImageUrl }
-          },
-          {
-            type: 'text',
-            text: `aap ek expert fashion stylist hai.
+      if (process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY) {
+        // Direct Anthropic
+        styleEndpoint = "https://api.anthropic.com/v1/messages";
+        styleHeaders = {
+          "Content-Type": "application/json",
+          "x-api-key":
+            process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY,
+          "anthropic-version": "2023-06-01",
+        };
+        styleBody = {
+          model: "claude-haiku-4-5",
+          max_tokens: 300,
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "image",
+                  source: { type: "url", url: savedImageUrl },
+                },
+                {
+                  type: "text",
+                  text: `aap ek expert fashion stylist hai.
 Is try-on image ko dekh kar Hindi mein batao:
 
 1. 🎨 Color Rating: /10
@@ -379,32 +517,34 @@ Is try-on image ko dekh kar Hindi mein batao:
 7. ✨ aur konse dress combination achhe rahenge.
 8. 🎯 Aur kya hand accesories or hairstyle or other improvement kar sakte hain, taki confident and smart dikhen
 
-Short aur friendly jawab den!`
-          }
-        ]
-      }]
-    }
-  } else if (process.env.OPENROUTER_API_KEY) {
-    // OpenRouter
-    styleEndpoint = 'https://openrouter.ai/api/v1/chat/completions'
-    styleHeaders = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      'HTTP-Referer': process.env.FRONTEND_URL || 'http://localhost:3000'
-    }
-    styleBody = {
-      model: 'anthropic/claude-3-haiku',
-      max_tokens: 300,
-      messages: [{
-        role: 'user',
-        content: [
-          {
-            type: 'image_url',
-            image_url: { url: savedImageUrl }
-          },
-          {
-            type: 'text',
-            text: `Tum ek expert fashion stylist hai.
+Short aur friendly jawab den!`,
+                },
+              ],
+            },
+          ],
+        };
+      } else if (process.env.OPENROUTER_API_KEY) {
+        // OpenRouter
+        styleEndpoint = "https://openrouter.ai/api/v1/chat/completions";
+        styleHeaders = {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "HTTP-Referer": process.env.FRONTEND_URL || "http://localhost:3000",
+        };
+        styleBody = {
+          model: "anthropic/claude-3-haiku",
+          max_tokens: 300,
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "image_url",
+                  image_url: { url: savedImageUrl },
+                },
+                {
+                  type: "text",
+                  text: `Tum ek expert fashion stylist hai.
 Is try-on image ko dekh kar Hindi mein batao:
 
 1. 🎨 Color Rating: /10
@@ -416,34 +556,35 @@ Is try-on image ko dekh kar Hindi mein batao:
 7. ✨ aur konse dress combination achhe rahenge.
 8. 🎯 Aur kya hand accesories or hairstyle or other improvement kar sakte hain, taki confident and smart dikhen
 
-Short aur friendly jawab den!`
-          }
-        ]
-      }]
-    }
-  }
+Short aur friendly jawab den!`,
+                },
+              ],
+            },
+          ],
+        };
+      }
 
-  if (styleEndpoint) {
-    const styleRes = await fetch(styleEndpoint, {
-      method: 'POST',
-      headers: styleHeaders,
-      body: JSON.stringify(styleBody)
-    })
-    const styleData = await styleRes.json()
+      if (styleEndpoint) {
+        const styleRes = await fetch(styleEndpoint, {
+          method: "POST",
+          headers: styleHeaders,
+          body: JSON.stringify(styleBody),
+        });
+        const styleData = await styleRes.json();
 
-    // Response parse karo
-    if (styleData.content) {
-      // Anthropic format
-      styleAdvice = styleData.content?.[0]?.text || null
-    } else if (styleData.choices) {
-      // OpenRouter format
-      styleAdvice = styleData.choices?.[0]?.message?.content || null
+        // Response parse karo
+        if (styleData.content) {
+          // Anthropic format
+          styleAdvice = styleData.content?.[0]?.text || null;
+        } else if (styleData.choices) {
+          // OpenRouter format
+          styleAdvice = styleData.choices?.[0]?.message?.content || null;
+        }
+      }
+    } catch (e) {
+      console.log("Style advice skip:", e.message);
+      console.error("❌ Style advice error details:", e);
     }
-  }
-} catch (e) {
-  console.log('Style advice skip:', e.message)
-   console.error('❌ Style advice error details:', e);
-}
 
     // Legacy count
     await Seller.findByIdAndUpdate(seller._id, {
@@ -453,7 +594,7 @@ Short aur friendly jawab den!`
     res.json({
       success: true,
       resultImage: savedImageUrl,
-      styleAdvice :styleAdvice,
+      styleAdvice: styleAdvice,
       humanImage: humanUrl,
     });
   } catch (error) {

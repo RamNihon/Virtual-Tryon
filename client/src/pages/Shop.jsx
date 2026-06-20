@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import API_URL from "../api";
 import { useCustomer } from "../context/CustomerContext";
-import VoiceAssistant, { speakText } from '../components/VoiceAssistant'
+import VoiceAssistant, { speakText } from "../components/VoiceAssistant";
 
 // Shared status color classes (used for badges across the page)
 const STATUS_COLORS = {
@@ -235,104 +235,98 @@ function ShopNavbar({ shop, onLoginClick, onProfileClick }) {
               </>
             )}
           </div>
-  {/* --- 1. ANIMATED HAMBURGER BUTTON --- */}
-<button
-  onClick={() => setMenuOpen(!menuOpen)}
-  className="md:hidden relative w-10 h-10 flex flex-col items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 transition-all duration-300 focus:outline-none z-50 group border border-white/5 cursor-pointer"
-  aria-label="Toggle Menu"
->
-  <div className="w-5 h-3.5 flex flex-col justify-between relative">
-    {/* टॉप लाइन */}
-    <span
-      className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 transform origin-center ${
-        menuOpen ? "rotate-45 translate-y-[6px]" : ""
-      }`}
-    ></span>
-    
-    {/* मिडिल line */}
-    <span
-      className={`w-full h-0.5 bg-white rounded-full transition-all duration-200 transform ${
-        menuOpen ? "opacity-0 scale-x-0" : ""
-      }`}
-    ></span>
-    
-    {/* बॉटम लाइन */}
-    <span
-      className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 transform origin-center ${
-        menuOpen ? "-rotate-45 -translate-y-[6px]" : ""
-      }`}
-    ></span>
-  </div>
-</button>
+          {/* --- 1. ANIMATED HAMBURGER BUTTON --- */}
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="md:hidden relative w-10 h-10 flex flex-col items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 transition-all duration-300 focus:outline-none z-50 group border border-white/5 cursor-pointer"
+            aria-label="Toggle Menu"
+          >
+            <div className="w-5 h-3.5 flex flex-col justify-between relative">
+              {/* टॉप लाइन */}
+              <span
+                className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 transform origin-center ${
+                  menuOpen ? "rotate-45 translate-y-[6px]" : ""
+                }`}
+              ></span>
 
-</div>
+              {/* मिडिल line */}
+              <span
+                className={`w-full h-0.5 bg-white rounded-full transition-all duration-200 transform ${
+                  menuOpen ? "opacity-0 scale-x-0" : ""
+                }`}
+              ></span>
 
-{/* --- 2. ADVANCE PREMIUM DROPDOWN MENU --- */}
-{menuOpen && (
-  <div
-    className="md:hidden mt-3 p-2 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/10 space-y-1 shadow-xl shadow-purple-950/20 animate-in fade-in slide-in-from-top-3 duration-300"
-  >
-    {customer ? (
-      <>
-        <button
-          onClick={() => {
-            onProfileClick();
-            setMenuOpen(false);
-          }}
-          className="flex items-center gap-2.5 w-full text-left text-white text-sm font-semibold px-3 py-2.5 rounded-xl hover:bg-white/10 active:bg-white/20 transition-all"
-        >
-          <span>👤</span> My Account
-        </button>
-        <button
-          onClick={() => {
-            logoutCustomer();
-            setMenuOpen(false);
-          }}
-          className="flex items-center gap-2.5 w-full text-left text-pink-200 text-sm font-semibold px-3 py-2.5 rounded-xl hover:bg-red-500/10 active:bg-red-500/20 transition-all"
-        >
-          <span>🔓</span> Logout
-        </button>
-      </>
-    ) : (
-      <>
-        <button
-          onClick={() => {
-            onLoginClick("login");
-            setMenuOpen(false);
-          }}
-          className="flex items-center gap-2.5 w-full text-left text-white text-sm font-semibold px-3 py-2.5 rounded-xl hover:bg-white/10 active:bg-white/20 transition-all"
-        >
-          <span>🔑</span> Login
-        </button>
-        <button
-          onClick={() => {
-            onLoginClick("register");
-            setMenuOpen(false);
-          }}
-          className="flex items-center gap-2.5 w-full text-left text-white text-sm font-semibold px-3 py-2.5 rounded-xl hover:bg-white/10 active:bg-white/20 transition-all"
-        >
-          <span>📝</span> Register
-        </button>
-      </>
-    )}
-  </div>
-)}
-</div>
+              {/* बॉटम लाइन */}
+              <span
+                className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 transform origin-center ${
+                  menuOpen ? "-rotate-45 -translate-y-[6px]" : ""
+                }`}
+              ></span>
+            </div>
+          </button>
+        </div>
 
-{/* --- 3. PREMIUM RUNNING TICKER BAR --- */}
-<div
-  className="bg-gradient-to-r from-indigo-700 via-purple-600 to-indigo-700 py-2.5 px-4 text-center border-t border-white/5 relative overflow-hidden"
->
-  {/* बैकग्राउंड शाइन इफ़ेक्ट */}
-  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-shimmery"></div>
-  
-  <p className="text-white text-xs sm:text-sm font-bold tracking-wide min-h-6 flex items-center justify-center gap-1 drop-shadow-sm relative z-10">
-    <span>{displayText}</span>
-    <span className="w-1.5 h-3.5 bg-white/80 rounded-sm animate-pulse inline-block ml-0.5"></span>
-  </p>
-</div>
-</div>
+        {/* --- 2. ADVANCE PREMIUM DROPDOWN MENU --- */}
+        {menuOpen && (
+          <div className="md:hidden mt-3 p-2 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/10 space-y-1 shadow-xl shadow-purple-950/20 animate-in fade-in slide-in-from-top-3 duration-300">
+            {customer ? (
+              <>
+                <button
+                  onClick={() => {
+                    onProfileClick();
+                    setMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2.5 w-full text-left text-white text-sm font-semibold px-3 py-2.5 rounded-xl hover:bg-white/10 active:bg-white/20 transition-all"
+                >
+                  <span>👤</span> My Account
+                </button>
+                <button
+                  onClick={() => {
+                    logoutCustomer();
+                    setMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2.5 w-full text-left text-pink-200 text-sm font-semibold px-3 py-2.5 rounded-xl hover:bg-red-500/10 active:bg-red-500/20 transition-all"
+                >
+                  <span>🔓</span> Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => {
+                    onLoginClick("login");
+                    setMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2.5 w-full text-left text-white text-sm font-semibold px-3 py-2.5 rounded-xl hover:bg-white/10 active:bg-white/20 transition-all"
+                >
+                  <span>🔑</span> Login
+                </button>
+                <button
+                  onClick={() => {
+                    onLoginClick("register");
+                    setMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2.5 w-full text-left text-white text-sm font-semibold px-3 py-2.5 rounded-xl hover:bg-white/10 active:bg-white/20 transition-all"
+                >
+                  <span>📝</span> Register
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
 
+      {/* --- 3. PREMIUM RUNNING TICKER BAR --- */}
+      <div className="bg-gradient-to-r from-indigo-700 via-purple-600 to-indigo-700 py-2.5 px-4 text-center border-t border-white/5 relative overflow-hidden">
+        {/* बैकग्राउंड शाइन इफ़ेक्ट */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-shimmery"></div>
+
+        <p className="text-white text-xs sm:text-sm font-bold tracking-wide min-h-6 flex items-center justify-center gap-1 drop-shadow-sm relative z-10">
+          <span>{displayText}</span>
+          <span className="w-1.5 h-3.5 bg-white/80 rounded-sm animate-pulse inline-block ml-0.5"></span>
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -1475,7 +1469,6 @@ function CustomerProfile({ shop, onClose }) {
     <div>
       {/* ─── 1. सबसे बाहरी बैकड्रॉप / रैपर ─── */}
       <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-end">
-        
         {/* ─── 2. मुख्य साइडबार पैरेंट कंटेनर ─── */}
         <div
           className="bg-white w-full md:w-[600px] md:min-w-[420px]
@@ -1484,54 +1477,53 @@ function CustomerProfile({ shop, onClose }) {
                      overflow-hidden transition-all duration-300 ease-in-out"
           onClick={(e) => e.stopPropagation()}
         >
-
-
-
-        {/* ─── PREMIUM ADVANCE HEADER SECTION ─── */}
-        <div
-          className="bg-gradient-to-br from-indigo-700 via-purple-600 to-pink-600 
+          {/* ─── PREMIUM ADVANCE HEADER SECTION ─── */}
+          <div
+            className="bg-gradient-to-br from-indigo-700 via-purple-600 to-pink-600 
                      p-6 text-white relative overflow-hidden 
                      border-b border-white/10 shadow-lg flex-shrink-0"
-        >
-          {/* बैकग्राउंड में अट्रैक्टिव एब्सट्रैक्ट यूआई ग्लो (Decorative Element) */}
-          <div className="absolute -top-12 -right-12 w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
-          <div className="absolute -bottom-8 -left-12 w-28 h-28 bg-pink-500/20 rounded-full blur-xl pointer-events-none"></div>
+          >
+            {/* बैकग्राउंड में अट्रैक्टिव एब्सट्रैक्ट यूआई ग्लो (Decorative Element) */}
+            <div className="absolute -top-12 -right-12 w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+            <div className="absolute -bottom-8 -left-12 w-28 h-28 bg-pink-500/20 rounded-full blur-xl pointer-events-none"></div>
 
-          <div className="flex justify-between items-center relative z-10 gap-4">
-            {/* यूजर इन्फो - विथ एवतार या फर्स्ट लेटर बैच */}
-            <div className="flex items-center gap-3.5 min-w-0 flex-1">
-              {/* सुंदर राउंडेड प्रोफाइल आइकॉन/बैच */}
-              <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center font-black text-lg text-white shadow-inner flex-shrink-0 backdrop-blur-sm">
-                {customer?.name ? customer.name.charAt(0).toUpperCase() : "👤"}
-              </div>
-              
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="text-lg font-black text-white tracking-tight truncate">
-                    {customer?.name || "Guest User"}
-                  </p>
-                  <span className="text-[9px] font-extrabold text-white bg-emerald-500 px-1.5 py-0.5 rounded-md uppercase tracking-wider shadow-sm flex-shrink-0">
-                    Active
-                  </span>
+            <div className="flex justify-between items-center relative z-10 gap-4">
+              {/* यूजर इन्फो - विथ एवतार या फर्स्ट लेटर बैच */}
+              <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                {/* सुंदर राउंडेड प्रोफाइल आइकॉन/बैच */}
+                <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center font-black text-lg text-white shadow-inner flex-shrink-0 backdrop-blur-sm">
+                  {customer?.name
+                    ? customer.name.charAt(0).toUpperCase()
+                    : "👤"}
                 </div>
-                <p className="text-purple-200/90 text-xs truncate mt-0.5 font-medium tracking-wide">
-                  {customer?.email || "No email connected"}
-                </p>
-              </div>
-            </div>
 
-            {/* ✕ (Close) बटन - अब यह कभी हाइड नहीं होगा */}
-         {/* ✕ (Close) बटन - जो मोबाइल एम्यूलेटर, असली फोन और लैपटॉप हर जगह 100% घूमेगा */}
-<button
-  onClick={() => {
-    setIsClosing(true);
-    // 300ms के एनीमेशन के बाद onClose फंक्शन चलेगा ताकि घूमता हुआ साफ़ दिखे
-    setTimeout(() => {
-      onClose();
-      setIsClosing(false);
-    }, 300);
-  }}
-  className={`w-10 h-10 rounded-xl bg-white/10 
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-lg font-black text-white tracking-tight truncate">
+                      {customer?.name || "Guest User"}
+                    </p>
+                    <span className="text-[9px] font-extrabold text-white bg-emerald-500 px-1.5 py-0.5 rounded-md uppercase tracking-wider shadow-sm flex-shrink-0">
+                      Active
+                    </span>
+                  </div>
+                  <p className="text-purple-200/90 text-xs truncate mt-0.5 font-medium tracking-wide">
+                    {customer?.email || "No email connected"}
+                  </p>
+                </div>
+              </div>
+
+              {/* ✕ (Close) बटन - अब यह कभी हाइड नहीं होगा */}
+              {/* ✕ (Close) बटन - जो मोबाइल एम्यूलेटर, असली फोन और लैपटॉप हर जगह 100% घूमेगा */}
+              <button
+                onClick={() => {
+                  setIsClosing(true);
+                  // 300ms के एनीमेशन के बाद onClose फंक्शन चलेगा ताकि घूमता हुआ साफ़ दिखे
+                  setTimeout(() => {
+                    onClose();
+                    setIsClosing(false);
+                  }, 300);
+                }}
+                className={`w-10 h-10 rounded-xl bg-white/10 
              border border-white/10 
              flex items-center justify-center text-white
              font-medium shadow-inner flex-shrink-0
@@ -1540,32 +1532,29 @@ function CustomerProfile({ shop, onClose }) {
              hover:bg-red-500 hover:border-red-400 hover:rotate-90
              active:scale-75
              ${isClosing ? "rotate-180 bg-red-600 scale-75" : ""}`}
-  title="Close Profile"
->
-  <span className="text-sm font-bold tracking-normal leading-none block transition-transform duration-300 group-hover:scale-110">
-    ✕
-  </span>
-</button>
-
+                title="Close Profile"
+              >
+                <span className="text-sm font-bold tracking-normal leading-none block transition-transform duration-300 group-hover:scale-110">
+                  ✕
+                </span>
+              </button>
+            </div>
           </div>
-        </div>
 
-        {/* ─── SCROLLABLE CONTENT AREA START (इसके नीचे के टैब्स और फॉर्म यहाँ आएंगे) ─── */}
-               {/* ─── SCROLLABLE CONTENT AREA START ─── */}
-        <div className="flex-1 overflow-y-auto 
+          {/* ─── SCROLLABLE CONTENT AREA START (इसके नीचे के टैब्स और फॉर्म यहाँ आएंगे) ─── */}
+          {/* ─── SCROLLABLE CONTENT AREA START ─── */}
+          <div
+            className="flex-1 overflow-y-auto 
                         [&::-webkit-scrollbar]:w-1.5
                         [&::-webkit-scrollbar-track]:bg-transparent
                         [&::-webkit-scrollbar-thumb]:bg-purple-500/20
                         hover:[&::-webkit-scrollbar-thumb]:bg-purple-500/40
                         [&::-webkit-scrollbar-thumb]:rounded-full
                         transition-all duration-200"
-        >
-
-
-
-                {/* ─── ULTRA-ADVANCE RESPONSIVE TABS BAR ─── */}
-        <div
-          className="flex overflow-x-auto p-3 gap-2 border-b bg-gray-50
+          >
+            {/* ─── ULTRA-ADVANCE RESPONSIVE TABS BAR ─── */}
+            <div
+              className="flex overflow-x-auto p-3 gap-2 border-b bg-gray-50
                      md:pb-4
                      [&::-webkit-scrollbar]:h-1
                      [&::-webkit-scrollbar-track]:bg-transparent
@@ -1573,13 +1562,12 @@ function CustomerProfile({ shop, onClose }) {
                      hover:[&::-webkit-scrollbar-thumb]:bg-purple-700/50
                      [&::-webkit-scrollbar-thumb]:rounded-full
                      transition-all duration-200"
-        >
-
-          {menuItems.map((item) => (
-            <button
-              key={item.key}
-              onClick={() => setActiveSection(item.key)}
-              className={`flex-shrink-0 flex items-center
+            >
+              {menuItems.map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => setActiveSection(item.key)}
+                  className={`flex-shrink-0 flex items-center
                          gap-1.5 px-3 py-2 rounded-xl text-sm
                          font-medium transition whitespace-nowrap
                          ${
@@ -1587,225 +1575,581 @@ function CustomerProfile({ shop, onClose }) {
                              ? "bg-purple-600 text-white"
                              : "bg-white text-gray-600 border"
                          }`}
-            >
-              {item.icon} {item.label}
-            </button>
-          ))}
-        </div>
+                >
+                  {item.icon} {item.label}
+                </button>
+              ))}
+            </div>
 
-        <div className="p-4">
-          {/* Profile */}
-          {activeSection === "profile" && (
-            <div className="w-full max-w-xl mx-auto space-y-5 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm">
-              {/* 1. शीर्ष हिस्सा (Header) - प्रोफाइल टाइटल और एडिट बटन */}
-              <div className="flex justify-between items-center pb-2.5 border-b border-gray-50">
-                <div className="flex items-center gap-2">
-                  <svg
-                    xmlns="http://w3.org"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    className="text-purple-600"
-                  >
-                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                  <h3 className="font-black text-gray-800 tracking-wide uppercase text-sm">
-                    My Profile
-                  </h3>
-                </div>
+            <div className="p-4">
+              {/* Profile */}
+              {activeSection === "profile" && (
+                <div className="w-full max-w-xl mx-auto space-y-5 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm">
+                  {/* 1. शीर्ष हिस्सा (Header) - प्रोफाइल टाइटल और एडिट बटन */}
+                  <div className="flex justify-between items-center pb-2.5 border-b border-gray-50">
+                    <div className="flex items-center gap-2">
+                      <svg
+                        xmlns="http://w3.org"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        className="text-purple-600"
+                      >
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                      </svg>
+                      <h3 className="font-black text-gray-800 tracking-wide uppercase text-sm">
+                        My Profile
+                      </h3>
+                    </div>
 
-                {/* एडवांस एडिट / कैंसल बटन */}
-                <button
-                  onClick={() => setEditingProfile(!editingProfile)}
-                  className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer flex items-center gap-1 border
+                    {/* एडवांस एडिट / कैंसल बटन */}
+                    <button
+                      onClick={() => setEditingProfile(!editingProfile)}
+                      className={`text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer flex items-center gap-1 border
                    ${
                      editingProfile
                        ? "bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100/70"
                        : "bg-purple-50 text-purple-700 border-purple-100/50 hover:bg-purple-100"
                    }`}
-                >
-                  {editingProfile ? (
-                    <>
-                      <svg
-                        xmlns="http://w3.org"
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                      >
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                      <span>Cancel</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg
-                        xmlns="http://w3.org"
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                      >
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                        <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z" />
-                      </svg>
-                      <span>Edit</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* 2. इनपुट फ़ील्ड्स ग्रिड (Name, Last Name, Mobile) */}
-              <div className="space-y-4">
-                {["name", "lastName", "mobile"].map((field) => (
-                  <div key={field} className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block">
-                      {field === "lastName"
-                        ? "Last Name"
-                        : field.charAt(0).toUpperCase() + field.slice(1)}
-                    </label>
-
-                    {editingProfile ? (
-                      /* एडिटिंग मोड: प्रीमियम फोकस स्टेट इनपुट */
-                      <input
-                        type="text"
-                        value={profile[field] || ""}
-                        onChange={(e) =>
-                          setProfile({
-                            ...profile,
-                            [field]: e.target.value,
-                          })
-                        }
-                        className="w-full border border-gray-200 bg-gray-50/30 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800
-                         focus:outline-none focus:border-purple-500 focus:bg-white focus:shadow-md focus:shadow-purple-500/5 transition-all duration-200"
-                      />
-                    ) : (
-                      /* व्यू मोड: क्लीन रीड-ओनली कार्ड */
-                      <p className="text-gray-800 text-sm font-bold bg-gray-50/60 border border-gray-100 rounded-xl px-4 py-3">
-                        {profile[field] || "—"}
-                      </p>
-                    )}
+                    >
+                      {editingProfile ? (
+                        <>
+                          <svg
+                            xmlns="http://w3.org"
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                          >
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                          <span>Cancel</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            xmlns="http://w3.org"
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                          >
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z" />
+                          </svg>
+                          <span>Edit</span>
+                        </>
+                      )}
+                    </button>
                   </div>
-                ))}
-              </div>
 
-              {/* 3. जेंडर सिलेक्शन और सेव बटन (केवल एडिटिंग मोड में) */}
-              {editingProfile && (
-                <div className="space-y-5 pt-2 animate-fadeIn">
-                  {/* जेंडर चयन बॉक्स */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block">
-                      Gender
-                    </label>
-                    <div className="grid grid-cols-3 gap-2.5">
-                      {["male", "female", "other"].map((g) => (
-                        <button
-                          key={g}
-                          type="button"
-                          onClick={() => setProfile({ ...profile, gender: g })}
-                          className={`py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 border flex items-center justify-center gap-1.5 leading-none cursor-pointer transform active:scale-95
+                  {/* 2. इनपुट फ़ील्ड्स ग्रिड (Name, Last Name, Mobile) */}
+                  <div className="space-y-4">
+                    {["name", "lastName", "mobile"].map((field) => (
+                      <div key={field} className="space-y-1.5">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block">
+                          {field === "lastName"
+                            ? "Last Name"
+                            : field.charAt(0).toUpperCase() + field.slice(1)}
+                        </label>
+
+                        {editingProfile ? (
+                          /* एडिटिंग मोड: प्रीमियम फोकस स्टेट इनपुट */
+                          <input
+                            type="text"
+                            value={profile[field] || ""}
+                            onChange={(e) =>
+                              setProfile({
+                                ...profile,
+                                [field]: e.target.value,
+                              })
+                            }
+                            className="w-full border border-gray-200 bg-gray-50/30 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800
+                         focus:outline-none focus:border-purple-500 focus:bg-white focus:shadow-md focus:shadow-purple-500/5 transition-all duration-200"
+                          />
+                        ) : (
+                          /* व्यू मोड: क्लीन रीड-ओनली कार्ड */
+                          <p className="text-gray-800 text-sm font-bold bg-gray-50/60 border border-gray-100 rounded-xl px-4 py-3">
+                            {profile[field] || "—"}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 3. जेंडर सिलेक्शन और सेव बटन (केवल एडिटिंग मोड में) */}
+                  {editingProfile && (
+                    <div className="space-y-5 pt-2 animate-fadeIn">
+                      {/* जेंडर चयन बॉक्स */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block">
+                          Gender
+                        </label>
+                        <div className="grid grid-cols-3 gap-2.5">
+                          {["male", "female", "other"].map((g) => (
+                            <button
+                              key={g}
+                              type="button"
+                              onClick={() =>
+                                setProfile({ ...profile, gender: g })
+                              }
+                              className={`py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 border flex items-center justify-center gap-1.5 leading-none cursor-pointer transform active:scale-95
                            ${
                              profile.gender === g
                                ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-transparent shadow-md shadow-purple-500/20"
                                : "border-gray-200 bg-white text-gray-600 hover:border-purple-300 hover:text-purple-700"
                            }`}
-                        >
-                          {/* जेंडर के हिसाब से कस्टमाइज्ड लाइन आइकॉन */}
-                          {g === "male" && (
-                            <svg
-                              xmlns="http://w3.org"
-                              width="13"
-                              height="13"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="3"
                             >
-                              <circle cx="10" cy="14" r="5" />
-                              <path d="M14 10l7-7M16 3h5v5" />
-                            </svg>
-                          )}
-                          {g === "female" && (
-                            <svg
-                              xmlns="http://w3.org"
-                              width="13"
-                              height="13"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="3"
-                            >
-                              <circle cx="12" cy="9" r="5" />
-                              <path d="M12 14v7M9 18h6" />
-                            </svg>
-                          )}
-                          {g === "other" && (
-                            <svg
-                              xmlns="http://w3.org"
-                              width="13"
-                              height="13"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="3"
-                            >
-                              <circle cx="12" cy="12" r="10" />
-                              <path d="M12 8v8M8 12h8" />
-                            </svg>
-                          )}
-                          <span>{g}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                              {/* जेंडर के हिसाब से कस्टमाइज्ड लाइन आइकॉन */}
+                              {g === "male" && (
+                                <svg
+                                  xmlns="http://w3.org"
+                                  width="13"
+                                  height="13"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                >
+                                  <circle cx="10" cy="14" r="5" />
+                                  <path d="M14 10l7-7M16 3h5v5" />
+                                </svg>
+                              )}
+                              {g === "female" && (
+                                <svg
+                                  xmlns="http://w3.org"
+                                  width="13"
+                                  height="13"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                >
+                                  <circle cx="12" cy="9" r="5" />
+                                  <path d="M12 14v7M9 18h6" />
+                                </svg>
+                              )}
+                              {g === "other" && (
+                                <svg
+                                  xmlns="http://w3.org"
+                                  width="13"
+                                  height="13"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                >
+                                  <circle cx="12" cy="12" r="10" />
+                                  <path d="M12 8v8M8 12h8" />
+                                </svg>
+                              )}
+                              <span>{g}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
 
-                  {/* मुख्य सेव बटन (मैजिकल शाइन और रोटेटिंग स्पिनर के साथ) */}
-                  <button
-                    onClick={saveProfile}
-                    disabled={loading}
-                    className={`w-full py-3.5 rounded-xl text-xs font-black uppercase tracking-widest text-white transition-all duration-300 relative overflow-hidden flex items-center justify-center gap-2
+                      {/* मुख्य सेव बटन (मैजिकल शाइन और रोटेटिंग स्पिनर के साथ) */}
+                      <button
+                        onClick={saveProfile}
+                        disabled={loading}
+                        className={`w-full py-3.5 rounded-xl text-xs font-black uppercase tracking-widest text-white transition-all duration-300 relative overflow-hidden flex items-center justify-center gap-2
                      ${
                        loading
                          ? "bg-gradient-to-r from-gray-300 to-gray-400 cursor-not-allowed shadow-none"
                          : "bg-gradient-to-r from-purple-600 via-purple-600 to-indigo-600 shadow-md shadow-purple-500/10 hover:shadow-lg hover:shadow-purple-500/30 hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
                      }`}
-                  >
-                    {loading ? (
-                      <>
-                        {/* लोडिंग व्हील स्पिनर */}
-                        <svg
-                          className="animate-spin h-4 w-4 text-white"
-                          xmlns="http://w3.org"
-                          fill="none"
-                          viewBox="0 0 24 24"
+                      >
+                        {loading ? (
+                          <>
+                            {/* लोडिंग व्हील स्पिनर */}
+                            <svg
+                              className="animate-spin h-4 w-4 text-white"
+                              xmlns="http://w3.org"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 0 1 4 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                            <span>Saving Changes...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg
+                              xmlns="http://w3.org"
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.5"
+                            >
+                              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                              <polyline points="17 21 17 13 7 13 7 21" />
+                              <polyline points="7 3 7 8 15 8" />
+                            </svg>
+                            <span>Save Profile</span>
+                          </>
+                        )}
+                      </button>
+
+                      {/* प्रोफाइल मैसेज/सक्सेस अलर्ट बॉक्स */}
+                      {profileMsg && (
+                        <div
+                          className={`p-3 rounded-xl text-xs font-bold text-center border animate-pulse [animation-duration:3s]
+                          ${
+                            profileMsg.toLowerCase().includes("error") ||
+                            profileMsg.toLowerCase().includes("fail")
+                              ? "bg-rose-50 border-rose-100 text-rose-600"
+                              : "bg-emerald-50 border-emerald-100 text-emerald-700"
+                          }`}
                         >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 0 1 4 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
+                          {profileMsg}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Measurements */}
+              {activeSection === "measurements" && (
+                <div className="space-y-4">
+                  <h3 className="font-bold text-gray-800">📏 Fabric Shop</h3>
+                  <p className="text-gray-400 text-sm">
+                    Fabric shop mein better fitting ke liye measurements save
+                    karen!
+                  </p>
+                  <a
+                    href={`/fabric/${shop?.sellerId || ""}`}
+                    className="block w-full bg-gradient-to-r
+                  from-purple-600 to-indigo-600
+                  text-white py-3 rounded-xl
+                  font-bold text-center"
+                  >
+                    🧵 Go to Fabric Shop
+                  </a>
+                </div>
+              )}
+
+              {/* Orders */}
+              {activeSection === "orders" && (
+                <div className="w-full max-w-2xl mx-auto space-y-4 pb 8">
+                  {/* सेक्शन हेडिंग काउंट बैज के साथ */}
+                  <div className="flex items-center justify-between mb-5 pb-2 border-b border-gray-100">
+                    <div className="flex items-center gap-2">
+                      <svg
+                        xmlns="http://w3.org"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        className="text-purple-600"
+                      >
+                        <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                        <path d="m3.3 7 8.7 5 8.7-5" />
+                        <path d="M12 22V12" />
+                      </svg>
+                      <h3 className="font-black text-gray-800 tracking-wide uppercase text-sm">
+                        My Orders
+                      </h3>
+                    </div>
+                    <span className="bg-purple-100 text-purple-700 text-xs font-black px-2.5 py-1 rounded-lg">
+                      {orders.length} {orders.length === 1 ? "Order" : "Orders"}
+                    </span>
+                  </div>
+
+                  {orders.length === 0 ? (
+                    /* खाली स्टेट का प्रीमियम और एनिमेटेड लुक (No Orders State) */
+                    <div className="text-center py-14 bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-200/60 p-6">
+                      <div className="relative flex items-center justify-center bg-gray-100 text-gray-400 w-14 h-14 rounded-2xl mx-auto mb-3 animate-pulse">
+                        <svg
+                          xmlns="http://w3.org"
+                          width="28"
+                          height="28"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                        >
+                          <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                          <path d="m3.3 7 8.7 5 8.7-5" />
+                          <path d="M12 22V12" />
                         </svg>
-                        <span>Saving Changes...</span>
-                      </>
-                    ) : (
-                      <>
+                      </div>
+                      <p className="text-gray-700 font-bold text-base mb-0.5">
+                        No orders placed yet
+                      </p>
+                      <p className="text-gray-400 text-xs font-medium max-w-xs mx-auto">
+                        When you purchase custom garments or fabrics, they will
+                        appear right here.
+                      </p>
+                    </div>
+                  ) : (
+                    /* ऑर्डर्स लिस्ट कार्ड्स (Active Orders Grid) */
+                    <div className="space-y-4">
+                      {orders.map((order) => (
+                        <div
+                          key={order._id}
+                          onClick={() => {
+                            // ⚡ यहाँ हमने सीधे ब्राउज़र के इन-बिल्ट विंडो ऑब्जेक्ट का उपयोग किया है
+                            // इससे कोई भी 'navigate' एरर नहीं आएगा और पेज स्मूथली खुल जाएगा
+                            window.location.href = `/order/${order._id}`;
+                          }}
+                          className="group border border-gray-100 bg-white rounded-2xl p-4.5 cursor-pointer
+                       shadow-sm hover:shadow-md hover:border-purple-200 hover:-translate-y-0.5
+                       transition-all duration-300 ease-out relative overflow-hidden"
+                        >
+                          {/* शीर्ष हिस्सा: ऑर्डर आईडी और स्टेटस */}
+                          <div className="flex items-start justify-between mb-4 pb-3 border-b border-gray-50">
+                            <div className="space-y-0.5">
+                              <p className="text-xs font-bold text-gray-800 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-md inline-block font-mono">
+                                #{order.orderId}
+                              </p>
+                              <p className="text-[11px] text-gray-400 font-semibold tracking-wide flex items-center gap-1">
+                                <svg
+                                  xmlns="http://w3.org"
+                                  width="11"
+                                  height="11"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                >
+                                  <circle cx="12" cy="12" r="10" />
+                                  <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                                {new Date(order.createdAt).toLocaleDateString(
+                                  "en-IN",
+                                  {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  },
+                                )}
+                              </p>
+                            </div>
+
+                            {/* मॉडर्न स्टेटस बैज (यहाँ STATUS_COLORS का उपयोग करके वार्निंग भी ठीक कर दी गई है) */}
+                            <span
+                              className={`text-[10px] uppercase font-black tracking-widest px-2.5 py-1 rounded-lg border shadow-sm ${
+                                STATUS_COLORS &&
+                                STATUS_COLORS[order.orderStatus]
+                                  ? STATUS_COLORS[order.orderStatus]
+                                  : order.orderStatus === "delivered"
+                                    ? "bg-emerald-50 border-emerald-100 text-emerald-700"
+                                    : order.orderStatus === "cancelled"
+                                      ? "bg-rose-50 border-rose-100 text-rose-700"
+                                      : "bg-purple-50 border-purple-100 text-purple-700"
+                              }`}
+                            >
+                              {order.orderStatus === "out_for_delivery"
+                                ? "Out for Delivery"
+                                : order.orderStatus?.replace(/_/g, " ")}
+                            </span>
+                          </div>
+
+                          {/* मध्य हिस्सा: प्रोडक्ट की इमेज और नाम/कीमत */}
+                          <div className="flex gap-3.5 items-center">
+                            <div className="w-14 h-14 bg-neutral-50 rounded-xl border border-gray-100 p-1 flex-shrink-0 overflow-hidden relative group-hover:scale-102 transition-transform duration-300">
+                              <img
+                                src={order.productImage}
+                                alt={order.productName}
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+
+                            <div className="space-y-0.5 flex-1 min-w-0">
+                              <p className="font-bold text-sm text-gray-800 truncate group-hover:text-purple-700 transition-colors duration-200">
+                                {order.productName}
+                              </p>
+                              <p className="text-purple-600 font-black text-base">
+                                ₹{order.totalAmount}
+                              </p>
+                            </div>
+
+                            {/* तीर का निशान जो माउस ले जाने पर सीधे खिसकेगा (Micro-interaction) */}
+                            <div className="text-gray-300 group-hover:text-purple-500 transform group-hover:translate-x-1 transition-all duration-300 flex-shrink-0">
+                              <svg
+                                xmlns="http://w3.org"
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                              >
+                                <path d="M5 12h14M12 5l7 7-7 7" />
+                              </svg>
+                            </div>
+                          </div>
+
+                          {/* लाइव ट्रैकिंग बार (सक्रिय ऑर्डर्स के लिए) */}
+                          {!["delivered", "cancelled"].includes(
+                            order.orderStatus,
+                          ) && (
+                            <div className="flex flex-wrap items-center justify-between gap-1 mt-4 pt-3 border-t border-gray-50 bg-purple-50/10 px-1 rounded-b-2xl w-full overflow-hidden">
+                              <div className="flex items-center gap-2">
+                                <div className="relative flex h-2 w-2 flex-shrink-0">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                </div>
+                                <span className="text-[11px] text-emerald-700 font-bold uppercase tracking-wider whitespace-nowrap">
+                                  Live Tracking Available
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap ml-auto sm:ml-0">
+                                Click to view status
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Addresses */}
+              {/* Addresses सेक्शन - इसे एक प्रीमियम पैरेंट विजेट में रैप किया गया है */}
+              {activeSection === "addresses" && (
+                <div className="w-full max-w-xl mx-auto space-y-4 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm animate-fadeIn">
+                  <div className="flex items-center gap-2 pb-2.5 border-b border-gray-50 mb-2">
+                    <svg
+                      xmlns="http://w3.org"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      className="text-purple-600"
+                    >
+                      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    <h3 className="font-black text-gray-800 tracking-wide uppercase text-sm">
+                      Saved Addresses
+                    </h3>
+                  </div>
+
+                  <AddressManager
+                    customer={customer}
+                    customerToken={customerToken}
+                    loginCustomer={loginCustomer}
+                  />
+                </div>
+              )}
+
+              {/* Account Settings सेक्शन (Logout & Danger Zone) */}
+              {activeSection === "account" && (
+                <div className="w-full max-w-xl mx-auto space-y-6 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm animate-fadeIn">
+                  {/* हेडिंग */}
+                  <div className="flex items-center gap-2 pb-2.5 border-b border-gray-50">
+                    <svg
+                      xmlns="http://w3.org"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      className="text-purple-600"
+                    >
+                      <circle cx="12" cy="12" r="3" />
+                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                    </svg>
+                    <h3 className="font-black text-gray-800 tracking-wide uppercase text-sm">
+                      Account Settings
+                    </h3>
+                  </div>
+
+                  {/* बटन्स कंटेनर */}
+                  <div className="space-y-3">
+                    {/* 1. लॉगआउट बटन (क्लीन और मॉडर्न लुक) */}
+                    <button
+                      onClick={() => {
+                        logoutCustomer();
+                        onClose();
+                      }}
+                      className="w-full border border-gray-200 text-gray-700 py-3.5 rounded-xl
+                   text-xs font-black uppercase tracking-wider bg-white shadow-sm
+                   hover:bg-gray-50 hover:border-gray-300 transform hover:-translate-y-0.5 
+                   active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <svg
+                        xmlns="http://w3.org"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                      </svg>
+                      <span>Logout Session</span>
+                    </button>
+
+                    {/* 2. डेंजर ज़ोन: डिलीट अकाउंट बटन (प्रीमियम रेड अलर्ट थीम) */}
+                    <div className="pt-2 border-t border-gray-100 mt-4">
+                      <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-2 block pl-1">
+                        Danger Zone
+                      </p>
+                      <button
+                        onClick={async () => {
+                          if (
+                            !window.confirm(
+                              "Are you sure you want to delete your account? This action cannot be undone.",
+                            )
+                          )
+                            return;
+                          try {
+                            await axios.delete(
+                              `${API_URL}/api/customer/account`,
+                              {
+                                headers: {
+                                  Authorization: `Bearer ${customerToken}`,
+                                },
+                              },
+                            );
+                            logoutCustomer();
+                            onClose();
+                          } catch (e) {
+                            // पुराना डिफ़ॉल्ट अलर्ट बॉक्स सेफ रखा है
+                            alert("Error deleting account!");
+                          }
+                        }}
+                        className="w-full bg-rose-50/60 border border-rose-200 text-rose-600 py-3.5 rounded-xl 
+                     text-xs font-black uppercase tracking-wider shadow-sm
+                     hover:bg-rose-100 hover:border-rose-300 hover:shadow-md hover:shadow-rose-500/5
+                     transform hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+                      >
                         <svg
                           xmlns="http://w3.org"
                           width="14"
@@ -1815,464 +2159,119 @@ function CustomerProfile({ shop, onClose }) {
                           stroke="currentColor"
                           strokeWidth="2.5"
                         >
-                          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                          <polyline points="17 21 17 13 7 13 7 21" />
-                          <polyline points="7 3 7 8 15 8" />
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          <line x1="10" y1="11" x2="10" y2="17" />
+                          <line x1="14" y1="11" x2="14" y2="17" />
                         </svg>
-                        <span>Save Profile</span>
-                      </>
-                    )}
+                        <span>Delete Account Permanently</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Help */}
+              {activeSection === "help" && (
+                <div className="w-full max-w-xl mx-auto space-y-5 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm">
+                  {/* 1. क्लीन एडवांस हेडर */}
+                  <div className="flex items-center gap-2 pb-2.5 border-b border-gray-50">
+                    <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                    <h3 className="font-black text-gray-800 tracking-wide uppercase text-xs">
+                      Help Center & Support
+                    </h3>
+                  </div>
+
+                  {/* 2. प्रीमियम इनपुट बॉक्स (ग्लास इफेक्ट और सॉफ्ट शैडो के साथ) */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pl-1">
+                      Describe Your Issue
+                    </label>
+                    <textarea
+                      rows={4}
+                      placeholder="How can we help you today? Write your message here..."
+                      className="w-full border border-gray-200 bg-gray-50/40 rounded-xl p-4 text-sm font-semibold text-gray-800 resize-none
+                             focus:outline-none focus:border-purple-500 focus:bg-white focus:shadow-md focus:shadow-purple-500/5 transition-all duration-200"
+                    />
+                  </div>
+
+                  {/* 3. सबमिट बटन (अल्टीमेट पर्पल-इंडिगो ग्रेडिएंट और हैप्टिक क्लिक) */}
+                  <button
+                    className="w-full bg-gradient-to-r from-purple-600 via-purple-600 to-indigo-600 text-white
+                           py-3.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-md shadow-purple-500/10
+                           hover:shadow-lg hover:shadow-purple-500/30 transform hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 cursor-pointer"
+                  >
+                    Submit Query
                   </button>
 
-                  {/* प्रोफाइल मैसेज/सक्सेस अलर्ट बॉक्स */}
-                  {profileMsg && (
-                    <div
-                      className={`p-3 rounded-xl text-xs font-bold text-center border animate-pulse [animation-duration:3s]
-                          ${
-                            profileMsg.toLowerCase().includes("error") ||
-                            profileMsg.toLowerCase().includes("fail")
-                              ? "bg-rose-50 border-rose-100 text-rose-600"
-                              : "bg-emerald-50 border-emerald-100 text-emerald-700"
-                          }`}
-                    >
-                      {profileMsg}
+                  {/* 4. व्हाट्सएप सपोर्ट (सुपर प्रीमियम नियन ग्रीन कस्टमाइजेशन) */}
+                  {shop?.whatsapp && (
+                    <div className="pt-3 border-t border-gray-100 mt-2">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block pl-1">
+                        Instant Live Chat
+                      </p>
+                      <a
+                        href={`https://wa.me${shop.whatsapp}?text=Hi, I need help.`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white
+                               py-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-center
+                               shadow-md shadow-green-500/10 hover:shadow-green-500/30
+                               transform hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-200 cursor-pointer"
+                      >
+                        Chat On WhatsApp
+                      </a>
                     </div>
                   )}
                 </div>
               )}
             </div>
-          )}
-
-          {/* Measurements */}
-          {activeSection === "measurements" && (
-            <div className="space-y-4">
-              <h3 className="font-bold text-gray-800">📏 Fabric Shop</h3>
-              <p className="text-gray-400 text-sm">
-                Fabric shop mein better fitting ke liye measurements save karen!
-              </p>
-              <a
-                href={`/fabric/${shop?.sellerId || ""}`}
-                className="block w-full bg-gradient-to-r
-                  from-purple-600 to-indigo-600
-                  text-white py-3 rounded-xl
-                  font-bold text-center"
-              >
-                🧵 Go to Fabric Shop
-              </a>
-            </div>
-          )}
-
-          {/* Orders */}
-          {activeSection === "orders" && (
-            <div className="w-full max-w-2xl mx-auto space-y-4 pb 8">
-              {/* सेक्शन हेडिंग काउंट बैज के साथ */}
-              <div className="flex items-center justify-between mb-5 pb-2 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                  <svg
-                    xmlns="http://w3.org"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    className="text-purple-600"
-                  >
-                    <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-                    <path d="m3.3 7 8.7 5 8.7-5" />
-                    <path d="M12 22V12" />
-                  </svg>
-                  <h3 className="font-black text-gray-800 tracking-wide uppercase text-sm">
-                    My Orders
-                  </h3>
-                </div>
-                <span className="bg-purple-100 text-purple-700 text-xs font-black px-2.5 py-1 rounded-lg">
-                  {orders.length} {orders.length === 1 ? "Order" : "Orders"}
-                </span>
-              </div>
-
-              {orders.length === 0 ? (
-                /* खाली स्टेट का प्रीमियम और एनिमेटेड लुक (No Orders State) */
-                <div className="text-center py-14 bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-200/60 p-6">
-                  <div className="relative flex items-center justify-center bg-gray-100 text-gray-400 w-14 h-14 rounded-2xl mx-auto mb-3 animate-pulse">
-                    <svg
-                      xmlns="http://w3.org"
-                      width="28"
-                      height="28"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                    >
-                      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-                      <path d="m3.3 7 8.7 5 8.7-5" />
-                      <path d="M12 22V12" />
-                    </svg>
-                  </div>
-                  <p className="text-gray-700 font-bold text-base mb-0.5">
-                    No orders placed yet
-                  </p>
-                  <p className="text-gray-400 text-xs font-medium max-w-xs mx-auto">
-                    When you purchase custom garments or fabrics, they will
-                    appear right here.
-                  </p>
-                </div>
-              ) : (
-                /* ऑर्डर्स लिस्ट कार्ड्स (Active Orders Grid) */
-                <div className="space-y-4">
-                  {orders.map((order) => (
-                    <div
-                      key={order._id}
-                      onClick={() => {
-                        // ⚡ यहाँ हमने सीधे ब्राउज़र के इन-बिल्ट विंडो ऑब्जेक्ट का उपयोग किया है
-                        // इससे कोई भी 'navigate' एरर नहीं आएगा और पेज स्मूथली खुल जाएगा
-                        window.location.href = `/order/${order._id}`;
-                      }}
-                      className="group border border-gray-100 bg-white rounded-2xl p-4.5 cursor-pointer
-                       shadow-sm hover:shadow-md hover:border-purple-200 hover:-translate-y-0.5
-                       transition-all duration-300 ease-out relative overflow-hidden"
-                    >
-                      {/* शीर्ष हिस्सा: ऑर्डर आईडी और स्टेटस */}
-                      <div className="flex items-start justify-between mb-4 pb-3 border-b border-gray-50">
-                        <div className="space-y-0.5">
-                          <p className="text-xs font-bold text-gray-800 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-md inline-block font-mono">
-                            #{order.orderId}
-                          </p>
-                          <p className="text-[11px] text-gray-400 font-semibold tracking-wide flex items-center gap-1">
-                            <svg
-                              xmlns="http://w3.org"
-                              width="11"
-                              height="11"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <circle cx="12" cy="12" r="10" />
-                              <polyline points="12 6 12 12 16 14" />
-                            </svg>
-                            {new Date(order.createdAt).toLocaleDateString(
-                              "en-IN",
-                              {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric",
-                              },
-                            )}
-                          </p>
-                        </div>
-
-                        {/* मॉडर्न स्टेटस बैज (यहाँ STATUS_COLORS का उपयोग करके वार्निंग भी ठीक कर दी गई है) */}
-                        <span
-                          className={`text-[10px] uppercase font-black tracking-widest px-2.5 py-1 rounded-lg border shadow-sm ${
-                            STATUS_COLORS && STATUS_COLORS[order.orderStatus]
-                              ? STATUS_COLORS[order.orderStatus]
-                              : order.orderStatus === "delivered"
-                                ? "bg-emerald-50 border-emerald-100 text-emerald-700"
-                                : order.orderStatus === "cancelled"
-                                  ? "bg-rose-50 border-rose-100 text-rose-700"
-                                  : "bg-purple-50 border-purple-100 text-purple-700"
-                          }`}
-                        >
-                          {order.orderStatus === "out_for_delivery"
-                            ? "Out for Delivery"
-                            : order.orderStatus?.replace(/_/g, " ")}
-                        </span>
-                      </div>
-
-                      {/* मध्य हिस्सा: प्रोडक्ट की इमेज और नाम/कीमत */}
-                      <div className="flex gap-3.5 items-center">
-                        <div className="w-14 h-14 bg-neutral-50 rounded-xl border border-gray-100 p-1 flex-shrink-0 overflow-hidden relative group-hover:scale-102 transition-transform duration-300">
-                          <img
-                            src={order.productImage}
-                            alt={order.productName}
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-
-                        <div className="space-y-0.5 flex-1 min-w-0">
-                          <p className="font-bold text-sm text-gray-800 truncate group-hover:text-purple-700 transition-colors duration-200">
-                            {order.productName}
-                          </p>
-                          <p className="text-purple-600 font-black text-base">
-                            ₹{order.totalAmount}
-                          </p>
-                        </div>
-
-                        {/* तीर का निशान जो माउस ले जाने पर सीधे खिसकेगा (Micro-interaction) */}
-                        <div className="text-gray-300 group-hover:text-purple-500 transform group-hover:translate-x-1 transition-all duration-300 flex-shrink-0">
-                          <svg
-                            xmlns="http://w3.org"
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                          >
-                            <path d="M5 12h14M12 5l7 7-7 7" />
-                          </svg>
-                        </div>
-                      </div>
-
-                      {/* लाइव ट्रैकिंग बार (सक्रिय ऑर्डर्स के लिए) */}
-                      {!["delivered", "cancelled"].includes(
-                        order.orderStatus,
-                      ) && (
-                        <div className="flex flex-wrap items-center justify-between gap-1 mt-4 pt-3 border-t border-gray-50 bg-purple-50/10 px-1 rounded-b-2xl w-full overflow-hidden">
-                          <div className="flex items-center gap-2">
-                            <div className="relative flex h-2 w-2 flex-shrink-0">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </div>
-                            <span className="text-[11px] text-emerald-700 font-bold uppercase tracking-wider whitespace-nowrap">
-                              Live Tracking Available
-                            </span>
-                          </div>
-                          <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap ml-auto sm:ml-0">
-                            Click to view status
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Addresses */}
-          {/* Addresses सेक्शन - इसे एक प्रीमियम पैरेंट विजेट में रैप किया गया है */}
-          {activeSection === "addresses" && (
-            <div className="w-full max-w-xl mx-auto space-y-4 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm animate-fadeIn">
-              <div className="flex items-center gap-2 pb-2.5 border-b border-gray-50 mb-2">
-                <svg
-                  xmlns="http://w3.org"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  className="text-purple-600"
-                >
-                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-                <h3 className="font-black text-gray-800 tracking-wide uppercase text-sm">
-                  Saved Addresses
-                </h3>
-              </div>
-
-              <AddressManager
-                customer={customer}
-                customerToken={customerToken}
-                loginCustomer={loginCustomer}
-              />
-            </div>
-          )}
-
-          {/* Account Settings सेक्शन (Logout & Danger Zone) */}
-          {activeSection === "account" && (
-            <div className="w-full max-w-xl mx-auto space-y-6 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm animate-fadeIn">
-              {/* हेडिंग */}
-              <div className="flex items-center gap-2 pb-2.5 border-b border-gray-50">
-                <svg
-                  xmlns="http://w3.org"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  className="text-purple-600"
-                >
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                </svg>
-                <h3 className="font-black text-gray-800 tracking-wide uppercase text-sm">
-                  Account Settings
-                </h3>
-              </div>
-
-              {/* बटन्स कंटेनर */}
-              <div className="space-y-3">
-                {/* 1. लॉगआउट बटन (क्लीन और मॉडर्न लुक) */}
-                <button
-                  onClick={() => {
-                    logoutCustomer();
-                    onClose();
-                  }}
-                  className="w-full border border-gray-200 text-gray-700 py-3.5 rounded-xl
-                   text-xs font-black uppercase tracking-wider bg-white shadow-sm
-                   hover:bg-gray-50 hover:border-gray-300 transform hover:-translate-y-0.5 
-                   active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <svg
-                    xmlns="http://w3.org"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                    <polyline points="16 17 21 12 16 7" />
-                    <line x1="21" y1="12" x2="9" y2="12" />
-                  </svg>
-                  <span>Logout Session</span>
-                </button>
-
-                {/* 2. डेंजर ज़ोन: डिलीट अकाउंट बटन (प्रीमियम रेड अलर्ट थीम) */}
-                <div className="pt-2 border-t border-gray-100 mt-4">
-                  <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-2 block pl-1">
-                    Danger Zone
-                  </p>
-                  <button
-                    onClick={async () => {
-                      if (
-                        !window.confirm(
-                          "Are you sure you want to delete your account? This action cannot be undone.",
-                        )
-                      )
-                        return;
-                      try {
-                        await axios.delete(`${API_URL}/api/customer/account`, {
-                          headers: { Authorization: `Bearer ${customerToken}` },
-                        });
-                        logoutCustomer();
-                        onClose();
-                      } catch (e) {
-                        // पुराना डिफ़ॉल्ट अलर्ट बॉक्स सेफ रखा है
-                        alert("Error deleting account!");
-                      }
-                    }}
-                    className="w-full bg-rose-50/60 border border-rose-200 text-rose-600 py-3.5 rounded-xl 
-                     text-xs font-black uppercase tracking-wider shadow-sm
-                     hover:bg-rose-100 hover:border-rose-300 hover:shadow-md hover:shadow-rose-500/5
-                     transform hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
-                  >
-                    <svg
-                      xmlns="http://w3.org"
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                    >
-                      <polyline points="3 6 5 6 21 6" />
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                      <line x1="10" y1="11" x2="10" y2="17" />
-                      <line x1="14" y1="11" x2="14" y2="17" />
-                    </svg>
-                    <span>Delete Account Permanently</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Help */}
-          {activeSection === "help" && (
-            <div className="w-full max-w-xl mx-auto space-y-5 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm">
-              {/* 1. क्लीन एडवांस हेडर */}
-              <div className="flex items-center gap-2 pb-2.5 border-b border-gray-50">
-                <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
-                <h3 className="font-black text-gray-800 tracking-wide uppercase text-xs">
-                  Help Center & Support
-                </h3>
-              </div>
-
-              {/* 2. प्रीमियम इनपुट बॉक्स (ग्लास इफेक्ट और सॉफ्ट शैडो के साथ) */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pl-1">
-                  Describe Your Issue
-                </label>
-                <textarea
-                  rows={4}
-                  placeholder="How can we help you today? Write your message here..."
-                  className="w-full border border-gray-200 bg-gray-50/40 rounded-xl p-4 text-sm font-semibold text-gray-800 resize-none
-                             focus:outline-none focus:border-purple-500 focus:bg-white focus:shadow-md focus:shadow-purple-500/5 transition-all duration-200"
-                />
-              </div>
-
-              {/* 3. सबमिट बटन (अल्टीमेट पर्पल-इंडिगो ग्रेडिएंट और हैप्टिक क्लिक) */}
-              <button
-                className="w-full bg-gradient-to-r from-purple-600 via-purple-600 to-indigo-600 text-white
-                           py-3.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-md shadow-purple-500/10
-                           hover:shadow-lg hover:shadow-purple-500/30 transform hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 cursor-pointer"
-              >
-                Submit Query
-              </button>
-
-              {/* 4. व्हाट्सएप सपोर्ट (सुपर प्रीमियम नियन ग्रीन कस्टमाइजेशन) */}
-              {shop?.whatsapp && (
-                <div className="pt-3 border-t border-gray-100 mt-2">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block pl-1">
-                    Instant Live Chat
-                  </p>
-                  <a
-                    href={`https://wa.me${shop.whatsapp}?text=Hi, I need help.`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white
-                               py-3.5 rounded-xl text-xs font-black uppercase tracking-wider text-center
-                               shadow-md shadow-green-500/10 hover:shadow-green-500/30
-                               transform hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-200 cursor-pointer"
-                  >
-                    Chat On WhatsApp
-                  </a>
-                </div>
-              )}
-            </div>
-          )}
+          </div>
         </div>
       </div>
-    </div>
-    </div>
     </div>
   );
 }
 
 // ─── Loading Animation ────────────────────
 function TryOnAnimation() {
- const MESSAGES = [
+  const MESSAGES = [
     { emoji: "📸", text: "Photo is getting uploaded..." },
+    { emoji: "👔", text: "Garment is being analyzed..." },
     { emoji: "🤖", text: "AI is working..." },
     { emoji: "👗", text: "Cloth is getting fitted..." },
+    { emoji: "✨", text: "Final touches..." },
     { emoji: "✨", text: "Style advice is generating..." },
     { emoji: "🎨", text: "Result is getting ready..." },
-  ]
-  const [index, setIndex] = useState(0)
-  const spokenRef = useRef(new Set())
+  ];
+  const [index, setIndex] = useState(0);
+  const spokenRef = useRef(new Set());
 
   useEffect(() => {
     // Pehla message bolo
     if (!spokenRef.current.has(0)) {
-      speakText(MESSAGES[0].text, 'hi')
-      spokenRef.current.add(0)
+      speakText(MESSAGES[0].text, "en");
+      spokenRef.current.add(0);
     }
 
     const t = setInterval(() => {
-      setIndex(p => {
-        const next = p === MESSAGES.length - 1 ? 0 : p + 1
+      setIndex((p) => {
+        const next = p === MESSAGES.length - 1 ? 0 : p + 1;
         if (!spokenRef.current.has(next)) {
-          speakText(MESSAGES[next].text, 'en')
-          spokenRef.current.add(next)
+          speakText(MESSAGES[next].text, "en");
+          spokenRef.current.add(next);
         }
-        return next
-      })
-    }, 1800)
+        return next;
+      });
+    }, 1800);
 
     return () => {
-      clearInterval(t)
+      clearInterval(t);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      spokenRef.current.clear()
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+      spokenRef.current.clear();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div
@@ -3276,50 +3275,50 @@ function ProductModal({ product, shop, onClose, onTryOn, onOrder }) {
                     justify-center p-0 md:p-4"
       onClick={onClose}
     >
-            {/* इनर पॉपअप बॉक्स - अब यह मोबाइल पर फुलस्क्रीन रहेगा और लैपटॉप पर सेंटर्ड रहेगा */}
-        <div
-          className="bg-white w-full md:max-w-lg 
+      {/* इनर पॉपअप बॉक्स - अब यह मोबाइल पर फुलस्क्रीन रहेगा और लैपटॉप पर सेंटर्ड रहेगा */}
+      <div
+        className="bg-white w-full md:max-w-lg 
                      rounded-t-3xl md:rounded-3xl 
                      h-full md:max-h-[90vh] 
                      flex flex-col overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* ─── FIXED HEADER (यह हमेशा टॉप पर जमा रहेगा, मोबाइल पर कभी नहीं छुपेगा) ─── */}
-         <div
-  className="flex justify-between items-center
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* ─── FIXED HEADER (यह हमेशा टॉप पर जमा रहेगा, मोबाइल पर कभी नहीं छुपेगा) ─── */}
+        <div
+          className="flex justify-between items-center
              px-5 py-4 border-b border-gray-100/80 
              bg-white/80 backdrop-blur-md
              rounded-t-3xl md:rounded-t-3xl
              sticky top-0 z-50 
              transition-all duration-300"
->
-  {/* ब्रांड और नेम का अट्रैक्टिव सेक्शन */}
-  <div className="flex flex-col gap-0.5 max-w-[75vw]">
-    {product.brandName ? (
-      <div className="flex items-center gap-1.5">
-        <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded-md">
-          {product.brandName}
-        </span>
-        <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-        <span className="text-[11px] font-medium text-emerald-600 flex items-center gap-0.5">
-          ✨ Premium
-        </span>
-      </div>
-    ) : (
-      <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md w-max">
-        Collection
-      </span>
-    )}
-    
-    <h2 className="text-sm font-extrabold text-gray-800 tracking-tight truncate mt-0.5">
-      {product.name}
-    </h2>
-  </div>
+        >
+          {/* ब्रांड और नेम का अट्रैक्टिव सेक्शन */}
+          <div className="flex flex-col gap-0.5 max-w-[75vw]">
+            {product.brandName ? (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded-md">
+                  {product.brandName}
+                </span>
+                <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                <span className="text-[11px] font-medium text-emerald-600 flex items-center gap-0.5">
+                  ✨ Premium
+                </span>
+              </div>
+            ) : (
+              <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md w-max">
+                Collection
+              </span>
+            )}
 
-  {/* अट्रैक्टिव क्लोज बटन - विथ होवर एंड एक्टिव स्टेट */}
-  <button
-    onClick={onClose}
-    className="w-9 h-9 rounded-full bg-gray-50 hover:bg-red-50 
+            <h2 className="text-sm font-extrabold text-gray-800 tracking-tight truncate mt-0.5">
+              {product.name}
+            </h2>
+          </div>
+
+          {/* अट्रैक्टिव क्लोज बटन - विथ होवर एंड एक्टिव स्टेट */}
+          <button
+            onClick={onClose}
+            className="w-9 h-9 rounded-full bg-gray-50 hover:bg-red-50 
                border border-gray-100 hover:border-red-100
                flex items-center justify-center
                text-gray-400 hover:text-red-500
@@ -3327,44 +3326,41 @@ function ProductModal({ product, shop, onClose, onTryOn, onOrder }) {
                shadow-sm hover:shadow-md
                transform active:scale-90 hover:rotate-90
                transition-all duration-300 ease-out"
-    title="Close"
-  >
-    <span className="text-xs transition-transform duration-300">✕</span>
-  </button>
-</div>
+            title="Close"
+          >
+            <span className="text-xs transition-transform duration-300">✕</span>
+          </button>
+        </div>
 
+        {/* ─── SCROLLABLE CONTENT BODY START ─── */}
+        {/* नोट: इसके नीचे की बाकी सब चीजें (जैसे Images, Thumbnail Strip, Pricing) अब इस स्क्रॉल बॉक्स के अंदर स्मूथली स्क्रॉल होंगी */}
 
-          {/* ─── SCROLLABLE CONTENT BODY START ─── */}
-          {/* नोट: इसके नीचे की बाकी सब चीजें (जैसे Images, Thumbnail Strip, Pricing) अब इस स्क्रॉल बॉक्स के अंदर स्मूथली स्क्रॉल होंगी */}
-
-          <div className="flex-1 overflow-y-auto">
-
-
-        {/* Images */}
-        <div className="relative">
-          <div className="bg-gray-50">
-            <img
-              src={images[selectedImage]}
-              alt={product.name}
-              className="w-full h-80 object-contain p-3
+        <div className="flex-1 overflow-y-auto">
+          {/* Images */}
+          <div className="relative">
+            <div className="bg-gray-50">
+              <img
+                src={images[selectedImage]}
+                alt={product.name}
+                className="w-full h-80 object-contain p-3
                          cursor-zoom-in"
-              onClick={() => {
-                // Zoom handled in parent
-              }}
-            />
-          </div>
+                onClick={() => {
+                  // Zoom handled in parent
+                }}
+              />
+            </div>
 
-          {/* Thumbnail Strip */}
-          {images.length > 1 && (
-            <div
-              className="flex gap-2 p-3 overflow-x-auto
+            {/* Thumbnail Strip */}
+            {images.length > 1 && (
+              <div
+                className="flex gap-2 p-3 overflow-x-auto
                             bg-white border-b"
-            >
-              {images.map((img, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSelectedImage(i)}
-                  className={`flex-shrink-0 w-14 h-14
+              >
+                {images.map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedImage(i)}
+                    className={`flex-shrink-0 w-14 h-14
                              rounded-xl overflow-hidden
                              border-2 transition
                              ${
@@ -3372,347 +3368,282 @@ function ProductModal({ product, shop, onClose, onTryOn, onOrder }) {
                                  ? "border-purple-500"
                                  : "border-gray-100"
                              }`}
-                >
-                  <img
-                    src={img}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="p-5">
-          {/* Brand + Name */}
-          {product.brandName && (
-            <p
-              className="text-purple-600 font-bold
-                          text-sm mb-1"
-            >
-              {product.brandName}
-            </p>
-          )}
-          <h1 className="text-xl font-bold text-gray-800 mb-2">
-            {product.name}
-          </h1>
-
-          {/* Description */}
-          {product.description && (
-            <p
-              className="text-gray-500 text-sm
-                          leading-relaxed mb-3"
-            >
-              {product.description}
-            </p>
-          )}
-
-          {/* Pricing */}
-          <div className="flex items-center gap-3 mb-4">
-            {hasDiscount && (
-              <span
-                className="bg-green-600 text-white
-                               text-xs font-bold px-2 py-1
-                               rounded-lg"
-              >
-                ↓ {product.discountPercent}% OFF
-              </span>
-            )}
-            <div className="flex items-center gap-2">
-              <span
-                className="text-2xl font-black
-                               text-gray-900"
-              >
-                ₹{product.price}
-              </span>
-              {hasDiscount && (
-                <span
-                  className="text-gray-400 text-sm
-                                 line-through"
-                >
-                  ₹{product.originalPrice}
-                </span>
-              )}
-            </div>
-            {hasDiscount && (
-              <span
-                className="text-green-600 text-xs
-                               font-medium"
-              >
-                Save ₹{product.originalPrice - product.price}
-              </span>
+                  >
+                    <img
+                      src={img}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
             )}
           </div>
 
-          {/* Size Chart */}
-          {product.sizes?.length > 0 && (
-            <div className="mb-4">
+          <div className="p-5">
+            {/* Brand + Name */}
+            {product.brandName && (
               <p
-                className="text-sm font-semibold
-                            text-gray-700 mb-2"
+                className="text-purple-600 font-bold
+                          text-sm mb-1"
               >
-                Size Select Karo
+                {product.brandName}
               </p>
-              <div className="flex gap-2 flex-wrap">
-                {product.sizes.map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`px-4 py-2 rounded-xl text-sm
+            )}
+            <h1 className="text-xl font-bold text-gray-800 mb-2">
+              {product.name}
+            </h1>
+
+            {/* Description */}
+            {product.description && (
+              <p
+                className="text-gray-500 text-sm
+                          leading-relaxed mb-3"
+              >
+                {product.description}
+              </p>
+            )}
+
+            {/* Pricing */}
+            <div className="flex items-center gap-3 mb-4">
+              {hasDiscount && (
+                <span
+                  className="bg-green-600 text-white
+                               text-xs font-bold px-2 py-1
+                               rounded-lg"
+                >
+                  ↓ {product.discountPercent}% OFF
+                </span>
+              )}
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-2xl font-black
+                               text-gray-900"
+                >
+                  ₹{product.price}
+                </span>
+                {hasDiscount && (
+                  <span
+                    className="text-gray-400 text-sm
+                                 line-through"
+                  >
+                    ₹{product.originalPrice}
+                  </span>
+                )}
+              </div>
+              {hasDiscount && (
+                <span
+                  className="text-green-600 text-xs
+                               font-medium"
+                >
+                  Save ₹{product.originalPrice - product.price}
+                </span>
+              )}
+            </div>
+
+            {/* Size Chart */}
+            {product.sizes?.length > 0 && (
+              <div className="mb-4">
+                <p
+                  className="text-sm font-semibold
+                            text-gray-700 mb-2"
+                >
+                  Size Select Karo
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  {product.sizes.map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => setSelectedSize(size)}
+                      className={`px-4 py-2 rounded-xl text-sm
                                font-semibold border-2 transition
                                ${
                                  selectedSize === size
                                    ? "bg-gray-900 text-white border-gray-900"
                                    : "border-gray-200 text-gray-700 hover:border-gray-400"
                                }`}
-                  >
-                    {size}
-                  </button>
-                ))}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Delivery Info */}
-          <div className="bg-gray-50 rounded-2xl p-4 mb-4">
-            <p
-              className="text-xs font-semibold text-gray-500
+            {/* Delivery Info */}
+            <div className="bg-gray-50 rounded-2xl p-4 mb-4">
+              <p
+                className="text-xs font-semibold text-gray-500
                           uppercase tracking-wide mb-3"
-            >
-              Delivery Details
-            </p>
-            <div className="flex items-start gap-2 mb-2">
-              <span className="text-base">📍</span>
-              <div>
-                <p className="text-sm text-gray-700 font-medium">
-                  {product.price >= 499
-                    ? "🚚 Free Delivery!"
-                    : "🚚 Delivery: ₹60"}
-                </p>
-                <p className="text-xs text-gray-400">
-                  Expected by{" "}
-                  {new Date(
-                    Date.now() + 5 * 24 * 60 * 60 * 1000,
-                  ).toLocaleDateString("en-IN", {
-                    weekday: "short",
-                    day: "numeric",
-                    month: "short",
-                  })}
-                </p>
-              </div>
-            </div>
-            <p
-              className="text-xs text-gray-500 flex
-                          items-center gap-1"
-            >
-              <span>🏪</span>
-              Fulfilled by{" "}
-              <span className="font-semibold text-gray-700 ml-1">
-                {shop?.name}
-              </span>
-            </p>
-            <p
-              className=" font-semibold text-xs text-blue-500 flex
-                          items-center gap-1 mt-2"
-            >
-              <span>⛟.</span>
-              Free delivery on all orders above ₹499
-            </p>
-          </div>
-
-          {/* Trust Badges */}
-          <div className="grid grid-cols-3 gap-3 mb-5">
-            {[
-              { icon: "↩️", text: "7 Day Return" },
-              { icon: "💵", text: "Cash on Delivery" },
-              { icon: "✅", text: "VirtualTryOn Assured" },
-            ].map((b, i) => (
-              <div
-                key={i}
-                className="text-center bg-blue-50
-                           rounded-xl p-3"
               >
-                <div className="text-xl mb-1">{b.icon}</div>
-                <p
-                  className="text-xs text-gray-600
-                               font-medium leading-tight"
-                >
-                  {b.text}
-                </p>
+                Delivery Details
+              </p>
+              <div className="flex items-start gap-2 mb-2">
+                <span className="text-base">📍</span>
+                <div>
+                  <p className="text-sm text-gray-700 font-medium">
+                    {product.price >= 499
+                      ? "🚚 Free Delivery!"
+                      : "🚚 Delivery: ₹60"}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    Expected by{" "}
+                    {new Date(
+                      Date.now() + 5 * 24 * 60 * 60 * 1000,
+                    ).toLocaleDateString("en-IN", {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "short",
+                    })}
+                  </p>
+                </div>
               </div>
-            ))}
-          </div>
+              <p
+                className="text-xs text-gray-500 flex
+                          items-center gap-1"
+              >
+                <span>🏪</span>
+                Fulfilled by{" "}
+                <span className="font-semibold text-gray-700 ml-1">
+                  {shop?.name}
+                </span>
+              </p>
+              <p
+                className=" font-semibold text-xs text-blue-500 flex
+                          items-center gap-1 mt-2"
+              >
+                <span>⛟.</span>
+                Free delivery on all orders above ₹499
+              </p>
+            </div>
 
-          {/* Product Highlights */}
-          {product.highlights &&
-            Object.values(product.highlights).some((v) => v) && (
-              <div className="mb-5">
-                <p
-                  className="text-sm font-bold text-gray-800
-                            mb-3 uppercase tracking-wide"
-                >
-                  Product Highlights
-                </p>
+            {/* Trust Badges */}
+            <div className="grid grid-cols-3 gap-3 mb-5">
+              {[
+                { icon: "↩️", text: "7 Day Return" },
+                { icon: "💵", text: "Cash on Delivery" },
+                { icon: "✅", text: "VirtualTryOn Assured" },
+              ].map((b, i) => (
                 <div
-                  className="bg-gray-50 rounded-2xl
-                              overflow-hidden"
+                  key={i}
+                  className="text-center bg-blue-50
+                           rounded-xl p-3"
                 >
-                  {[
-                    { k: "packOf", l: "Pack Of" },
-                    { k: "color", l: "Color" },
-                    { k: "pattern", l: "Pattern" },
-                    { k: "fabric", l: "Fabric" },
-                    { k: "occasion", l: "Occasion" },
-                    { k: "suitableFor", l: "Suitable For" },
-                  ]
-                    .filter((f) => product.highlights[f.k])
-                    .map((f, i, arr) => (
-                      <div
-                        key={f.k}
-                        className={`flex px-4 py-3
+                  <div className="text-xl mb-1">{b.icon}</div>
+                  <p
+                    className="text-xs text-gray-600
+                               font-medium leading-tight"
+                  >
+                    {b.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Product Highlights */}
+            {product.highlights &&
+              Object.values(product.highlights).some((v) => v) && (
+                <div className="mb-5">
+                  <p
+                    className="text-sm font-bold text-gray-800
+                            mb-3 uppercase tracking-wide"
+                  >
+                    Product Highlights
+                  </p>
+                  <div
+                    className="bg-gray-50 rounded-2xl
+                              overflow-hidden"
+                  >
+                    {[
+                      { k: "packOf", l: "Pack Of" },
+                      { k: "color", l: "Color" },
+                      { k: "pattern", l: "Pattern" },
+                      { k: "fabric", l: "Fabric" },
+                      { k: "occasion", l: "Occasion" },
+                      { k: "suitableFor", l: "Suitable For" },
+                    ]
+                      .filter((f) => product.highlights[f.k])
+                      .map((f, i, arr) => (
+                        <div
+                          key={f.k}
+                          className={`flex px-4 py-3
                                ${
                                  i !== arr.length - 1
                                    ? "border-b border-gray-100"
                                    : ""
                                }`}
-                      >
-                        <span
-                          className="text-gray-400 text-sm
+                        >
+                          <span
+                            className="text-gray-400 text-sm
                                      w-28 flex-shrink-0"
-                        >
-                          {f.l}
-                        </span>
-                        <span
-                          className="text-gray-800 text-sm
+                          >
+                            {f.l}
+                          </span>
+                          <span
+                            className="text-gray-800 text-sm
                                      font-medium"
-                        >
-                          {product.highlights[f.k]}
-                        </span>
-                      </div>
-                    ))}
+                          >
+                            {product.highlights[f.k]}
+                          </span>
+                        </div>
+                      ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-          {/* Reviews Section - Read Only */}
-          <ProductReviews
-            product={product}
-            showAllReviews={showAllReviews}
-            setShowAllReviews={setShowAllReviews}
-            onImageClick={(img, review) => setZoomedReview({ img, review })}
-          />
-        </div>
+            {/* Reviews Section - Read Only */}
+            <ProductReviews
+              product={product}
+              showAllReviews={showAllReviews}
+              setShowAllReviews={setShowAllReviews}
+              onImageClick={(img, review) => setZoomedReview({ img, review })}
+            />
+          </div>
 
-        {/* Sticky Buttons */}
-        <div
-          className="sticky bottom-0 bg-white border-t
+          {/* Sticky Buttons */}
+          <div
+            className="sticky bottom-0 bg-white border-t
                         px-5 py-4 space-y-2.5
                         shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
-        >
-          <button
-            onClick={() => onOrder(product)}
-            disabled={!product?.inStock}
-            className={`w-full py-3.5 rounded-2xl font-bold text-lg flex items-center justify-center gap-2.5 
+          >
+            <button
+              onClick={() => onOrder(product)}
+              disabled={!product?.inStock}
+              className={`w-full py-3.5 rounded-2xl font-bold text-lg flex items-center justify-center gap-2.5 
              transition-all duration-300 ease-in-out shadow-lg transform active:scale-[0.98]
              ${
                product?.inStock
                  ? "bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 text-white shadow-green-500/20 hover:shadow-green-500/40 hover:-translate-y-0.5 cursor-pointer"
                  : "bg-gradient-to-r from-gray-100 via-gray-200 to-gray-300 text-gray-400 shadow-none cursor-not-allowed border border-gray-300/30"
              }`}
-          >
-            {product?.inStock ? (
-              <>
-                {/* आइकॉन रैपर - इसे परफेक्टली सेंटर और अलाइन किया गया है */}
-                <div className="relative flex items-center justify-center bg-white/15 p-1 rounded-lg animate-pulse [animation-duration:1.5s]">
-                  <span className="absolute inline-flex h-full w-full rounded-lg bg-white/20 animate-ping opacity-60"></span>
-                  <svg
-                    xmlns="http://w3.org"
-                    width="18" // साइज़ थोड़ा छोटा किया ताकि ऊपर टच न हो
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5" // यह आइकॉन को बढ़िया और बोल्ड रखेगा
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="relative z-10"
-                  >
-                    <circle cx="8" cy="21" r="1" />
-                    <circle cx="19" cy="21" r="1" />
-                    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
-                  </svg>
-                </div>
+            >
+              {product?.inStock ? (
+                <>
+                  {/* आइकॉन रैपर - इसे परफेक्टली सेंटर और अलाइन किया गया है */}
+                  <div className="relative flex items-center justify-center bg-white/15 p-1 rounded-lg animate-pulse [animation-duration:1.5s]">
+                    <span className="absolute inline-flex h-full w-full rounded-lg bg-white/20 animate-ping opacity-60"></span>
+                    <svg
+                      xmlns="http://w3.org"
+                      width="18" // साइज़ थोड़ा छोटा किया ताकि ऊपर टच न हो
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5" // यह आइकॉन को बढ़िया और बोल्ड रखेगा
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="relative z-10"
+                    >
+                      <circle cx="8" cy="21" r="1" />
+                      <circle cx="19" cy="21" r="1" />
+                      <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+                    </svg>
+                  </div>
 
-                <span className="tracking-wide">Order Now</span>
-              </>
-            ) : (
-              <>
-                <svg
-                  xmlns="http://w3.org"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="m4.93 4.93 14.14 14.14" />
-                </svg>
-                <span className="tracking-wide uppercase text-sm font-extrabold opacity-75">
-                  Out of Stock
-                </span>
-              </>
-            )}
-          </button>
-
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (product.inStock === false) return;
-              onTryOn(product);
-            }}
-            disabled={product.inStock === false}
-            className={`w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 
-             transition-all duration-300 ease-in-out shadow-lg transform active:scale-[0.98]
-             ${
-               product.inStock === false
-                 ? "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-400 shadow-none cursor-not-allowed border border-gray-300/30"
-                 : "bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 text-white shadow-purple-500/20 hover:shadow-purple-500/40 hover:-translate-y-0.5 cursor-pointer"
-             }`}
-          >
-            {product.inStock === false ? (
-              <>
-                {/* आउट ऑफ़ स्टॉक स्टेट */}
-                <svg
-                  xmlns="http://w3.org"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="m4.93 4.93 14.14 14.14" />
-                </svg>
-                <span className="tracking-wide uppercase text-sm font-extrabold opacity-75">
-                  Tryon Unavailable
-                </span>
-              </>
-            ) : (
-              <>
-                {/* एक्टिव AI / फैशन ट्राई-ऑन स्टेट */}
-                <div className="relative flex items-center justify-center bg-white/20 p-1 rounded-lg animate-pulse [animation-duration:1.8s]">
-                  {/* पीछे हल्का सा ग्लोइंग रिंग इफ़ेक्ट */}
-                  <span className="absolute inline-flex h-full w-full rounded-lg bg-white/20 animate-ping opacity-60"></span>
-
-                  {/* स्पार्कल / मैजिक AI आइकॉन (जो वर्चुअल ट्राई-ऑन को दर्शाता है) */}
+                  <span className="tracking-wide">Order Now</span>
+                </>
+              ) : (
+                <>
                   <svg
                     xmlns="http://w3.org"
                     width="18"
@@ -3723,81 +3654,145 @@ function ProductModal({ product, shop, onClose, onTryOn, onOrder }) {
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="relative z-10"
                   >
-                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z" />
-                    <path
-                      d="m5 3 1 2.5L8.5 6 6 7 5 9.5 4 7 1.5 6 4 5.5Z"
-                      className="opacity-80"
-                    />
-                    <path
-                      d="m19 17 1 2.5 2.5.5-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1Z"
-                      className="opacity-80"
-                    />
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="m4.93 4.93 14.14 14.14" />
                   </svg>
-                </div>
-
-                <span className="tracking-wide">Try-On Now!</span>
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Review Image Zoom */}
-      {zoomedReview && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-90
-                     z-50 flex items-center justify-center p-4"
-          onClick={() => setZoomedReview(null)}
-        >
-          <div
-            className="bg-white rounded-2xl overflow-hidden
-                          max-w-sm w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <img
-              src={zoomedReview.img}
-              alt=""
-              className="w-full h-64 object-cover"
-            />
-            <div className="p-4">
-              <div className="flex items-center gap-1 mb-2">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <span
-                    key={s}
-                    className={`text-sm ${
-                      s <= zoomedReview.review.rating
-                        ? "text-yellow-400"
-                        : "text-gray-200"
-                    }`}
-                  >
-                    ★
+                  <span className="tracking-wide uppercase text-sm font-extrabold opacity-75">
+                    Out of Stock
                   </span>
-                ))}
-                <span className="text-xs text-gray-500 ml-1">
-                  {zoomedReview.review.customerName}
-                </span>
-              </div>
-              {zoomedReview.review.review && (
-                <p className="text-sm text-gray-700">
-                  {zoomedReview.review.review}
-                </p>
+                </>
               )}
-            </div>
+            </button>
+
             <button
-              onClick={() => setZoomedReview(null)}
-              className="w-full bg-gray-100 py-3 text-sm
-                         font-semibold text-gray-600
-                         hover:bg-gray-200 transition"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (product.inStock === false) return;
+                onTryOn(product);
+              }}
+              disabled={product.inStock === false}
+              className={`w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 
+             transition-all duration-300 ease-in-out shadow-lg transform active:scale-[0.98]
+             ${
+               product.inStock === false
+                 ? "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-400 shadow-none cursor-not-allowed border border-gray-300/30"
+                 : "bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 text-white shadow-purple-500/20 hover:shadow-purple-500/40 hover:-translate-y-0.5 cursor-pointer"
+             }`}
             >
-              Close
+              {product.inStock === false ? (
+                <>
+                  {/* आउट ऑफ़ स्टॉक स्टेट */}
+                  <svg
+                    xmlns="http://w3.org"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="m4.93 4.93 14.14 14.14" />
+                  </svg>
+                  <span className="tracking-wide uppercase text-sm font-extrabold opacity-75">
+                    Tryon Unavailable
+                  </span>
+                </>
+              ) : (
+                <>
+                  {/* एक्टिव AI / फैशन ट्राई-ऑन स्टेट */}
+                  <div className="relative flex items-center justify-center bg-white/20 p-1 rounded-lg animate-pulse [animation-duration:1.8s]">
+                    {/* पीछे हल्का सा ग्लोइंग रिंग इफ़ेक्ट */}
+                    <span className="absolute inline-flex h-full w-full rounded-lg bg-white/20 animate-ping opacity-60"></span>
+
+                    {/* स्पार्कल / मैजिक AI आइकॉन (जो वर्चुअल ट्राई-ऑन को दर्शाता है) */}
+                    <svg
+                      xmlns="http://w3.org"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="relative z-10"
+                    >
+                      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z" />
+                      <path
+                        d="m5 3 1 2.5L8.5 6 6 7 5 9.5 4 7 1.5 6 4 5.5Z"
+                        className="opacity-80"
+                      />
+                      <path
+                        d="m19 17 1 2.5 2.5.5-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1Z"
+                        className="opacity-80"
+                      />
+                    </svg>
+                  </div>
+
+                  <span className="tracking-wide">Try-On Now!</span>
+                </>
+              )}
             </button>
           </div>
         </div>
-      
-      )}
-    </div>
+
+        {/* Review Image Zoom */}
+        {zoomedReview && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-90
+                     z-50 flex items-center justify-center p-4"
+            onClick={() => setZoomedReview(null)}
+          >
+            <div
+              className="bg-white rounded-2xl overflow-hidden
+                          max-w-sm w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={zoomedReview.img}
+                alt=""
+                className="w-full h-64 object-cover"
+              />
+              <div className="p-4">
+                <div className="flex items-center gap-1 mb-2">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <span
+                      key={s}
+                      className={`text-sm ${
+                        s <= zoomedReview.review.rating
+                          ? "text-yellow-400"
+                          : "text-gray-200"
+                      }`}
+                    >
+                      ★
+                    </span>
+                  ))}
+                  <span className="text-xs text-gray-500 ml-1">
+                    {zoomedReview.review.customerName}
+                  </span>
+                </div>
+                {zoomedReview.review.review && (
+                  <p className="text-sm text-gray-700">
+                    {zoomedReview.review.review}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={() => setZoomedReview(null)}
+                className="w-full bg-gray-100 py-3 text-sm
+                         font-semibold text-gray-600
+                         hover:bg-gray-200 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -3849,10 +3844,10 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
       const formData = new FormData();
       formData.append("humanImage", humanImage);
       formData.append("garmentUrl", product.imageUrl); // imageUrl sahi hai
-    // Category sahi se bhejo
-const category = product.category || 'upper_body'
-formData.append("description", category)
-console.log('Sending category:', category)
+      // Category sahi se bhejo
+      const category = product.category || "upper_body";
+      formData.append("description", category);
+      console.log("Sending category:", category);
 
       const res = await axios.post(`${API_URL}/api/tryon`, formData, {
         headers: {
@@ -4075,6 +4070,19 @@ console.log('Sending category:', category)
             </div>
 
             {/* Try On Button */}
+
+            {(product?.category?.includes("lower") ||
+              product?.category?.includes("pant")) && (
+              <div
+                className="bg-amber-50 border border-amber-200
+                  rounded-xl p-3 mb-3"
+              >
+                <p className="text-amber-700 text-xs font-medium">
+                  ⚠️ Straight standing full-body photos give the best results
+                  for lower body Try-on. Actual results may vary
+                </p>
+              </div>
+            )}
             <button
               onClick={handleTryOn}
               disabled={tryonLoading || !humanImage}
@@ -4897,13 +4905,12 @@ export default function Shop() {
         <CustomerProfile shop={shop} onClose={() => setShowProfile(false)} />
       )}
 
-{/* Voice Assistant */}
+      {/* Voice Assistant */}
       <VoiceAssistant
         pageType="shop"
-        shopName={shop?.name || ''}
+        shopName={shop?.name || ""}
         language="hi"
       />
-
     </div>
   );
 }

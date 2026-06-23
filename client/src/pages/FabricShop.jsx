@@ -732,7 +732,7 @@ function FabricAnimation({ step }) {
 
   return (
      <div
-    style={{ zIndex: 50 }}
+    style={{ zIndex: 99999 }}
     className="fixed inset-0 bg-black bg-opacity-75
                flex items-center justify-center
                backdrop-blur-sm"
@@ -943,7 +943,8 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
           className="bg-white w-full md:max-w-2xl 
                      h-[100svh] md:h-auto md:max-h-[92vh] 
                      flex flex-col overflow-hidden 
-                     rounded-t-3xl md:rounded-3xl shadow-2xl"
+                     rounded-t-3xl md:rounded-3xl shadow-2xl
+          transform-gpu will-change-transform backface-visibility-hidden"
         >
           {/* ─── 1. ADVANCE FIXED HEADER BAR (लाइन 898) ─── */}
           <div

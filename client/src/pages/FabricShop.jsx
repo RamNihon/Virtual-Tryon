@@ -732,7 +732,7 @@ function FabricAnimation({ step }) {
 
   return (
      <div
-    style={{ zIndex: 99999 }}
+    style={{ zIndex: 50 }}
     className="fixed inset-0 bg-black bg-opacity-75
                flex items-center justify-center
                backdrop-blur-sm"

@@ -586,7 +586,7 @@ function CustomerAuthModal({ mode, onClose, onSuccess }) {
 }
 
 // ─── Order Modal ──────────────────────────
-function OrderModal({ product, shop, onClose }) {
+function OrderModal({ product, shop, onClose, tryonResult }) {
   const { customer, customerToken, loginCustomer } = useCustomer();
   const [step, setStep] = useState("options");
   const selectedSize = product.sizes?.[0] || "";
@@ -613,18 +613,22 @@ function OrderModal({ product, shop, onClose }) {
   const deliveryFee = product.price >= 499 ? 0 : 60;
   const total = product.price + deliveryFee;
 
-  const handleWhatsApp = () => {
-    if (!shop?.whatsapp) return;
-    const msg = encodeURIComponent(
-      `Hi! I want to order:\n\n` +
-        `Product: ${product.name}\n` +
-        `Price: ₹${product.price}\n` +
-        `Delivery: ${deliveryFee === 0 ? "FREE" : "₹" + deliveryFee}\n` +
-        `Total: ₹${total}\n\nPlease confirm!`,
-    );
-    window.open(`https://wa.me/${shop.whatsapp}?text=${msg}`);
-    onClose();
-  };
+const handleWhatsApp = () => {
+  if (!shop?.whatsapp) return;
+  const msg = encodeURIComponent(
+    `Hi! I want to order:\n\n` +
+      `Product: ${product?.name || "N/A"}\n` +
+      `Price: ₹${product?.price || "0"}\n` +
+      `Delivery: ${deliveryFee === 0 ? "FREE" : "₹" + deliveryFee}\n` +
+      `Total: ₹${total}\n\n` +
+      `📸 Fabric Preview: ${product?.imageUrl || product?.fabricImageUrl || "N/A"}\n` +
+      `${tryonResult ? `✨ Try-on Result: ${tryonResult}\n\n` : ""}` +
+      `Please confirm!`,
+  );
+  window.open(`https://wa.me/${shop.whatsapp}?text=${msg}`);
+  onClose();
+};
+
 
   const handleAddressAndProceed = async () => {
     if (!customer) {
@@ -1049,7 +1053,7 @@ function OrderModal({ product, shop, onClose }) {
                     className="w-full text-gray-400 text-sm py-2
                  hover:text-gray-600 transition"
                   >
-                    ← Change Address
+                    ← Go Back
                   </button>
                 </div>
               )}
@@ -4314,22 +4318,25 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
                     className="bg-black bg-opacity-80
                       px-4 pb-6 pt-2 space-y-2 mt-4"
                   >
-                    {shop?.whatsapp && (
-                      <a
-                        href={`https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(
-                          `Hi! Maine try on kiya!\n👗 ${product?.name}\n💰 ₹${product?.price}\n\n Yah order karna hai!`,
-                        )}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        onClick={() => trackOrder(selectedProduct, "whatsapp")}
-                        className="block w-full bg-green-500
-                       text-white py-4 rounded-2xl
-                       font-bold text-center text-base
-                       hover:bg-green-600 transition"
-                      >
-                        📱 Like it ! Order Now
-                      </a>
-                    )}
+                 {shop?.whatsapp && (
+  <a
+    href={`https://wa.me{shop.whatsapp}?text=${encodeURIComponent(
+      `Hi! Maine try on kiya!\n\n` +
+      `👗 Fabric: ${product?.name || "N/A"}\n` +
+      `💰 Price: ₹${product?.price || "0"}\n\n` +
+      `📸 Fabric Preview: ${product?.imageUrl || product?.fabricImageUrl || "N/A"}\n` +
+      `${tryonResult ? `✨ Try-on Result: ${tryonResult}\n\n` : ""}` +
+      `Yah order karna hai!`
+    )}`}
+    target="_blank"
+    rel="noreferrer"
+    onClick={() => trackOrder(selectedProduct, "whatsapp")}
+    className="block w-full bg-green-500 text-white py-4 rounded-2xl font-bold text-center text-base hover:bg-green-600 transition"
+  >
+    📱 Like it ! Order Now
+  </a>
+)}
+
 
                     {shop?.upiId && (
                       <button

@@ -689,6 +689,7 @@ function FabricAnimation({ step }) {
     { emoji: "✂️", text: "AI is stitching..." },
     { emoji: "👔", text: "Garment is being prepared..." },
     { emoji: "✨", text: "Final touches..." },
+    { emoji: "🎉", text: "Generating your final result..." },
   ];
 
   const tryonSteps = [
@@ -943,8 +944,7 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
           className="bg-white w-full md:max-w-2xl 
                      h-[100svh] md:h-auto md:max-h-[92vh] 
                      flex flex-col overflow-hidden 
-                     rounded-t-3xl md:rounded-3xl shadow-2xl
-          transform-gpu will-change-transform backface-visibility-hidden"
+                     rounded-t-3xl md:rounded-3xl shadow-2xl"
         >
           {/* ─── 1. ADVANCE FIXED HEADER BAR (लाइन 898) ─── */}
           <div
@@ -1602,38 +1602,49 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
                 )}
 
                 {/* Order Buttons */}
-                <div className="mt-4 space-y-2">
-                  {shop?.whatsapp && (
-                    <a
-                      href={`https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(
-                        `Hi! Maine fabric try on kiya!\n\n` +
-                          `Fabric: ${product.name}\n` +
-                          `Price: ₹${product.price}\n\n` +
-                          `Custom stitch order karna hai!`,
-                      )}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="block w-full bg-green-500 text-white
-                                 py-4 rounded-2xl font-bold text-center
-                                 hover:bg-green-600 transition"
-                    >
-                      📱 WhatsApp Par Custom Order Karen!
-                    </a>
-                  )}
-                  {shop?.upiId && (
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(shop.upiId);
-                        alert(`UPI: ${shop.upiId}\nAmount: ₹${product.price}`);
-                      }}
-                      className="w-full border-2 border-green-500
-                                 text-green-600 py-3 rounded-2xl
-                                 font-semibold hover:bg-green-50 transition"
-                    >
-                      💳 UPI Se Pay Karen
-                    </button>
-                  )}
-                </div>
+                <div className="mt-4 space-y-3">
+  {shop?.whatsapp && (
+    <a
+      href={`https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(
+        `📌 *NEW CUSTOM STITCH ORDER*\n\n` +
+        `👔 *Fabric:* ${product?.name || "N/A"}\n` +
+        `🏷️ *Brand:* ${product?.brand || "Standard"}\n` +
+        `🧵 *Material:* ${product?.fabricType || "N/A"}\n` +
+        `💰 *Price:* ₹${product?.price || "0"}\n\n` +
+        `📸 *Fabric Image:* ${product?.fabricImageUrl || "N/A"}\n` +
+       
+        `💬 _Hi! Mujhe is fabric aur try-on result ke hisab se custom stitch order karna hai!_`
+      )}`}
+      target="_blank"
+      rel="noreferrer"
+      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3.5 rounded-2xl font-bold text-center shadow-md shadow-green-500/10 hover:opacity-95 transition cursor-pointer text-sm"
+    >
+      <svg xmlns="http://w3.org" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+      </svg>
+      WhatsApp Par Order Karen
+    </a>
+  )}
+
+  {shop?.upiId && (
+    <button
+      onClick={() => {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(shop.upiId);
+          alert(`✅ UPI ID Copy Ho Gayi Hai!\n\nID: ${shop.upiId}\nAmount: ₹${product?.price || 0}`);
+        }
+      }}
+      className="flex items-center justify-center gap-2 w-full border border-slate-200 text-slate-700 py-3 rounded-2xl font-semibold bg-slate-50 hover:bg-slate-100 transition cursor-pointer text-sm"
+    >
+      <svg xmlns="http://w3.org" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <rect x="2" y="5" width="20" height="14" rx="2" />
+        <line x1="2" y1="10" x2="22" y2="10" />
+      </svg>
+      UPI Copy & Pay
+    </button>
+  )}
+</div>
+
               </div>
             )}
           </div>

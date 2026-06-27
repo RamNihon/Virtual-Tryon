@@ -42,6 +42,7 @@ const ProtectedRoute = ({ children }) => {
 function AppContent() {
   const location = useLocation();
   const isShopPage = location.pathname.startsWith("/shop/");
+    const isShop = location.pathname.startsWith("/fabric/");
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -94,6 +95,7 @@ function AppContent() {
 
       {/* Shop page par ShopFooter, baki par Footer */}
       {isShopPage ? <ShopFooter /> : <Footer />}
+      {isShop ? <ShopFooter /> : <Footer />}
     </div>
   );
 }

@@ -14,6 +14,12 @@ export default function Footer() {
   if (location.pathname.startsWith("/refund")) {
     return null;
   }
+   if (location.pathname.startsWith("/fabric")) {
+    return null;
+  }
+   if (location.pathname.startsWith("/shop")) {
+    return null;
+  }
 
   return (
     <footer

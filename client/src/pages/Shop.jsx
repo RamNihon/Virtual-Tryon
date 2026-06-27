@@ -4,6 +4,7 @@ import axios from "axios";
 import API_URL from "../api";
 import { useCustomer } from "../context/CustomerContext";
 import VoiceAssistant, { speakText } from "../components/VoiceAssistant";
+import TryOnGallery from "../components/TryOnGallery";
 
 // Shared status color classes (used for badges across the page)
 const STATUS_COLORS = {
@@ -140,7 +141,7 @@ function ShopNavbar({ shop, onLoginClick, onProfileClick }) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const features = [
-    "✨ Virtual Try-On( for uppper body dress only)",
+    "✨ Virtual Try-On Technology",
     "🤖 AI Style Advice",
     "📱 Easy WhatsApp Orders",
     "📱 Easy Direct order",
@@ -613,22 +614,21 @@ function OrderModal({ product, shop, onClose, tryonResult }) {
   const deliveryFee = product.price >= 499 ? 0 : 60;
   const total = product.price + deliveryFee;
 
-const handleWhatsApp = () => {
-  if (!shop?.whatsapp) return;
-  const msg = encodeURIComponent(
-    `Hi! I want to order:\n\n` +
-      `Product: ${product?.name || "N/A"}\n` +
-      `Price: ₹${product?.price || "0"}\n` +
-      `Delivery: ${deliveryFee === 0 ? "FREE" : "₹" + deliveryFee}\n` +
-      `Total: ₹${total}\n\n` +
-      `📸 Fabric Preview: ${product?.imageUrl || product?.fabricImageUrl || "N/A"}\n` +
-      `${tryonResult ? `✨ Try-on Result: ${tryonResult}\n\n` : ""}` +
-      `Please confirm!`,
-  );
-  window.open(`https://wa.me/${shop.whatsapp}?text=${msg}`);
-  onClose();
-};
-
+  const handleWhatsApp = () => {
+    if (!shop?.whatsapp) return;
+    const msg = encodeURIComponent(
+      `Hi! I want to order:\n\n` +
+        `Product: ${product?.name || "N/A"}\n` +
+        `Price: ₹${product?.price || "0"}\n` +
+        `Delivery: ${deliveryFee === 0 ? "FREE" : "₹" + deliveryFee}\n` +
+        `Total: ₹${total}\n\n` +
+        `📸 Fabric Preview: ${product?.imageUrl || product?.fabricImageUrl || "N/A"}\n` +
+        `${tryonResult ? `✨ Try-on Result: ${tryonResult}\n\n` : ""}` +
+        `Please confirm!`,
+    );
+    window.open(`https://wa.me/${shop.whatsapp}?text=${msg}`);
+    onClose();
+  };
 
   const handleAddressAndProceed = async () => {
     if (!customer) {
@@ -785,65 +785,181 @@ const handleWhatsApp = () => {
               {shop?.whatsapp && (
                 <button
                   onClick={handleWhatsApp}
-                  className="w-full bg-green-500 text-white
-                             py-4 rounded-2xl font-bold
-                             hover:bg-green-600 transition
-                             flex items-center
-                             justify-center gap-3"
+                  className="group relative w-full overflow-hidden bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 text-white py-3.5 px-6 rounded-2xl font-sans font-bold shadow-[0_4px_20px_rgba(16,185,129,0.2)] hover:shadow-[0_8px_30px_rgba(16,185,129,0.35)] transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] flex items-center justify-center gap-4 border border-emerald-400/20"
                 >
-                  <span className="text-xl">📱</span>
-                  <div className="text-left">
-                    <p className="font-bold">Order on WhatsApp </p>
-                    <p className="text-green-100 text-xs">
-                      Deal with the seller directly
+                  {/* 🌊 बैकग्राउंड पर एक प्रीमियम वेव शाइन इफेक्ट (Hover करने पर चमकेगा) */}
+                  <div className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/15 to-transparent -skew-x-12 -translate-x-full group-hover:animate-[shine_0.8s_ease-in-out]"></div>
+
+                  {/* 🟢 एडवांस नियॉन ग्लो वाला व्हाट्सएप आइकन */}
+                  <div className="flex-shrink-0 relative flex items-center justify-center w-9 h-9 rounded-xl bg-white/12 border border-white/20 text-white shadow-inner">
+                    <svg
+                      xmlns="http://w3.org"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                      className="w-5 h-5"
+                    >
+                      <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.713-1.455L0 24zm6.59-4.846c1.66.986 3.296 1.489 4.961 1.491 5.485.002 9.948-4.463 9.951-9.95.001-2.657-1.02-5.155-2.877-7.015s-4.359-2.883-7.016-2.884c-5.49 0-9.953 4.464-9.956 9.952-.001 1.761.464 3.424 1.348 4.909l-.989 3.61 3.709-.972zm11.444-6.842c-.305-.153-1.805-.89-2.083-.991-.279-.101-.482-.153-.684.153-.203.306-.784.991-.962 1.194-.178.203-.356.229-.661.076-.305-.153-1.288-.475-2.454-1.516-.908-.81-1.52-1.81-1.698-2.115-.178-.305-.019-.47.134-.622.137-.137.305-.356.457-.534.153-.178.203-.305.305-.509.102-.203.051-.381-.025-.534-.076-.153-.684-1.647-.937-2.257-.247-.593-.499-.513-.684-.522-.178-.008-.381-.01-.584-.01s-.534.076-.813.381c-.279.305-1.066 1.042-1.066 2.541s1.092 2.946 1.244 3.15c.153.203 2.15 3.284 5.207 4.601.727.314 1.293.502 1.735.643.73.232 1.393.199 1.918.121.585-.087 1.805-.738 2.059-1.452.254-.715.254-1.327.178-1.452-.076-.126-.279-.203-.584-.356z" />
+                    </svg>
+                    {/* पल्सिंग ऑनलाइन सिग्नल */}
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-white border border-green-500 animate-pulse"></span>
+                  </div>
+
+                  {/* 📝 प्रीमियम डार्क-लाइट टेक्स्ट कंट्रास्ट */}
+                  <div className="flex-1 text-left space-y-0.5">
+                    <p className="font-sans font-bold text-sm tracking-wide leading-none">
+                      Order via WhatsApp
+                    </p>
+                    <p className="text-emerald-100/90 font-medium text-[11px] leading-tight tracking-normal">
+                      Connect with the seller directly for instant deals
                     </p>
                   </div>
+
+                  {/* ➡️ छोटा सा प्रीमियम एरो इंडिकेटर */}
+                  <svg
+                    xmlns="http://w3.org"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className="w-4 h-4 text-emerald-100 group-hover:translate-x-0.5 transition-transform duration-200"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                    />
+                  </svg>
                 </button>
               )}
 
+
+{/* direct order button hai yahan par jo google se advance kiya hai  */}
+              {/* 💳 मुख्य अल्ट्रा-एडवांस ऑर्डर कार्ड बटन (100% वर्किंग इन-लाइन पॉपअप) */}
               <button
-                onClick={() => {
+                onClick={(e) => {
                   if (!customer) {
-                    alert("Log in first for a direct order!");
+                    // फिक्स किया गया लॉजिक: अब यह बटन के अंदर से ही क्लास को ढूंढेगा
+                    const el = e.currentTarget;
+                    const errBox = el.querySelector(".js-err-box");
+
+                    if (errBox) {
+                      // पर्दे को स्क्रीन पर दिखाना (स्लाइड इन)
+                      errBox.classList.remove(
+                        "hidden",
+                        "opacity-0",
+                        "-translate-y-2",
+                      );
+                      errBox.classList.add(
+                        "flex",
+                        "opacity-100",
+                        "translate-y-0",
+                      );
+
+                      // 4 सेकंड के बाद पर्दे को वापस छुपाना (स्लाइड आउट)
+                      setTimeout(() => {
+                        errBox.classList.remove("opacity-100", "translate-y-0");
+                        errBox.classList.add("opacity-0", "-translate-y-2");
+                        setTimeout(() => errBox.classList.add("hidden"), 300);
+                      }, 4000);
+                    }
                     return;
                   }
                   setStep("address");
                 }}
-                className="w-full bg-gradient-to-r
-                           from-purple-600 to-indigo-600
-                           text-white py-4 pr-3 rounded-2xl
-                           font-bold hover:opacity-90 transition
-                           flex items-center
-                           justify-center gap-3"
+                className="group relative w-full text-left overflow-hidden bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 p-5 rounded-2xl shadow-[0_10px_30px_rgba(99,102,241,0.18)] hover:shadow-[0_15px_35px_rgba(99,102,241,0.32)] transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] border border-white/10"
               >
-                <span className="text-xl"></span>
+                {/* 🌌 बैकग्राउंड में सॉफ्ट नियॉन लाइट्स */}
+                <div className="absolute top-0 right-0 -mt-10 -mr-10 w-32 h-32 bg-purple-400/20 rounded-full blur-3xl group-hover:bg-purple-400/25 transition-all duration-500"></div>
+                <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-32 h-32 bg-indigo-400/10 rounded-full blur-3xl group-hover:bg-indigo-400/15 transition-all duration-500"></div>
 
-                <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-6 rounded-2xl shadow-md border border-white/3 w-full">
-                  {/* Header Section */}
-                  <div className="flex items-center gap-3 mb-4 text-left">
-                    <span className="text-xl">🛒</span>
-                    <h3 className="text-lg font-bold tracking-wide text-white">
-                      Order Now
-                    </h3>
+                {/* 🚨 यह है आपका इन-लाइन सुंदर अलर्ट (जो अब 100% काम करेगा) */}
+                <div className="js-err-box hidden opacity-0 -translate-y-2 transition-all duration-300 absolute inset-0 bg-slate-900/95 z-20 rounded-2xl p-4 items-center gap-3 border border-red-500/30 shadow-lg">
+                  <div className="flex-shrink-0 bg-red-500/20 p-2 rounded-xl text-red-400">
+                    <svg
+                      xmlns="http://w3.org"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2.5}
+                      stroke="currentColor"
+                      className="w-5 h-5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h5 className="text-red-400 text-xs font-bold uppercase tracking-widest">
+                      Authentication Required
+                    </h5>
+                    <p className="text-slate-300 text-[11px] font-medium mt-0.5 leading-relaxed">
+                      Please Register or Login first to place a direct order
+                      securely.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="relative z-10 space-y-4">
+                  {/* 🛒 हेडर सेक्शन */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/10 border border-white/20 text-white shadow-inner">
+                        <svg
+                          xmlns="http://w3.org"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={2}
+                          stroke="currentColor"
+                          className="w-4.5 h-4.5"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M15.75 10.5V6a3.75 3.75 0 10-7 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
+                          />
+                        </svg>
+                      </div>
+                      <h3 className="text-base font-bold tracking-wide text-white font-sans">
+                        Direct Order Now
+                      </h3>
+                    </div>
+
+                    <div className="w-7 h-7 rounded-lg bg-white/10 border border-white/10 flex items-center justify-center text-white/80 group-hover:translate-x-0.5 transition-transform duration-200">
+                      <svg
+                        xmlns="http://w3.org"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2.5}
+                        stroke="currentColor"
+                        className="w-3.5 h-3.5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                        />
+                      </svg>
+                    </div>
                   </div>
 
-                  {/* Content Section */}
-                  <div className="space-y-3 text-left">
-                    {/* Green Highlighted Text */}
-                    <div className="flex items-start gap-2 text-left">
-                      <span className="text-emerald-300 text-sm mt-0.5 flex-shrink-0">
+                  {/* 📝 कंटेंट सेक्शन */}
+                  <div className="space-y-2.5">
+                    <div className="flex items-start gap-2.5 bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-xl">
+                      <span className="text-emerald-300 text-xs mt-0.5 animate-pulse">
                         ✨
                       </span>
-                      <p className="text-emerald-300 font-medium text-xs leading-relaxed text-left">
-                        We will handle your order with the seller for a
-                        hassle-free experience
+                      <p className="text-emerald-300 font-semibold text-[11px] leading-relaxed text-left">
+                        Hassle-Free Experience: We will personally coordinate
+                        and manage your order directly with the seller.
                       </p>
                     </div>
 
-                    {/* Secondary Info */}
-                    <div className="pl-6 text-left">
-                      <p className="text-purple-200 text-xs font-semibold tracking-wide">
-                        Address + Online Payment
+                    <div className="flex items-center gap-2 pl-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-300"></span>
+                      <p className="text-indigo-200 text-[10px] font-bold tracking-wider uppercase">
+                        Fill Address & Do Secured Online Payment
                       </p>
                     </div>
                   </div>
@@ -852,7 +968,7 @@ const handleWhatsApp = () => {
 
               {!customer && (
                 <p className="text-center text-xs text-gray-400">
-                  Login is required for direct orders
+                  Sign in/ Sign up is required for direct orders
                 </p>
               )}
             </div>
@@ -2239,96 +2355,366 @@ function CustomerProfile({ shop, onClose }) {
 
 // ─── Loading Animation ────────────────────
 function TryOnAnimation() {
-  const MESSAGES = [
-    { emoji: "📸", text: "Photo is getting uploaded..." },
-    { emoji: "👔", text: "Garment is being analyzed..." },
-    { emoji: "🤖", text: "AI is working..." },
-    { emoji: "👗", text: "Cloth is getting fitted..." },
-    { emoji: "✨", text: "Final touches..." },
-    { emoji: "✨", text: "Style advice is generating..." },
-    { emoji: "🎨", text: "Result is getting ready..." },
+  const STEPS = [
+    {
+      label: "Photo Upload",
+      detail: "Your photo is being uploaded to a secure server",
+      percent: 12,
+      color: "#8B5CF6",
+      icon: "📸",
+    },
+    {
+      label: "AI Analysis",
+      detail: "The system is detecting your body measurements",
+      percent: 28,
+      color: "#7C3AED",
+      icon: "🔍",
+    },
+    {
+      label: "Garment Mapping",
+      detail: "Our system is fitting the clothes on you",
+      percent: 52,
+      color: "#6D28D9",
+      icon: "👗",
+    },
+    {
+      label: "Texture Rendering",
+      detail: "We are adjusting the fabric texture and color",
+      percent: 74,
+      color: "#5B21B6",
+      icon: "🎨",
+    },
+
+    {
+      label: "Final Touches",
+      detail: "The result is almost ready!",
+      percent: 97,
+      color: "#3B0764",
+      icon: "🚀",
+    },
+
+    {
+      label: "Style Analysis",
+      detail: "AI style advice is being prepared",
+      percent: 88,
+      color: "#4C1D95",
+      icon: "✨",
+    },
+
+    // {
+    //   label: 'Final Touches',
+    //   detail: 'The result is almost ready!',
+    //   percent: 97,
+    //   color: '#3B0764',
+    //   icon: '🚀'
+    // }
   ];
-  const [index, setIndex] = useState(0);
+
+  const [stepIdx, setStepIdx] = useState(0);
+  const [displayPercent, setDisplayPercent] = useState(0);
+  const [particles, setParticles] = useState([]);
   const spokenRef = useRef(new Set());
 
+  // Particles generate
   useEffect(() => {
-    // Pehla message bolo
+    setParticles(
+      Array.from({ length: 20 }, (_, i) => ({
+        id: i,
+        x: Math.random() * 100,
+        delay: Math.random() * 3,
+        size: Math.random() * 4 + 2,
+        duration: Math.random() * 3 + 2,
+      })),
+    );
+  }, []);
+
+  // Step progression
+  useEffect(() => {
     if (!spokenRef.current.has(0)) {
-      speakText(MESSAGES[0].text, "en");
+      speakText(STEPS[0].detail, "en");
       spokenRef.current.add(0);
     }
 
     const t = setInterval(() => {
-      setIndex((p) => {
-        const next = p === MESSAGES.length - 1 ? 0 : p + 1;
-        if (!spokenRef.current.has(next)) {
-          speakText(MESSAGES[next].text, "en");
+      setStepIdx((p) => {
+        const next = p < STEPS.length - 1 ? p + 1 : p;
+        if (!spokenRef.current.has(next) && next !== p) {
+          speakText(STEPS[next].detail, "en");
           spokenRef.current.add(next);
         }
         return next;
       });
-    }, 1800);
+    }, 4000);
 
     return () => {
       clearInterval(t);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+      // eslint-disable-next-line
       spokenRef.current.clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Smooth percent counter
+  useEffect(() => {
+    const target = STEPS[stepIdx].percent;
+    const interval = setInterval(() => {
+      setDisplayPercent((prev) => {
+        if (prev >= target) {
+          clearInterval(interval);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 30);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepIdx]);
+
+  const current = STEPS[stepIdx];
+  const circumference = 2 * Math.PI * 54;
+
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-70
-                    z-50 flex items-center justify-center
-                    backdrop-blur-sm"
+      style={{ zIndex: 99999 }}
+      className="fixed inset-0 flex items-center justify-center"
     >
+      {/* Animated gradient backdrop */}
       <div
-        className="bg-white rounded-3xl p-10 text-center
-                      shadow-2xl max-w-sm w-full mx-4"
-      >
-        <div className="relative w-28 h-28 mx-auto mb-6">
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)",
+        }}
+      />
+
+      {/* Floating particles */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {particles.map((p) => (
           <div
-            className="absolute inset-0 rounded-full
-                          border-4 border-purple-100"
+            key={p.id}
+            className="absolute rounded-full opacity-30"
+            style={{
+              left: `${p.x}%`,
+              bottom: "-10px",
+              width: `${p.size}px`,
+              height: `${p.size}px`,
+              background: "linear-gradient(135deg, #8B5CF6, #EC4899)",
+              animation: `floatUp ${p.duration}s ${p.delay}s infinite linear`,
+            }}
           />
+        ))}
+      </div>
+
+      {/* Main Card */}
+      <div className="relative z-10 w-full max-w-sm mx-4">
+        <div
+          className="rounded-3xl overflow-hidden"
+          style={{
+            background: "rgba(255,255,255,0.05)",
+            backdropFilter: "blur(20px)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            boxShadow:
+              "0 25px 50px rgba(0,0,0,0.5), 0 0 100px rgba(139,92,246,0.2)",
+          }}
+        >
+          {/* Top glow bar */}
           <div
-            className="absolute inset-0 rounded-full
-                          border-4 border-purple-600
-                          border-t-transparent
-                          border-r-transparent animate-spin"
+            className="h-1 w-full"
+            style={{
+              background: `linear-gradient(90deg, #8B5CF6 0%, #EC4899 ${displayPercent}%, rgba(255,255,255,0.1) ${displayPercent}%)`,
+            }}
           />
-          <div
-            className="absolute inset-3 rounded-full
-                          bg-purple-50 animate-pulse
-                          flex items-center justify-center text-4xl"
-          >
-            {MESSAGES[index].emoji}
+
+          <div className="p-8">
+            {/* Circular Progress */}
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <svg width="140" height="140" className="-rotate-90">
+                  {/* Background ring */}
+                  <circle
+                    cx="70"
+                    cy="70"
+                    r="54"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.08)"
+                    strokeWidth="8"
+                  />
+                  {/* Outer glow ring */}
+                  <circle
+                    cx="70"
+                    cy="70"
+                    r="62"
+                    fill="none"
+                    stroke="rgba(139,92,246,0.15)"
+                    strokeWidth="2"
+                  />
+                  {/* Progress ring */}
+                  <circle
+                    cx="70"
+                    cy="70"
+                    r="54"
+                    fill="none"
+                    stroke="url(#progressGrad)"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={
+                      circumference - (displayPercent / 100) * circumference
+                    }
+                    style={{ transition: "stroke-dashoffset 0.3s ease" }}
+                  />
+                  <defs>
+                    <linearGradient
+                      id="progressGrad"
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="0%"
+                    >
+                      <stop offset="0%" stopColor="#8B5CF6" />
+                      <stop offset="100%" stopColor="#EC4899" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+
+                {/* Center content */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center rotate-0">
+                  <span
+                    className="text-3xl mb-1"
+                    style={{
+                      filter: "drop-shadow(0 0 8px rgba(139,92,246,0.8))",
+                    }}
+                  >
+                    {current.icon}
+                  </span>
+                  <span className="text-2xl font-black text-white">
+                    {displayPercent}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Step Label */}
+            <div className="text-center mb-5">
+              <h3 className="text-xl font-black text-white mb-1">
+                {current.label}
+              </h3>
+              <p className="text-purple-300 text-sm leading-relaxed">
+                {current.detail}
+              </p>
+            </div>
+
+            {/* Step Indicators */}
+            <div className="flex justify-center gap-2 mb-5">
+              {STEPS.map((s, i) => (
+                <div
+                  key={i}
+                  className="rounded-full transition-all duration-500"
+                  style={{
+                    width: i === stepIdx ? "24px" : "8px",
+                    height: "8px",
+                    background:
+                      i <= stepIdx
+                        ? "linear-gradient(90deg, #8B5CF6, #EC4899)"
+                        : "rgba(255,255,255,0.15)",
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Linear Progress Bar */}
+            <div
+              className="rounded-full overflow-hidden mb-3"
+              style={{
+                height: "6px",
+                background: "rgba(255,255,255,0.08)",
+              }}
+            >
+              <div
+                className="h-full rounded-full transition-all duration-300"
+                style={{
+                  width: `${displayPercent}%`,
+                  background:
+                    "linear-gradient(90deg, #8B5CF6, #EC4899, #F59E0B)",
+                }}
+              />
+            </div>
+
+            {/* Step list */}
+            <div className="space-y-2">
+              {STEPS.map((s, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 rounded-xl px-3 py-2 transition-all"
+                  style={{
+                    background:
+                      i === stepIdx ? "rgba(139,92,246,0.2)" : "transparent",
+                    border:
+                      i === stepIdx
+                        ? "1px solid rgba(139,92,246,0.3)"
+                        : "1px solid transparent",
+                  }}
+                >
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{
+                      background:
+                        i < stepIdx
+                          ? "linear-gradient(135deg, #8B5CF6, #EC4899)"
+                          : i === stepIdx
+                            ? "rgba(139,92,246,0.4)"
+                            : "rgba(255,255,255,0.05)",
+                    }}
+                  >
+                    {i < stepIdx ? (
+                      <span className="text-white text-xs">✓</span>
+                    ) : i === stepIdx ? (
+                      <span className="text-xs">{s.icon}</span>
+                    ) : (
+                      <span className="text-white text-xs opacity-30">○</span>
+                    )}
+                  </div>
+                  <span
+                    className={`text-xs font-medium transition-all
+                    ${
+                      i === stepIdx
+                        ? "text-purple-200"
+                        : i < stepIdx
+                          ? "text-white opacity-60"
+                          : "text-white opacity-20"
+                    }`}
+                  >
+                    {s.label}
+                  </span>
+                  {i === stepIdx && (
+                    <div className="ml-auto flex gap-1">
+                      {[0, 1, 2].map((d) => (
+                        <div
+                          key={d}
+                          className="w-1 h-1 rounded-full bg-purple-400 animate-bounce"
+                          style={{ animationDelay: `${d * 0.15}s` }}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <p className="text-center text-white text-xs mt-4 opacity-40">
+              It will take 30-60 seconds, Please wait patiently... 😊
+            </p>
           </div>
         </div>
-        <h3 className="text-xl font-bold text-gray-800 mb-2">
-          AI Magic is Working!
-        </h3>
-        <p className="text-purple-600 font-medium animate-pulse">
-          {MESSAGES[index].text}
-        </p>
-        <div className="flex justify-center gap-2 mt-6">
-          {MESSAGES.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 rounded-full transition-all duration-500
-                         ${
-                           i === index
-                             ? "w-6 bg-purple-600"
-                             : "w-1.5 bg-gray-200"
-                         }`}
-            />
-          ))}
-        </div>
-        <p className="text-gray-400 text-xs mt-4">
-          It will take 20-30 seconds, Please wait... 😊
-        </p>
       </div>
+
+      {/* CSS for float animation */}
+      <style>{`
+        @keyframes floatUp {
+          0% { transform: translateY(0) scale(1); opacity: 0.3; }
+          100% { transform: translateY(-100vh) scale(0); opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -3852,6 +4238,7 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
       const category = product.category || "upper_body";
       formData.append("description", category);
       console.log("Sending category:", category);
+      formData.append("productName", product.name || "");
 
       const res = await axios.post(`${API_URL}/api/tryon`, formData, {
         headers: {
@@ -4066,10 +4453,10 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
                   <span className="font-bold">Tip:</span> Seedhi khadi photo
                   (Front-face portrait) best result deti hai!
                 </p>
-                <p className="text-xs font-medium text-red-700 leading-relaxed">
+                {/* <p className="text-xs font-medium text-red-700 leading-relaxed">
                   <span className="font-bold">Note:</span> The Try-on feature is
                   currently working only for the upper body!
-                </p>
+                </p> */}
               </div>
             </div>
 
@@ -4318,25 +4705,24 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
                     className="bg-black bg-opacity-80
                       px-4 pb-6 pt-2 space-y-2 mt-4"
                   >
-                 {shop?.whatsapp && (
-  <a
-    href={`https://wa.me{shop.whatsapp}?text=${encodeURIComponent(
-      `Hi! Maine try on kiya!\n\n` +
-      `👗 Fabric: ${product?.name || "N/A"}\n` +
-      `💰 Price: ₹${product?.price || "0"}\n\n` +
-      `📸 Fabric Preview: ${product?.imageUrl || product?.fabricImageUrl || "N/A"}\n` +
-      `${tryonResult ? `✨ Try-on Result: ${tryonResult}\n\n` : ""}` +
-      `Yah order karna hai!`
-    )}`}
-    target="_blank"
-    rel="noreferrer"
-    onClick={() => trackOrder(selectedProduct, "whatsapp")}
-    className="block w-full bg-green-500 text-white py-4 rounded-2xl font-bold text-center text-base hover:bg-green-600 transition"
-  >
-    📱 Like it ! Order Now
-  </a>
-)}
-
+                    {shop?.whatsapp && (
+                      <a
+                        href={`https://wa.me{shop.whatsapp}?text=${encodeURIComponent(
+                          `Hi! Maine try on kiya!\n\n` +
+                            `👗 Fabric: ${product?.name || "N/A"}\n` +
+                            `💰 Price: ₹${product?.price || "0"}\n\n` +
+                            `📸 Fabric Preview: ${product?.imageUrl || product?.fabricImageUrl || "N/A"}\n` +
+                            `${tryonResult ? `✨ Try-on Result: ${tryonResult}\n\n` : ""}` +
+                            `Yah order karna hai!`,
+                        )}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={() => trackOrder(selectedProduct, "whatsapp")}
+                        className="block w-full bg-green-500 text-white py-4 rounded-2xl font-bold text-center text-base hover:bg-green-600 transition"
+                      >
+                        📱 Like it ! Order Now
+                      </a>
+                    )}
 
                     {shop?.upiId && (
                       <button
@@ -4918,6 +5304,9 @@ export default function Shop() {
         shopName={shop?.name || ""}
         language="hi"
       />
+
+      {/* Try-On Gallery */}
+      <TryOnGallery shop={shop} apiKey={shop?.apiKey} />
     </div>
   );
 }

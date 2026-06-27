@@ -4,6 +4,7 @@ import axios from "axios";
 import API_URL from "../api";
 import { useCustomer } from "../context/CustomerContext";
 import VoiceAssistant, { speakText } from "../components/VoiceAssistant";
+import TryOnGallery from '../components/TryOnGallery'
 
 // ─── Garment Labels ───────────────────────
 const GARMENT_LABELS = {
@@ -684,116 +685,349 @@ function StitchingCalculator({ product, onClose, measurements }) {
 }
 // ─── Loading Animation ────────────────────
 function FabricAnimation({ step }) {
-  const steps = [
-    { emoji: "🧵", text: "Fabric is being analyzed..." },
-    { emoji: "✂️", text: "AI is stitching..." },
-    { emoji: "👔", text: "Garment is being prepared..." },
-    { emoji: "✨", text: "Final touches..." },
-    { emoji: "🎉", text: "Generating your final result..." },
+  const generateSteps = [
+    {
+      label: "Fabric Upload",
+      detail: "Analyzing the fabric photo...",
+      percent: 15,
+      icon: "🧵",
+    },
+    {
+      label: "Pattern Detection",
+      detail: "Detecting fabric pattern and texture...",
+      percent: 35,
+      icon: "🔍",
+    },
+    {
+      label: "AI Stitching",
+      detail: "Stitching the garment via AI...",
+      percent: 60,
+      icon: "✂️",
+    },
+    {
+      label: "Garment Shaping",
+      detail: "Shaping and structuring the garment...",
+      percent: 82,
+      icon: "👔",
+    },
+    {
+      label: "Final Render",
+      detail: "Applying final design touches...",
+      percent: 97,
+      icon: "✨",
+    },
   ];
 
   const tryonSteps = [
-    { emoji: "📸", text: "Uploading your portrait photo..." },
-    { emoji: "🤖", text: "AI engine processing..." },
-    { emoji: "👔", text: "Garment is being analyzed..." },
-    { emoji: "👗", text: "Fitting garment to your body..." },
-    { emoji: "🎉", text: "Generating your final result..." },
+    {
+      label: "Photo Processing",
+      detail: "Uploading and processing your photo...",
+      percent: 12,
+      icon: "📸",
+    },
+    {
+      label: "Body Detection",
+      detail: "Analyzing body structure and measurements...",
+      percent: 30,
+      icon: "🤖",
+    },
+    {
+      label: "Garment Fitting",
+      detail: "Fitting the garment to your body...",
+      percent: 55,
+      icon: "👗",
+    },
+    {
+      label: "Texture Sync",
+      detail: "Syncing and matching fabric texture...",
+      percent: 78,
+      icon: "🎨",
+    },
+    {
+      label: "Result Ready",
+      detail: "Generating your final look!",
+      percent: 97,
+      icon: "🎉",
+    },
   ];
 
-  const activeSteps = step === "tryon" ? tryonSteps : steps;
-  const [index, setIndex] = useState(0);
+  const STEPS = step === "tryon" ? tryonSteps : generateSteps;
+  const [stepIdx, setStepIdx] = useState(0);
+  const [displayPercent, setDisplayPercent] = useState(0);
+  const [particles, setParticles] = useState([]);
   const spokenRef = useRef(new Set());
 
   useEffect(() => {
-    // Pehla step immediately bolo
+    setParticles(
+      Array.from({ length: 16 }, (_, i) => ({
+        id: i,
+        x: Math.random() * 100,
+        delay: Math.random() * 3,
+        size: Math.random() * 4 + 2,
+        duration: Math.random() * 3 + 2,
+      })),
+    );
+  }, []);
+
+  useEffect(() => {
+    spokenRef.current.clear();
+    setStepIdx(0);
+    setDisplayPercent(0);
     if (!spokenRef.current.has(0)) {
-      speakText(activeSteps[0].text, "en");
+      speakText(STEPS[0].detail, "en");
       spokenRef.current.add(0);
     }
-
     const t = setInterval(() => {
-      setIndex((p) => {
-        const next = p === activeSteps.length - 1 ? 0 : p + 1;
-        // Har step par voice
-        if (!spokenRef.current.has(next)) {
-          speakText(activeSteps[next].text, "en");
+      setStepIdx((p) => {
+        const next = p < STEPS.length - 1 ? p + 1 : p;
+        if (!spokenRef.current.has(next) && next !== p) {
+          speakText(STEPS[next].detail, "en");
           spokenRef.current.add(next);
         }
         return next;
       });
-    }, 3000);
-
+    }, 3500);
+  
     return () => {
       clearInterval(t);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line
       spokenRef.current.clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
+  useEffect(() => {
+    const target = STEPS[stepIdx].percent;
+    const interval = setInterval(() => {
+      setDisplayPercent((prev) => {
+        if (prev >= target) {
+          clearInterval(interval);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 25);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepIdx]);
+
+  const current = STEPS[stepIdx];
+  const circumference = 2 * Math.PI * 54;
+
   return (
-     <div
-    style={{ zIndex: 99999 }}
-    className="fixed inset-0 bg-black bg-opacity-75
-               flex items-center justify-center
-               backdrop-blur-sm"
+    <div
+      style={{ zIndex: 99999 }}
+      className="fixed inset-0 flex items-center justify-center"
     >
       <div
-        className="bg-white rounded-3xl p-10 text-center
-                      max-w-sm w-full mx-4 shadow-2xl"
-      >
-        {/* Animated rings */}
-        <div className="relative w-28 h-28 mx-auto mb-6">
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)",
+        }}
+      />
+
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {particles.map((p) => (
           <div
-            className="absolute inset-0 rounded-full
-                          border-4 border-purple-100"
+            key={p.id}
+            className="absolute rounded-full opacity-30"
+            style={{
+              left: `${p.x}%`,
+              bottom: "-10px",
+              width: `${p.size}px`,
+              height: `${p.size}px`,
+              background: "linear-gradient(135deg, #8B5CF6, #EC4899)",
+              animation: `floatUp ${p.duration}s ${p.delay}s infinite linear`,
+            }}
           />
+        ))}
+      </div>
+
+      <div className="relative z-10 w-full max-w-sm mx-4">
+        <div
+          className="rounded-3xl overflow-hidden"
+          style={{
+            background: "rgba(255,255,255,0.05)",
+            backdropFilter: "blur(20px)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            boxShadow:
+              "0 25px 50px rgba(0,0,0,0.5), 0 0 100px rgba(139,92,246,0.2)",
+          }}
+        >
           <div
-            className="absolute inset-0 rounded-full
-                          border-4 border-purple-600
-                          border-t-transparent animate-spin"
+            className="h-1 w-full"
+            style={{
+              background: `linear-gradient(90deg, #8B5CF6 0%, #EC4899 ${displayPercent}%, rgba(255,255,255,0.1) ${displayPercent}%)`,
+            }}
           />
-          <div
-            className="absolute inset-2 rounded-full
-                          border-4 border-indigo-200
-                          border-b-transparent animate-spin"
-            style={{ animationDirection: "reverse", animationDuration: "1.5s" }}
-          />
-          <div
-            className="absolute inset-0 flex items-center
-                          justify-center text-4xl"
-          >
-            {steps[index].emoji}
+
+          <div className="p-7">
+            <div className="flex justify-center mb-5">
+              <div className="relative">
+                <svg width="130" height="130" className="-rotate-90">
+                  <circle
+                    cx="65"
+                    cy="65"
+                    r="54"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.08)"
+                    strokeWidth="8"
+                  />
+                  <circle
+                    cx="65"
+                    cy="65"
+                    r="62"
+                    fill="none"
+                    stroke="rgba(139,92,246,0.15)"
+                    strokeWidth="2"
+                  />
+                  <circle
+                    cx="65"
+                    cy="65"
+                    r="54"
+                    fill="none"
+                    stroke="url(#fabricGrad)"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={
+                      circumference - (displayPercent / 100) * circumference
+                    }
+                    style={{ transition: "stroke-dashoffset 0.3s ease" }}
+                  />
+                  <defs>
+                    <linearGradient
+                      id="fabricGrad"
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="0%"
+                    >
+                      <stop offset="0%" stopColor="#8B5CF6" />
+                      <stop offset="100%" stopColor="#EC4899" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span
+                    className="text-3xl mb-1"
+                    style={{
+                      filter: "drop-shadow(0 0 8px rgba(139,92,246,0.8))",
+                    }}
+                  >
+                    {current.icon}
+                  </span>
+                  <span className="text-2xl font-black text-white">
+                    {displayPercent}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-black text-white mb-1">
+                {current.label}
+              </h3>
+              <p className="text-purple-300 text-xs">{current.detail}</p>
+            </div>
+
+            <div className="flex justify-center gap-1.5 mb-4">
+              {STEPS.map((_, i) => (
+                <div
+                  key={i}
+                  className="rounded-full transition-all duration-500"
+                  style={{
+                    width: i === stepIdx ? "20px" : "6px",
+                    height: "6px",
+                    background:
+                      i <= stepIdx
+                        ? "linear-gradient(90deg, #8B5CF6, #EC4899)"
+                        : "rgba(255,255,255,0.15)",
+                  }}
+                />
+              ))}
+            </div>
+
+            <div
+              className="rounded-full overflow-hidden mb-3"
+              style={{ height: "5px", background: "rgba(255,255,255,0.08)" }}
+            >
+              <div
+                className="h-full rounded-full transition-all duration-300"
+                style={{
+                  width: `${displayPercent}%`,
+                  background:
+                    "linear-gradient(90deg, #8B5CF6, #EC4899, #F59E0B)",
+                }}
+              />
+            </div>
+
+            {STEPS.map((s, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2 rounded-xl px-3 py-1.5 mb-1 transition-all"
+                style={{
+                  background:
+                    i === stepIdx ? "rgba(139,92,246,0.2)" : "transparent",
+                  border:
+                    i === stepIdx
+                      ? "1px solid rgba(139,92,246,0.3)"
+                      : "1px solid transparent",
+                }}
+              >
+                <div
+                  className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{
+                    background:
+                      i < stepIdx
+                        ? "linear-gradient(135deg, #8B5CF6, #EC4899)"
+                        : i === stepIdx
+                          ? "rgba(139,92,246,0.4)"
+                          : "rgba(255,255,255,0.05)",
+                  }}
+                >
+                  {i < stepIdx ? (
+                    <span className="text-white text-xs">✓</span>
+                  ) : (
+                    <span className="text-xs">
+                      {i === stepIdx ? s.icon : "○"}
+                    </span>
+                  )}
+                </div>
+                <span
+                  className={`text-xs font-medium
+                  ${i === stepIdx ? "text-purple-200" : i < stepIdx ? "text-white opacity-60" : "text-white opacity-20"}`}
+                >
+                  {s.label}
+                </span>
+                {i === stepIdx && (
+                  <div className="ml-auto flex gap-1">
+                    {[0, 1, 2].map((d) => (
+                      <div
+                        key={d}
+                        className="w-1 h-1 rounded-full bg-purple-400 animate-bounce"
+                        style={{ animationDelay: `${d * 0.15}s` }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            <p className="text-center text-white text-xs mt-3 opacity-40">
+              It will take 30-60 seconds, Please wait patiently... 😊
+            </p>
           </div>
         </div>
-
-        <h3 className="text-xl font-bold text-gray-800 mb-2">
-          {step === "generate"
-            ? "AI is making the garment!"
-            : "The Virtual Try-on is in progress!"}
-        </h3>
-        <p className="text-purple-600 font-medium animate-pulse">
-          {steps[index].text}
-        </p>
-
-        <div className="flex justify-center gap-2 mt-5">
-          {steps.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 rounded-full transition-all duration-500
-                         ${
-                           i === index
-                             ? "w-6 bg-purple-600"
-                             : "w-1.5 bg-gray-200"
-                         }`}
-            />
-          ))}
-        </div>
-
-        <p className="text-gray-400 text-xs mt-4">
-          It will take 30-60 seconds, Please wait patiently... 😊
-        </p>
       </div>
+
+      <style>{`
+        @keyframes floatUp {
+          0% { transform: translateY(0) scale(1); opacity: 0.3; }
+          100% { transform: translateY(-100vh) scale(0); opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -1102,6 +1336,25 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
                   ))}
                 </div>
               )}
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                {product.inStock ? (
+                  <span
+                    className="text-green-600 text-xs font-bold
+                     bg-green-50 px-3 py-1.5 rounded-full
+                     border border-green-200"
+                  >
+                    ✅ In Stock
+                  </span>
+                ) : (
+                  <span
+                    className="text-red-500 text-xs font-bold
+                     bg-red-50 px-3 py-1.5 rounded-full
+                     border border-red-200"
+                  >
+                    ❌ Out of Stock
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* 3. PRICE TAG UI (Bold & Clear) */}
@@ -1199,13 +1452,145 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
             </div>
 
             {/* 5. DESCRIPTION BOX */}
-            {product.description && (
-              <div className="bg-gray-50/50 rounded-2xl p-4 border border-gray-100">
-                <p className="text-gray-600 text-sm leading-relaxed font-medium">
-                  {product.description}
-                </p>
+
+            {/* Product Details Grid */}
+            <div className="bg-gray-50 rounded-2xl p-4 space-y-3">
+              {/* Description */}
+              {product.description && (
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                    ✨ About This Fabric
+                  </p>
+                  <p className="text-gray-600 text-sm font-medium leading-relaxed bg-gray-50/50 rounded-xl p-3.5 border border-gray-50">
+                    {product.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Colors */}
+              {product.colors?.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                    🎨 Available Colors
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {product.colors.map((color) => {
+                      const colorMap = {
+                        Red: "#EF4444",
+                        Blue: "#3B82F6",
+                        Green: "#22C55E",
+                        Yellow: "#EAB308",
+                        Orange: "#F97316",
+                        Purple: "#A855F7",
+                        Pink: "#EC4899",
+                        Black: "#1F2937",
+                        White: "#F3F4F6",
+                        Grey: "#9CA3AF",
+                        Brown: "#92400E",
+                        Cream: "#FEF3C7",
+                        Navy: "#1E3A5F",
+                        Maroon: "#7F1D1D",
+                        Teal: "#0D9488",
+                        Gold: "#D97706",
+                        Silver: "#CBD5E1",
+                      };
+                      return (
+                        <div
+                          key={color}
+                          className="flex items-center gap-2 bg-gray-50/60 rounded-full px-3.5 py-1.5 border border-gray-200/60 shadow-sm transition duration-200 hover:bg-gray-50"
+                        >
+                          <span
+                            className="w-2.5 h-2.5 rounded-full border border-gray-300 flex-shrink-0 shadow-sm"
+                            style={{ background: colorMap[color] || "#888" }}
+                          />
+                          <span className="text-xs text-gray-700 font-semibold">
+                            {color}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Meta Info Row */}
+              <div className="grid grid-cols-2 gap-3.5">
+                {/* Brand */}
+                {product.brand && (
+                  <div className="bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-2xl p-4 transition duration-300 hover:shadow-md hover:border-purple-100 group">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                      🏷️{" "}
+                      <span className="group-hover:text-purple-600 transition-colors">
+                        Brand
+                      </span>
+                    </p>
+                    <p className="text-sm font-bold text-gray-800 tracking-wide">
+                      {product.brand}
+                    </p>
+                  </div>
+                )}
+
+                {/* Material */}
+                {product.material && (
+                  <div className="bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-2xl p-4 transition duration-300 hover:shadow-md hover:border-purple-100 group">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                      🧵{" "}
+                      <span className="group-hover:text-purple-600 transition-colors">
+                        Material
+                      </span>
+                    </p>
+                    <p className="text-sm font-bold text-gray-800 capitalize tracking-wide">
+                      {product.material}
+                    </p>
+                  </div>
+                )}
+
+                {/* Type */}
+                {product.fabricType && (
+                  <div className="bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-2xl p-4 transition duration-300 hover:shadow-md hover:border-purple-100 group">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                      📋{" "}
+                      <span className="group-hover:text-purple-600 transition-colors">
+                        Type
+                      </span>
+                    </p>
+                    <p className="text-sm font-bold text-gray-800 capitalize tracking-wide">
+                      {product.fabricType}
+                    </p>
+                  </div>
+                )}
+
+                {/* Occasion */}
+                {product.occasion && product.occasion !== "any" && (
+                  <div className="bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-2xl p-4 transition duration-300 hover:shadow-md hover:border-purple-100 group">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                      🎉{" "}
+                      <span className="group-hover:text-purple-600 transition-colors">
+                        Occasion
+                      </span>
+                    </p>
+                    <p className="text-sm font-bold text-gray-800 capitalize tracking-wide">
+                      {product.occasion}
+                    </p>
+                  </div>
+                )}
+
+                {/* Pattern */}
+                {product.pattern && product.pattern !== "solid" && (
+                  <div className="col-span-2 bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-2xl p-4 transition duration-300 hover:shadow-md hover:border-purple-100 group">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                      🔹{" "}
+                      <span className="group-hover:text-purple-600 transition-colors">
+                        Pattern
+                      </span>
+                    </p>
+                    <p className="text-sm font-bold text-gray-800 capitalize tracking-wide">
+                      {product.pattern}
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
 
             {/* Step 1: Choose Garment - अपग्रेडेड एडवांस लेआउट */}
             <div className="bg-gradient-to-br from-gray-50 via-purple-50/30 to-indigo-50/30 rounded-2xl p-5 border border-purple-100/50 shadow-sm">
@@ -1523,16 +1908,58 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
                     />
                   </label>
 
-{(selectedGarment === 'pant' ||
-  selectedGarment === 'salwar_suit' ||
-  selectedGarment === 'salwar') && (
-  <div className="bg-amber-50 border border-amber-200
-                  rounded-xl p-3 mb-3">
-    <p className="text-amber-700 text-xs font-medium">
-      ⚠️ For lower body garments, Upload a straight, Full-body photo. For best results, Your entire body should be in the frame.
-    </p>
+                  {(selectedGarment === "pant" ||
+                    selectedGarment === "trouser" ||
+                    selectedGarment === "formal pant") && (
+                    <div
+                      className="bg-amber-50 border border-amber-200
+                  rounded-xl p-3 mb-3"
+                    >
+                      <p className="text-amber-700 text-xs font-medium">
+                        ⚠️ For lower body garments, Upload a straight, Full-body
+                        photo. For best results, Your entire body should be in
+                        the frame.
+                      </p>
+                    </div>
+                  )}
+
+                   {(selectedGarment === "kurta" ||
+  selectedGarment === "salwar_suit" ||
+  selectedGarment === "saree" ||
+  selectedGarment === "kurti" ||
+  selectedGarment === "lehenga" ||
+  selectedGarment === "gown") && (
+  <div className="relative overflow-hidden bg-white border border-slate-200/80 rounded-2xl p-4.5 mb-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(99,102,241,0.06)] font-sans group">
+    {/* 🌌 बैकग्राउंड में सॉफ्ट और एलिगेंट इंडिगो/पर्पल ग्लो (भद्दा नहीं लगेगा) */}
+    <div className="absolute top-0 right-0 -mt-8 -mr-8 w-24 h-24 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 rounded-full blur-2xl group-hover:from-indigo-500/8 group-hover:to-purple-500/8 transition-all duration-500"></div>
+
+    <div className="flex items-start gap-4 relative z-10">
+      {/* 🔮 सॉफ्ट पर्पल ग्रेडिएंट बैकग्राउंड वाला एडवांस कैमरा फोकस आइकन */}
+      <div className="flex-shrink-0 relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 text-indigo-600 shadow-sm">
+        <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4.5 h-4.5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 3.75H6A2.25 2.25 0 003.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0120.25 6v1.5m0 9V18A2.25 2.25 0 0118 20.25h-1.5m-9 0H6A2.25 2.25 0 013.75 18v-1.5M10.125 9h3.75M10.125 12h3.75M10.125 15h3.75" />
+        </svg>
+        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-indigo-500 animate-ping"></span>
+      </div>
+      
+      {/* 📝 क्रिस्प और प्रीमियम डार्क स्लेट टेक्स्ट */}
+      <div className="flex-1 space-y-1">
+        <div className="flex items-center gap-2">
+          <h4 className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 bg-clip-text text-transparent text-[11px] font-bold tracking-widest uppercase">
+            AI Draping Intelligence
+          </h4>
+          <span className="px-1.5 py-0.5 text-[9px] font-extrabold tracking-wider text-purple-600 bg-purple-50 border border-purple-100 rounded-md">
+            REQUIRED
+          </span>
+        </div>
+        
+        <p className="text-slate-600 text-xs leading-relaxed font-medium">
+          For Traditional & Full-Length outfits, please upload a <strong className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent font-bold underline decoration-indigo-500/30 decoration-2 underline-offset-2">Straight, Full-Body Photo</strong>. Your entire frame (head-to-toe) must be visible for flawless AI garment stitching and texture mapping.
+        </p>
+      </div>
+    </div>
   </div>
-)} 
+)}
 
 
                   <button
@@ -1603,48 +2030,64 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
 
                 {/* Order Buttons */}
                 <div className="mt-4 space-y-3">
-  {shop?.whatsapp && (
-    <a
-      href={`https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(
-        `📌 *NEW CUSTOM STITCH ORDER*\n\n` +
-        `👔 *Fabric:* ${product?.name || "N/A"}\n` +
-        `🏷️ *Brand:* ${product?.brand || "Standard"}\n` +
-        `🧵 *Material:* ${product?.fabricType || "N/A"}\n` +
-        `💰 *Price:* ₹${product?.price || "0"}\n\n` +
-        `📸 *Fabric Image:* ${product?.fabricImageUrl || "N/A"}\n` +
-       
-        `💬 _Hi! Mujhe is fabric aur try-on result ke hisab se custom stitch order karna hai!_`
-      )}`}
-      target="_blank"
-      rel="noreferrer"
-      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3.5 rounded-2xl font-bold text-center shadow-md shadow-green-500/10 hover:opacity-95 transition cursor-pointer text-sm"
-    >
-      <svg xmlns="http://w3.org" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-      </svg>
-      WhatsApp Par Order Karen
-    </a>
-  )}
+                  {shop?.whatsapp && (
+                    <a
+                      href={`https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(
+                        `📌 *NEW CUSTOM STITCH ORDER*\n\n` +
+                          `👔 *Fabric:* ${product?.name || "N/A"}\n` +
+                          `🏷️ *Brand:* ${product?.brand || "Standard"}\n` +
+                          `🧵 *Material:* ${product?.fabricType || "N/A"}\n` +
+                          `💰 *Price:* ₹${product?.price || "0"}\n\n` +
+                          `📸 *Fabric Image:* ${product?.fabricImageUrl || "N/A"}\n` +
+                          `💬 _Hi! Mujhe is fabric aur try-on result ke hisab se custom stitch order karna hai!_`,
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3.5 rounded-2xl font-bold text-center shadow-md shadow-green-500/10 hover:opacity-95 transition cursor-pointer text-sm"
+                    >
+                      <svg
+                        xmlns="http://w3.org"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                      </svg>
+                      WhatsApp Par Order Karen
+                    </a>
+                  )}
 
-  {shop?.upiId && (
-    <button
-      onClick={() => {
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(shop.upiId);
-          alert(`✅ UPI ID Copy Ho Gayi Hai!\n\nID: ${shop.upiId}\nAmount: ₹${product?.price || 0}`);
-        }
-      }}
-      className="flex items-center justify-center gap-2 w-full border border-slate-200 text-slate-700 py-3 rounded-2xl font-semibold bg-slate-50 hover:bg-slate-100 transition cursor-pointer text-sm"
-    >
-      <svg xmlns="http://w3.org" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-        <rect x="2" y="5" width="20" height="14" rx="2" />
-        <line x1="2" y1="10" x2="22" y2="10" />
-      </svg>
-      UPI Copy & Pay
-    </button>
-  )}
-</div>
-
+                  {shop?.upiId && (
+                    <button
+                      onClick={() => {
+                        if (navigator.clipboard) {
+                          navigator.clipboard.writeText(shop.upiId);
+                          alert(
+                            `✅ UPI ID Copy Ho Gayi Hai!\n\nID: ${shop.upiId}\nAmount: ₹${product?.price || 0}`,
+                          );
+                        }
+                      }}
+                      className="flex items-center justify-center gap-2 w-full border border-slate-200 text-slate-700 py-3 rounded-2xl font-semibold bg-slate-50 hover:bg-slate-100 transition cursor-pointer text-sm"
+                    >
+                      <svg
+                        xmlns="http://w3.org"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <rect x="2" y="5" width="20" height="14" rx="2" />
+                        <line x1="2" y1="10" x2="22" y2="10" />
+                      </svg>
+                      UPI Copy & Pay
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -2427,57 +2870,55 @@ export default function FabricShop() {
                   </div>
 
                   <div className="p-4 space-y-2">
-  {/* 1. Product Name - Always capitalized */}
-  <h3 className="font-bold text-gray-800 text-base truncate capitalize">
-    {product.name}
-  </h3>
+                    {/* 1. Product Name - Always capitalized */}
+                    <h3 className="font-bold text-gray-800 text-base truncate capitalize">
+                      {product.name}
+                    </h3>
 
-  {/* 2. Brand Name Tag */}
-  {product.brand ? (
-    <div>
-      <span className="inline-block bg-gray-100 text-gray-600 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded">
-      {product.brand}
-      </span>
-    </div>
-  ) : (
-    /* Invisible placeholder taaki spacing na bigde agar brand na ho */
-    <div className="h-[21px]"></div>
-  )}
+                    {/* 2. Brand Name Tag */}
+                    {product.brand ? (
+                      <div>
+                        <span className="inline-block bg-gray-100 text-gray-600 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+                          {product.brand}
+                        </span>
+                      </div>
+                    ) : (
+                      /* Invisible placeholder taaki spacing na bigde agar brand na ho */
+                      <div className="h-[21px]"></div>
+                    )}
 
-  {/* 3. Fabric Type */}
-  {product.fabricType ? (
-    <p className="text-gray-400 text-xs capitalize truncate">
-      {product.fabricType}
-    </p>
-  ) : (
-    /* Invisible placeholder for consistent alignment */
-    <p className="text-transparent text-xs">None</p>
-  )}
+                    {/* 3. Fabric Type */}
+                    {product.fabricType ? (
+                      <p className="text-gray-400 text-xs capitalize truncate">
+                        {product.fabricType}
+                      </p>
+                    ) : (
+                      /* Invisible placeholder for consistent alignment */
+                      <p className="text-transparent text-xs">None</p>
+                    )}
 
-  {/* 4. Price Section */}
-  <p className="text-purple-600 font-black text-lg pt-1">
-    ₹{product.price}
-  </p>
+                    {/* 4. Price Section */}
+                    <p className="text-purple-600 font-black text-lg pt-1">
+                      ₹{product.price}
+                    </p>
 
-  {/* 5. Available Garments Badges */}
-  <div className="flex flex-wrap gap-1 h-5 overflow-hidden">
-    {product.availableGarments?.slice(0, 3).map((g, i) => (
-      <span
-        key={i}
-        className="text-xs bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded-lg font-medium whitespace-nowrap"
-      >
-        {GARMENT_LABELS[g]?.split(" ").slice(1).join(" ")}
-      </span>
-    ))}
-    
-    {(product.availableGarments?.length || 0) > 3 && (
-      <span className="text-xs text-gray-400 self-center pl-1">
-        +{product.availableGarments.length - 3}
-      </span>
-    )}
-  </div>
+                    {/* 5. Available Garments Badges */}
+                    <div className="flex flex-wrap gap-1 h-5 overflow-hidden">
+                      {product.availableGarments?.slice(0, 3).map((g, i) => (
+                        <span
+                          key={i}
+                          className="text-xs bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded-lg font-medium whitespace-nowrap"
+                        >
+                          {GARMENT_LABELS[g]?.split(" ").slice(1).join(" ")}
+                        </span>
+                      ))}
 
-
+                      {(product.availableGarments?.length || 0) > 3 && (
+                        <span className="text-xs text-gray-400 self-center pl-1">
+                          +{product.availableGarments.length - 3}
+                        </span>
+                      )}
+                    </div>
 
                     <button
                       className="w-full py-3.5 rounded-2xl font-black text-sm tracking-wider text-white
@@ -2554,6 +2995,12 @@ export default function FabricShop() {
         shopName={shop?.name || ""}
         language="hi"
       />
+
+      {/* Try-On Gallery */}
+<TryOnGallery
+  shop={shop}
+  apiKey={shop?.apiKey}
+/>
     </div>
   );
 }

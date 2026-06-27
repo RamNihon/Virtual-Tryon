@@ -17,7 +17,27 @@ export default function VoiceAssistant({
   const [selectedLang, setSelectedLang] = useState(language);
   const [supported, setSupported] = useState(true);
   const voiceRef = useRef(null);
+  const [isVoiceTranslucent, setIsVoiceTranslucent] = useState(false);
+  const voiceFadeTimerRef = useRef(null);
 
+  // Auto-fade after 6 seconds of no interaction
+  const resetVoiceTimer = () => {
+    clearTimeout(voiceFadeTimerRef.current);
+    setIsVoiceTranslucent(false);
+    voiceFadeTimerRef.current = setTimeout(() => {
+      // यहाँ isOpen वॉयस असिस्टेंट का पॉपअप स्टेट है
+      if (!isOpen) setIsVoiceTranslucent(true);
+    }, 6000);
+  };
+  useEffect(() => {
+    resetVoiceTimer();
+    return () => {
+      clearTimeout(voiceFadeTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  // claude wala code, upar google ne banaya hai tooltip and translucent effect
   useEffect(() => {
     if (!window.speechSynthesis) {
       setSupported(false);
@@ -286,22 +306,46 @@ export default function VoiceAssistant({
 
   return (
     <>
-      {/* Floating Button */}
-      {/* 🎤 नेक्स्ट-जेनरेशन लिक्विड ऑरोरा एआई वॉइस असिस्टेंट बटन */}
       <button
         onClick={() => {
           setIsOpen(!isOpen);
           if (!isOpen) stopSpeaking();
         }}
-        className={`fixed bottom-24 right-8 z-50 w-14 h-14 rounded-full flex items-center justify-center cursor-pointer transition-all duration-500 shadow-2xl
-             ${
-               isSpeaking
-                 ? "bg-gradient-to-r from-rose-600 via-red-500 to-orange-500 shadow-xl shadow-red-500/40 scale-110 animate-pulse border-2 border-white"
-                 : "bg-gradient-to-r from-amber-400 via-emerald-400 to-indigo-500 text-slate-900 border border-white/40 shadow-xl shadow-emerald-400/30 hover:scale-110 active:scale-95 animate-gradient-flow"
-             }`}
+        onMouseEnter={() => {
+          setIsVoiceTranslucent(false);
+          resetVoiceTimer();
+        }}
+        /* 👈 यहाँ से सॉलिड bg-gradient-to-r को हटाकर कंडीशनल कर दिया है */
+        className={`fixed z-50 w-14 h-14 rounded-full flex items-center justify-center cursor-pointer transition-all duration-700 ease-out group
+       ${
+         isSpeaking
+           ? "bg-gradient-to-r from-rose-600 via-red-500 to-orange-500 shadow-xl shadow-red-500/40 scale-110 animate-pulse border-2 border-white"
+           : isVoiceTranslucent
+             ? "text-white shadow-none" // 👈 ट्रांसलूसेंट होने पर सॉलिड कलर्स गायब हो जाएंगे
+             : "bg-gradient-to-r from-amber-400 via-emerald-400 to-indigo-500 text-slate-900 border border-white/40 shadow-xl shadow-emerald-400/30 active:scale-95"
+       }`}
+        style={{
+          bottom: "24px",
+          right: "8px",
+          // 1. ट्रांसलूसेंट होने पर इसकी ओपेसिटी को और कम (0.4) कर दिया ताकि ये पूरी तरह शांत दिखे
+          opacity: isVoiceTranslucent ? 0.5 : 1,
+          transform: isSpeaking
+            ? "scale(1.1)"
+            : isVoiceTranslucent
+              ? "scale(0.9)"
+              : "scale(1)",
+          // 2. ⚡ असली फिक्स: ट्रांसलूसेंट स्टेट में बैकग्राउंड को एकदम हल्का पारदर्शी ग्लास लुक दे दिया
+          background: isVoiceTranslucent
+            ? "rgba(16, 185, 129, 0.4)" // हल्का सा एमराल्ड/ग्रीन टिंटेड पारदर्शी लुक
+            : undefined,
+          backdropFilter: isVoiceTranslucent ? "blur(8px)" : "none",
+          border: isVoiceTranslucent
+            ? "1px solid rgba(255, 255, 255, 0.2)"
+            : undefined,
+        }}
       >
         {isSpeaking ? (
-          /* 🔊 जब AI बोल रहा हो: सिरी स्टाइल का साउंडवेव एनिमेटेड एनिमेशन */
+          /* 🔊 साउंडवेव एनिमेशन */
           <div className="flex items-center gap-[3px] justify-center h-5">
             <div className="w-[3px] h-3 bg-white rounded-full animate-bounce [animation-duration:0.6s]" />
             <div className="w-[3px] h-5 bg-white rounded-full animate-bounce [animation-duration:0.4s] [animation-delay:0.15s]" />
@@ -309,10 +353,11 @@ export default function VoiceAssistant({
             <div className="w-[3px] h-2 bg-white rounded-full animate-bounce [animation-duration:0.7s] [animation-delay:0.1s]" />
           </div>
         ) : (
-          /* 🎙️ जब AI शांत हो: फ्यूचरिस्टिक होलोग्राफिक कोर माइक्रोफ़ोन विज़ुअल */
+          /* 🎙️ माइक्रोफ़ोन विज़ुअल */
           <div className="relative w-full h-full flex items-center justify-center">
-            {/* बटन के अंदर एक एक्स्ट्रा घूमता हुआ प्रीमियम रिपल्स इफ़ेक्ट */}
-            <div className="absolute inset-1 bg-white/20 rounded-full backdrop-blur-sm mix-blend-overlay animate-ping [animation-duration:3s]" />
+            {!isVoiceTranslucent && (
+              <div className="absolute inset-1 bg-white/20 rounded-full backdrop-blur-sm mix-blend-overlay animate-ping [animation-duration:3s]" />
+            )}
             <svg
               xmlns="http://w3.org"
               width="19"
@@ -323,12 +368,23 @@ export default function VoiceAssistant({
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-slate-950 relative z-10 drop-shadow-sm"
+              /* 👈 आइकॉन का रंग भी कंडीशनल कर दिया ताकि ट्रांसलूसेंट में सफेद दिखे और एक्टिव में डार्क */
+              className={`relative z-10 drop-shadow-sm transition-all duration-500 ${isVoiceTranslucent ? "text-emerald-400 opacity-60" : "text-slate-950 group-hover:scale-110"}`}
             >
               <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
               <path d="M19 10v1a7 7 0 0 1-14 0v-1" />
               <line x1="12" y1="19" x2="12" y2="22" />
             </svg>
+          </div>
+        )}
+
+        {/* 🏷️ टूलटिप */}
+        {!isVoiceTranslucent && (
+          <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 pointer-events-none flex items-center">
+            <div className="whitespace-nowrap rounded-xl bg-slate-900/95 backdrop-blur-md px-3.5 py-2 text-white text-xs font-bold tracking-wide shadow-xl border border-slate-800">
+              AI Voice Assistant
+            </div>
+            <div className="w-2 h-2 bg-slate-900/95 border-r border-t border-slate-800 rotate-45 -ml-1" />
           </div>
         )}
       </button>

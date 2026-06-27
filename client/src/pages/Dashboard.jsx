@@ -524,6 +524,7 @@ function FabricDashboard({ token, seller }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [addMsg, setAddMsg] = useState("");
   const [addLoading, setAddLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   // eslint-disable-next-line
   const [generatingFor, setGeneratingFor] = useState(null);
@@ -618,14 +619,28 @@ function FabricDashboard({ token, seller }) {
   };
 
   const handleAddProduct = async () => {
-    if (!form.name || !form.price || fabricImages.length === 0) {
-      setAddMsg("❌ Name, price, and fabric photo are necessary.!");
+    // Field-specific validation
+    const newErrors = {};
+    if (!form.name.trim()) newErrors.name = "Fabric name is necessary";
+    if (!form.price) newErrors.price = "Price is required ";
+    if (!form.pricePerMeter)
+      newErrors.pricePerMeter = "Price per meter is required";
+    if (!form.description.trim())
+      newErrors.description = "Description is necessary";
+    if (form.colors.length === 0)
+      newErrors.colors = "Select at least one color";
+    if (fabricImages.length === 0)
+      newErrors.images = "Fabric photo is necessary";
+    if (form.availableGarments.length === 0)
+      newErrors.garments = "Choose Garment type";
+
+    if (Object.keys(newErrors).length > 0) {
+      setFieldErrors(newErrors);
+      setAddMsg("");
       return;
     }
-    if (form.availableGarments.length === 0) {
-      setAddMsg("❌ Choose at least one garment type!");
-      return;
-    }
+
+    setFieldErrors({});
     setAddLoading(true);
     setAddMsg("");
     try {
@@ -751,22 +766,30 @@ function FabricDashboard({ token, seller }) {
                 className="text-sm font-medium
                                 text-gray-700 block mb-1.5"
               >
-                Fabric Name *
+                Fabric Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                placeholder="Like: German Silk, Premium Khadi Cotton, Pure Banarasi Silk..."
+                placeholder="German Silk, Premium Khadi Cotton, Pure Banarasi Silk..."
                 value={form.name}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    name: e.target.value,
-                  })
-                }
-                className="w-full border border-purple-200
-                           bg-white rounded-xl px-4 py-2.5 text-sm
-                           focus:outline-none focus:border-purple-500"
+                onChange={(e) => {
+                  setForm({ ...form, name: e.target.value });
+                  if (fieldErrors.name)
+                    setFieldErrors((p) => ({ ...p, name: "" }));
+                }}
+                className={`w-full rounded-xl px-4 py-2.5 text-sm
+             focus:outline-none transition border
+             ${
+               fieldErrors.name
+                 ? "border-red-400 bg-red-50 focus:border-red-500"
+                 : "border-purple-200 bg-white focus:border-purple-500"
+             }`}
               />
+              {fieldErrors.name && (
+                <p className="text-red-500 text-xs mt-1">
+                  ⚠️ {fieldErrors.name}
+                </p>
+              )}
             </div>
 
             <div>
@@ -797,45 +820,60 @@ function FabricDashboard({ token, seller }) {
                 className="text-sm font-medium
                                 text-gray-700 block mb-1.5"
               >
-                Total Fabric Bundle Price (₹) *
+                Total Fabric Bundle Price (₹){" "}
+                <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
                 placeholder="Total bundle price"
                 value={form.price}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    price: e.target.value,
-                  })
-                }
-                className="w-full border border-purple-200
-                           bg-white rounded-xl px-4 py-2.5 text-sm
-                           focus:outline-none focus:border-purple-500"
+                onChange={(e) => {
+                  setForm({ ...form, price: e.target.value });
+                  if (fieldErrors.price)
+                    setFieldErrors((p) => ({ ...p, price: "" }));
+                }}
+                className={`w-full rounded-xl px-4 py-2.5 text-sm
+             focus:outline-none transition border
+             ${
+               fieldErrors.price
+                 ? "border-red-400 bg-red-50 focus:border-red-500"
+                 : "border-purple-200 bg-white focus:border-purple-500"
+             }`}
               />
+              {fieldErrors.price && (
+                <p className="text-red-500 text-xs mt-1">
+                  ⚠️ {fieldErrors.price}
+                </p>
+              )}
             </div>
 
             <div>
-              <label
-                className="text-sm font-medium
-                                text-gray-700 block mb-1.5"
-              >
-                Price per Meter (₹)
+              <label className="text-sm font-medium text-gray-700 block mb-1.5">
+                Price per Meter (₹) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
+                required
                 placeholder="Per meter price"
                 value={form.pricePerMeter}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    pricePerMeter: e.target.value,
-                  })
-                }
-                className="w-full border border-purple-200
-                           bg-white rounded-xl px-4 py-2.5 text-sm
-                           focus:outline-none focus:border-purple-500"
+                onChange={(e) => {
+                  setForm({ ...form, pricePerMeter: e.target.value });
+                  if (fieldErrors.pricePerMeter) {
+                    setFieldErrors((p) => ({ ...p, pricePerMeter: "" }));
+                  }
+                }}
+                className={`w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none transition border
+      ${
+        fieldErrors.pricePerMeter
+          ? "border-red-400 bg-red-50 focus:border-red-500"
+          : "border-purple-200 bg-white focus:border-purple-500"
+      }`}
               />
+              {fieldErrors.pricePerMeter && (
+                <p className="text-red-500 text-xs mt-1">
+                  ⚠️ {fieldErrors.pricePerMeter}
+                </p>
+              )}
             </div>
 
             {/* <div>
@@ -853,23 +891,31 @@ function FabricDashboard({ token, seller }) {
               className="text-sm font-medium
                               text-gray-700 block mb-1.5"
             >
-              Description
+              Description<span className="text-red-500">*</span>
             </label>
             <textarea
               rows={2}
               placeholder="Fabric ke baare mein likhen..."
               value={form.description}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  description: e.target.value,
-                })
-              }
-              className="w-full border border-purple-200
-                         bg-white rounded-xl px-4 py-2.5 text-sm
-                         focus:outline-none focus:border-purple-500
-                         resize-none"
+              onChange={(e) => {
+                setForm({ ...form, description: e.target.value });
+                if (fieldErrors.description)
+                  setFieldErrors((p) => ({ ...p, description: "" }));
+              }}
+              className={`w-full rounded-xl px-4 py-2.5 text-sm
+             focus:outline-none resize-none transition border
+             ${
+               fieldErrors.description
+                 ? "border-red-400 bg-red-50 focus:border-red-500"
+                 : "border-purple-200 bg-white focus:border-purple-500"
+             }`}
             />
+
+            {fieldErrors.description && (
+              <p className="text-red-500 text-xs mt-1">
+                ⚠️ {fieldErrors.description}
+              </p>
+            )}
 
             {/* Color Selection */}
             <div className="mt-4">
@@ -912,6 +958,11 @@ function FabricDashboard({ token, seller }) {
                 </p>
               )}
             </div>
+            {fieldErrors.colors && (
+              <p className="text-red-500 text-xs mt-1">
+                ⚠️ {fieldErrors.colors}
+              </p>
+            )}
 
             {/* Brand + Material */}
             <div className="grid grid-cols-2 gap-3 mt-3">
@@ -1022,6 +1073,11 @@ function FabricDashboard({ token, seller }) {
               ))}
             </div>
           </div>
+          {fieldErrors.garments && (
+            <p className="text-red-500 text-xs mt-1">
+              ⚠️ {fieldErrors.garments}
+            </p>
+          )}
 
           {/* Fabric Images */}
           <div className="mt-4">
@@ -1070,6 +1126,9 @@ function FabricDashboard({ token, seller }) {
               </div>
             )}
           </div>
+          {fieldErrors.images && (
+            <p className="text-red-500 text-xs mt-1">⚠️ {fieldErrors.images}</p>
+          )}
 
           {addMsg && <p className="mt-3 text-sm">{addMsg}</p>}
 
@@ -1292,6 +1351,7 @@ export default function Dashboard() {
   const [productLoading, setProductLoading] = useState(false);
   const [productMsg, setProductMsg] = useState("");
   const [imageUrls, setImageUrls] = useState([""]);
+  const [productFieldErrors, setProductFieldErrors] = useState({});
   const [shopSettings, setShopSettings] = useState({
     whatsapp: "",
     upiId: "",
@@ -1340,43 +1400,51 @@ export default function Dashboard() {
   }, [seller, token, navigate, fetchDashboard, fetchProducts]);
 
   const handleAddProduct = async () => {
-    // Validation
-    if (!productForm.name) {
-      setProductMsg("❌ Product name is necessary!");
-      return;
-    }
-    if (!productForm.price) {
-      setProductMsg("❌ Price is necessary!");
-      return;
-    }
+    // Pehle errors clear karo
+    setProductFieldErrors({});
+    setProductMsg("");
 
     // Sequence images check
     const seqImgs = (productForm.seqImages || []).filter(Boolean);
-
-    // URL images
     const validUrls = (imageUrls || []).filter(
       (url) => url && url.startsWith("http"),
     );
-
     const totalImages = seqImgs.length + validUrls.length;
 
+    // ── Frontend field-specific validation ──────────────────────
+    const errors = {};
+
+    if (!productForm.name || productForm.name.trim().length < 2) {
+      errors.name = "Product name must be at least 2 characters long!";
+    }
+    const priceVal = parseFloat(productForm.price);
+    if (!productForm.price || isNaN(priceVal) || priceVal <= 0) {
+      errors.price = "Please enter a valid price greater than 0!";
+    }
+    if (
+      !productForm.description ||
+      productForm.description.trim().length < 20
+    ) {
+      errors.description = "Description must be at least 20 characters long!";
+    }
     if (totalImages < 2) {
-      setProductMsg("❌ You need to upload a minimum of 2 photos!");
-      return;
+      errors.images = "❌ You need to upload a minimum of 2 photos!";
     }
 
+    if (Object.keys(errors).length > 0) {
+      setProductFieldErrors(errors);
+      return;
+    }
+    // ─────────────────────────────────────────────────────────────
+
     setProductLoading(true);
-    setProductMsg("");
 
     try {
       const formData = new FormData();
 
-      // Sequence mein images add karo
       seqImgs.forEach((img) => {
         if (img) formData.append("productImages", img);
       });
-
-      // URL images
       validUrls.forEach((url) => {
         formData.append("imageUrls", url);
       });
@@ -1389,11 +1457,9 @@ export default function Dashboard() {
       formData.append("category", productForm.category);
       formData.append("productUrl", productForm.productUrl || "");
 
-      // Sizes
       const sizes = productForm.sizes || [];
       formData.append("sizes", JSON.stringify(sizes));
 
-      // Highlights
       const highlights = productForm.highlights || {};
       formData.append("highlights", JSON.stringify(highlights));
 
@@ -1405,6 +1471,7 @@ export default function Dashboard() {
       });
 
       setProductMsg("✅ Product added successfully!");
+      setProductFieldErrors({});
       setProductForm({
         name: "",
         brandName: "",
@@ -1420,7 +1487,12 @@ export default function Dashboard() {
       setImageUrls([""]);
       fetchProducts();
     } catch (err) {
-      setProductMsg(err.response?.data?.message || "❌ Error aaya!");
+      // Backend se field-specific errors
+      if (err.response?.data?.fieldErrors) {
+        setProductFieldErrors(err.response.data.fieldErrors);
+      } else {
+        setProductMsg(err.response?.data?.message || "❌ Error aaya!");
+      }
     } finally {
       setProductLoading(false);
     }
@@ -2069,7 +2141,7 @@ export default function Dashboard() {
                         text-gray-500 uppercase
                         tracking-wide block mb-1.5"
                   >
-                    Brand Name
+                    Brand Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -2095,23 +2167,30 @@ export default function Dashboard() {
                         text-gray-500 uppercase
                         tracking-wide block mb-1.5"
                   >
-                    Product Name *
+                    Product Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     placeholder="like: Men Slim Fit Shirt"
                     value={productForm.name}
-                    onChange={(e) =>
-                      setProductForm({
-                        ...productForm,
-                        name: e.target.value,
-                      })
-                    }
-                    className="w-full border border-gray-200
-                   rounded-xl px-4 py-2.5 text-sm
-                   focus:outline-none
-                   focus:border-purple-500"
+                    onChange={(e) => {
+                      setProductForm({ ...productForm, name: e.target.value });
+                      if (productFieldErrors.name)
+                        setProductFieldErrors((p) => ({ ...p, name: "" }));
+                    }}
+                    className={`w-full rounded-xl px-4 py-2.5 text-sm
+                   focus:outline-none transition border
+                   ${
+                     productFieldErrors.name
+                       ? "border-red-400 bg-red-50 focus:border-red-500"
+                       : "border-gray-200 focus:border-purple-500"
+                   }`}
                   />
+                  {productFieldErrors.name && (
+                    <p className="text-red-500 text-xs mt-1">
+                      ⚠️ {productFieldErrors.name}
+                    </p>
+                  )}
                 </div>
 
                 {/* Description */}
@@ -2121,74 +2200,130 @@ export default function Dashboard() {
                         text-gray-500 uppercase
                         tracking-wide block mb-1.5"
                   >
-                    Product Description
+                    Product Description <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     rows={3}
                     placeholder="Describe the product's key qualities..."
                     value={productForm.description || ""}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setProductForm({
                         ...productForm,
                         description: e.target.value,
-                      })
-                    }
-                    className="w-full border border-gray-200
-                   rounded-xl px-4 py-2.5 text-sm
-                   focus:outline-none
-                   focus:border-purple-500 resize-none"
+                      });
+                      if (productFieldErrors.description)
+                        setProductFieldErrors((p) => ({
+                          ...p,
+                          description: "",
+                        }));
+                    }}
+                    className={`w-full rounded-xl px-4 py-2.5 text-sm
+                   focus:outline-none resize-none transition border
+                   ${
+                     productFieldErrors.description
+                       ? "border-red-400 bg-red-50 focus:border-red-500"
+                       : "border-gray-200 focus:border-purple-500"
+                   }`}
                   />
+                  {productFieldErrors.description && (
+                    <p className="text-red-500 text-xs mt-1">
+                      ⚠️ {productFieldErrors.description}
+                    </p>
+                  )}
+
+                  <div className="mt-3 p-3.5 bg-slate-50 border-l-4 border-indigo-600 rounded-md shadow-sm font-sans">
+                    <div className="flex items-start gap-2.5">
+                      <span className="text-lg leading-none text-indigo-600">
+                        💡
+                      </span>
+                      <div>
+                        <h4 className="m-0 mb-1 text-sm font-semibold text-slate-800">
+                          महत्वपूर्ण निर्देश (Important Guide)
+                        </h4>
+                        <p className="m-0 text-xs text-slate-600Sub leading-relaxed">
+                          यदि आपके कपड़े की फोटो किसी{" "}
+                          <strong>असली मॉडल (Model)</strong> या{" "}
+                          <strong>पुतले (Mannequin)</strong> द्वारा पहनी हुई है,
+                          तो विवरण (Description) में{" "}
+                          <span className="text-indigo-600 font-medium bg-indigo-50 px-1.5 py-0.5 rounded text-[11px]">
+                            "model"
+                          </span>{" "}
+                          या{" "}
+                          <span className="text-indigo-600 font-medium bg-indigo-50 px-1.5 py-0.5 rounded text-[11px]">
+                            "worn by model"
+                          </span>{" "}
+                          शब्द ज़रूर लिखें। इससे कपड़ों की फिटिंग ग्राहक पर
+                          बिल्कुल सटीक बैठेगी।
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Pricing */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label
-                      className="text-xs font-semibold
-                          text-gray-500 uppercase
-                          tracking-wide block mb-1.5"
-                    >
-                      Original Price (₹)
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1.5">
+                      Original Price (₹) <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="number"
                       placeholder="eg-999"
                       value={productForm.originalPrice || ""}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const val = e.target.value;
                         setProductForm({
                           ...productForm,
-                          originalPrice: e.target.value,
-                        })
-                      }
-                      className="w-full border border-gray-200
-                     rounded-xl px-4 py-2.5 text-sm
-                     focus:outline-none
-                     focus:border-purple-500"
+                          originalPrice: val,
+                        });
+                      }}
+                      className={`w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none transition-border ${
+                        !productForm.originalPrice
+                          ? "border border-red-400 bg-red-50 focus:border-red-500"
+                          : "border border-gray-200 focus:border-purple-500"
+                      }`}
                     />
+                    {/* बिना productFieldErrors को छुए इन-लाइन रिक्वायर्ड एरर लॉजिक */}
+                    {!productForm.originalPrice && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        ⚠️ Original price is required
+                      </p>
+                    )}
                   </div>
+
                   <div>
                     <label
                       className="text-xs font-semibold
                           text-gray-500 uppercase
                           tracking-wide block mb-1.5"
                     >
-                      Final Price (₹) *
+                      Final Price (₹) <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="number"
-                      placeholder="eg-599"
-                      value={productForm.price}
-                      onChange={(e) =>
+                      placeholder="eg-999"
+                      value={productForm.price || ""}
+                      onChange={(e) => {
                         setProductForm({
                           ...productForm,
                           price: e.target.value,
-                        })
-                      }
-                      className="w-full border border-gray-200
-                     rounded-xl px-4 py-2.5 text-sm
-                     focus:outline-none
-                     focus:border-purple-500"
+                        });
+                        if (productFieldErrors.price)
+                          setProductFieldErrors((p) => ({ ...p, price: "" }));
+                      }}
+                      className={`w-full rounded-xl px-4 py-2.5 text-sm
+                     focus:outline-none transition border
+                     ${
+                       productFieldErrors.price
+                         ? "border-red-400 bg-red-50 focus:border-red-500"
+                         : "border-gray-200 focus:border-purple-500"
+                     }`}
                     />
+                    {productFieldErrors.price && (
+                      <p className="text-red-500 text-xs mt-1">
+                        ⚠️ {productFieldErrors.price}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -2561,6 +2696,11 @@ export default function Dashboard() {
                     })}
                   </div>
 
+                  {productFieldErrors.images && (
+                    <p className="text-red-500 text-xs mt-2 font-medium">
+                      ⚠️ {productFieldErrors.images}
+                    </p>
+                  )}
                   <p className="text-xs text-purple-600 mt-2">
                     💡 Front view pehle rakho - AI try-on ke liye best!
                   </p>

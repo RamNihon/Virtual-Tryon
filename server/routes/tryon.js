@@ -38,7 +38,7 @@ const getStyleAdviceClaude = async (imageUrl) => {
       },
       body: JSON.stringify({
         model: "claude-3-haiku-20240307",
-        max_tokens: 500,
+        max_tokens: 800,
         messages: [
           {
             role: "user",
@@ -97,7 +97,7 @@ const getStyleAdviceOpenRouter = async (imageUrl) => {
         },
         body: JSON.stringify({
           model: "anthropic/claude-3-haiku",
-          max_tokens: 500,
+          max_tokens: 800,
           messages: [
             {
               role: "user",
@@ -139,6 +139,189 @@ Short aur friendly jawab do!`,
     console.log("OpenRouter Error:", error.message);
     return null;
   }
+};
+
+// ─── Fashn.ai Try-On Helper ───────────────
+const runFashnTryon = async (
+  humanUrl,
+  garmentUrl,
+  category = "tops",
+  isDress = false,
+) => {
+  console.log("🚀 FASH_AI starting...");
+  if (!process.env.FASHN_API_KEY) {
+    throw new Error("FASHN_API_KEY not configured!");
+  }
+
+  console.log(`🎯 Fashn.ai starting... category: ${category}`);
+
+  // 1. तय करें कि कौन सा मॉडल और कौन सा पेलोड इस्तेमाल करना है
+  let modelName = "tryon-v1.6"; // डिफ़ॉल्ट मॉडल
+  let apiInputs = {};
+
+  if (isDress) {
+    // अगर लहंगा, साड़ी, सूट, गाउन है तो 2-क्रेडिट वाला PREMIUM TRYON-MAX मॉडल चलाएं
+    modelName = "tryon-max";
+    apiInputs = {
+      product_image: garmentUrl,
+      model_image: humanUrl,
+    };
+    console.log("🚀 Using PREMIUM MODEL: tryon-max (For Heavy Ethnic Wear)");
+  } else {
+    // अगर शर्ट, टी-शर्ट या पैंट है तो 1-क्रेडिट वाला ECONOMY V1.6 मॉडल सारे एडवांस्ड पैरामीटर्स के साथ चलाएं
+    modelName = "tryon-v1.6";
+    let photoType = "flat-lay";
+    const lowerDesc = garmentDesc ? garmentDesc.toLowerCase() : "";
+
+    // अगर डिस्क्रिप्शन में 'model' या 'worn by' या 'man' या 'woman' जैसे कीवर्ड्स हैं
+    if (
+      lowerDesc.includes("model") ||
+      lowerDesc.includes("wear") ||
+      lowerDesc.includes("man") ||
+      lowerDesc.includes("woman") ||
+      lowerDesc.includes("girl")
+    ) {
+      photoType = "model"; // अगर किसी इंसान ने पहना है तो खुद 'model' मोड पर स्विच हो जाएगा
+    }
+    apiInputs = {
+      model_image: humanUrl,
+      garment_image: garmentUrl,
+      category: category, // "tops" या "bottoms"
+      mode: "quality", // बेस्ट क्वालिटी
+      garment_photo_type: photoType,
+      segmentation_free: true, // पेट का शेप बचाने के लिए ज़रूरी
+    };
+    console.log(
+      "🛡️ Using ECONOMY MODEL: tryon-v1.6 (For Upper/Lower body with Body Preservation)",
+    );
+  }
+
+  // Step 1: Submit request
+  const submitRes = await fetch("https://api.fashn.ai/v1/run", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.FASHN_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model_name: modelName,
+      inputs: apiInputs,
+    }),
+  });
+
+  const submitData = await submitRes.json();
+  console.log("Fashn submit:", submitData);
+
+  if (!submitData.id) {
+    throw new Error(`Fashn submit failed: ${JSON.stringify(submitData)}`);
+  }
+
+  const predictionId = submitData.id;
+
+  // Step 2: Poll for result
+  let attempts = 0;
+  const maxAttempts = 40; // 80 seconds
+
+  while (attempts < maxAttempts) {
+    await new Promise((r) => setTimeout(r, 2000));
+
+    const statusRes = await fetch(
+      `https://api.fashn.ai/v1/status/${predictionId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.FASHN_API_KEY}`,
+        },
+      },
+    );
+
+    const statusData = await statusRes.json();
+    console.log(`Fashn poll ${attempts + 1}: ${statusData.status}`);
+
+    if (statusData.status === "completed") {
+      const outputUrl = statusData.output?.[0];
+      if (!outputUrl) throw new Error("Fashn: output URL missing!");
+      console.log("✅ Fashn result:", outputUrl);
+      return outputUrl;
+    } else if (statusData.status === "failed") {
+      throw new Error(
+        `Fashn failed: ${JSON.stringify(statusData.error || "")}`,
+      );
+    }
+
+    attempts++;
+  }
+
+  throw new Error("Fashn timeout after 80 seconds");
+};
+
+// ─── IDM-VTON Helper (fallback) ──────────
+const runIDMVTON = async (humanUrl, garmentUrl, garmentType, isCrop) => {
+  console.log("🔄 IDM-VTON running...");
+  const rawOutput = await replicate.run(
+    "cuuupid/idm-vton:906425dbca90663ff5427624839572cc56ea7d380343d13e2a4c4b09d3f0c30f",
+    {
+      input: {
+        human_img: humanUrl,
+        garm_img: garmentUrl,
+        garment_des: garmentType,
+        is_checked: true,
+        is_checked_crop: isCrop,
+        denoise_steps: 30,
+        seed: 42,
+      },
+    },
+  );
+
+  console.log("IDM raw output type:", typeof rawOutput);
+
+  let url = "";
+
+  if (typeof rawOutput === "string") {
+    url = rawOutput;
+  } else if (Array.isArray(rawOutput)) {
+    const item = rawOutput[0];
+    if (typeof item === "string") {
+      url = item;
+    } else if (item && typeof item.url === "function") {
+      url = item.url();
+    } else if (item && item.href) {
+      // URL object - href se nikaalo
+      url = item.href;
+    } else if (item && item.url) {
+      url = String(item.url);
+    } else {
+      url = String(item);
+    }
+  } else if (rawOutput && typeof rawOutput.url === "function") {
+    url = rawOutput.url();
+  } else if (rawOutput && rawOutput.href) {
+    // URL object directly
+    url = rawOutput.href;
+  } else if (rawOutput && rawOutput.url) {
+    url = String(rawOutput.url);
+  } else {
+    // ReadableStream
+    try {
+      let last = "";
+      for await (const event of rawOutput) {
+        last = event;
+      }
+      if (typeof last === "string") {
+        url = last;
+      } else if (last && last.href) {
+        url = last.href;
+      } else if (last && typeof last.url === "function") {
+        url = last.url();
+      } else {
+        url = String(last);
+      }
+    } catch (e) {
+      console.log("Stream error:", e.message);
+    }
+  }
+
+  console.log("IDM extracted URL:", url);
+  return url;
 };
 
 // This is tron.js code
@@ -188,146 +371,138 @@ router.post(
         "tryon/humans",
       );
 
-const garmentUrl = req.body.garmentUrl
-const garmentDesc = (req.body.description || 'upper_body').toLowerCase()
+      const garmentUrl = req.body.garmentUrl;
+      const garmentDesc = (req.body.description || "upper_body").toLowerCase();
 
-if (!garmentUrl) {
-  return res.status(400).json({
-    message: 'Garment image URL missing!'
-  })
-}
+      if (!garmentUrl) {
+        return res.status(400).json({
+          message: "Garment image URL missing!",
+        });
+      }
 
-// ─── Garment Category Detection ───────────
-// Lower body keywords
-const lowerKeywords = [
-  'lower_body', 'lower body', 'pant', 'pants',
-  'trouser', 'trousers', 'jeans', 'bottom',
-  'legging', 'leggings', 'skirt', 'shorts',
-  'pajama', 'dhoti', 'lungi', 'salwar'
-]
+      // ─── Garment Category Detection ───────────
+      // Lower body keywords
+      const lowerKeywords = [
+        "lower_body",
+        "lower body",
+        "pant",
+        "pants",
+        "trouser",
+        "trousers",
+        "jeans",
+        "bottom",
+        "legging",
+        "leggings",
+        "skirt",
+        "shorts",
+        "pajama",
+        "dhoti",
+        "lungi",
+        "salwar",
+      ];
 
-// Upper body keywords
-const upperKeywords = [
-  'upper_body', 'upper body', 'shirt', 'tshirt',
-  't-shirt', 'top', 'blouse', 'jacket', 'sweater',
-  'hoodie', 'kurta', 'kurti', 'coat', 'blazer',
-  'polo', 'tank', 'vest', 'saree', 'dupatta'
-]
+      // Upper body keywords
+      const upperKeywords = [
+        "upper_body",
+        "upper body",
+        "shirt",
+        "tshirt",
+        "t-shirt",
+        "top",
+        "blouse",
+        "jacket",
+        "sweater",
+        "hoodie",
+        "coat",
+        "blazer",
+        "polo",
+        "tank",
+        "vest",
+      ];
 
-// Dress keywords
-const dressKeywords = [
-  'dress', 'frock', 'gown', 'jumpsuit',
-  'salwar_suit', 'salwar suit', 'suit'
-]
+      // Dress keywords
+      const dressKeywords = [
+        "dress",
+        "frock",
+        "gown",
+        "saree",
+        "kurti",
+        "kurta",
+        "dupatta",
+        "jumpsuit",
+        "salwar_suit",
+        "salwar suit",
+        "suit",
+        "lehenga",
+        "anarkali",
+      ];
 
-let garmentType = 'upper body shirt clothing'
-let isCrop = false
-let isLower = false
+      let garmentType = "upper body shirt clothing";
+      let isCrop = false;
+      let isLower = false;
+      let isDress = false;
 
-const isLowerBody = lowerKeywords.some(k =>
-  garmentDesc.includes(k)
-)
-const isDress = dressKeywords.some(k =>
-  garmentDesc.includes(k)
-)
+      const isLowerBody = lowerKeywords.some((k) => garmentDesc.includes(k));
+      isDress = dressKeywords.some((k) => garmentDesc.includes(k));
 
-if (isLowerBody) {
-  garmentType = 'pants trousers lower body bottoms'
-  isCrop = true
-} else if (isDress) {
-  garmentType = 'full body dress'
-  isCrop = false
-} else {
-  garmentType = 'upper body shirt'
-  isCrop = false
-}
+      if (isLowerBody) {
+        garmentType = "pants trousers lower body bottoms";
+        isCrop = true;
+      } else if (isDress) {
+        garmentType = "full body dress";
+        isCrop = false;
+        let isDress = true;
+      } else {
+        garmentType = "upper body shirt";
+        isCrop = false;
+      }
 
-console.log(`Final garment_des: "${garmentType}", isCrop: ${isCrop}`)
+      console.log(`Final garment_des: "${garmentType}", isCrop: ${isCrop}`);
 
-console.log(`Category: "${garmentDesc}" → ${garmentType}`)
-console.log(`isCrop: ${isCrop}`)
+      console.log(`Category: "${garmentDesc}" → ${garmentType}`);
+      console.log(`isCrop: ${isCrop}`);
 
-      console.log("🚀 IDM-VTON starting...");
       // console.log("Human URL:", humanUrl);
       // console.log("Garment URL:", garmentUrl);
 
       // IDM-VTON run karo
-      const rawOutput = await replicate.run(
-        "cuuupid/idm-vton:906425dbca90663ff5427624839572cc56ea7d380343d13e2a4c4b09d3f0c30f",
-        {
-          input: {
-            human_img: humanUrl,
-            garm_img: garmentUrl,
-            garment_des: garmentType,
-            is_checked: true,
-            is_checked_crop: false,
-            denoise_steps: 30,
-            seed: 42,
-          },
-        },
-      );
-
-      // Neeche yeh add karo:
-      console.log("RAW OUTPUT:", rawOutput);
-      console.log("OUTPUT TYPE:", typeof rawOutput);
-
-      // ReadableStream handle karo (Replicate new format)
-      // ReadableStream handle karo (Replicate new format)
+      // ─── Smart Routing ────────────────────────
       let resultUrl = "";
 
-      if (typeof rawOutput === "string") {
-        resultUrl = rawOutput;
-      } else if (Array.isArray(rawOutput)) {
-        const first = rawOutput[0];
-        // अगर array का पहला एलिमेंट object है और उसमें url प्रॉपर्टी है
-        if (first && typeof first === "object" && first.url) {
-          resultUrl = typeof first.url === "function" ? first.url() : first.url;
-        } else {
-          resultUrl = String(first);
-        }
-      } else if (rawOutput && typeof rawOutput === "object") {
-        // 👈 यहाँ आपके एरर का मुख्य फिक्स है:
-        // अगर पूरा rawOutput ही एक URL object है (जैसा कि आपके टर्मिनल में दिख रहा है)
-        if (rawOutput.url) {
-          resultUrl =
-            typeof rawOutput.url === "function"
-              ? rawOutput.url()
-              : rawOutput.url;
-        } else if (rawOutput.pathname || rawOutput.href) {
-          // अगर object में direct 'url' नहीं है पर pathname/href है
-          resultUrl =
-            rawOutput.href || `https://replicate.delivery${rawOutput.pathname}`;
-        } else {
-          // बैकअप के लिए अगर कोई और फ़ॉर्मेट हो
-          resultUrl = String(rawOutput);
+      // Fashn.ai category determine karo
+      let fashnCategory = "tops";
+      if (isLowerBody) fashnCategory = "bottoms";
+      else if (isDress) fashnCategory = "one-pieces";
+
+      if (process.env.FASHN_API_KEY) {
+        // Sab kuch Fashn.ai se
+        try {
+          resultUrl = await runFashnTryon(
+            humanUrl,
+            garmentUrl,
+            fashnCategory,
+            isDress,
+          );
+        } catch (fashnErr) {
+          console.log("⚠️ Fashn failed, IDM-VTON fallback:", fashnErr.message);
+          resultUrl = await runIDMVTON(
+            humanUrl,
+            garmentUrl,
+            garmentType,
+            isCrop,
+          );
         }
       } else {
-        // ReadableStream - iterate karo
-        try {
-          let lastValue = "";
-          for await (const event of rawOutput) {
-            console.log("Stream event:", event);
-            lastValue = event;
-          }
-
-          if (lastValue && typeof lastValue === "object") {
-            resultUrl = lastValue.url
-              ? typeof lastValue.url === "function"
-                ? lastValue.url()
-                : lastValue.url
-              : String(lastValue);
-          } else {
-            resultUrl = String(lastValue);
-          }
-        } catch (e) {
-          console.log("Stream iteration error:", e.message);
-        }
+        // Sirf IDM-VTON
+        resultUrl = await runIDMVTON(humanUrl, garmentUrl, garmentType, isCrop);
       }
+
+      console.log("Final resultUrl:", resultUrl);
 
       // अगर ऊपर से फिर भी Object रह गया हो, तो string में कन्वर्ट करने का फाइनल सेफ्टी चेक
-      if (resultUrl && typeof resultUrl === "object") {
-        resultUrl = resultUrl.href || resultUrl.toString();
-      }
+      // if (resultUrl && typeof resultUrl === "object") {
+      //   resultUrl = resultUrl.href || resultUrl.toString();
+      // }
 
       console.log("EXTRACTED URL:", resultUrl);
 
@@ -399,6 +574,9 @@ console.log(`isCrop: ${isCrop}`)
         seller: seller._id,
         resultImage: finalImageUrl,
         humanImage: humanUrl,
+        garmentImage: garmentUrl || "",
+        productName: req.body.productName || "",
+        category: req.body.description || "upper_body",
       });
     } catch (error) {
       console.error("❌Tryon Error:", error.message);
@@ -409,5 +587,33 @@ console.log(`isCrop: ${isCrop}`)
     }
   },
 );
+
+// ─── Gallery Route ────────────────────────
+router.get("/gallery", async (req, res) => {
+  try {
+    const apiKey = req.headers["x-api-key"];
+    if (!apiKey) {
+      return res.status(401).json({ message: "API key missing!" });
+    }
+
+    const seller = await Seller.findOne({ apiKey });
+    if (!seller) {
+      return res.status(401).json({ message: "Invalid API key!" });
+    }
+
+    // Customer session ID se filter (optional)
+    const sessionId = req.query.sessionId;
+
+    const query = { seller: seller._id };
+
+    const history = await TryonHistory.find(query)
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    res.json({ success: true, history });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 module.exports = router;

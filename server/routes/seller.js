@@ -120,9 +120,28 @@ router.post(
   upload.array("productImages", 5),
   async (req, res) => {
     try {
-      let imageUrls = [];
+      // ── FIELD-SPECIFIC VALIDATION ────────────────────────────
+      const fieldErrors = {};
 
-      // File uploads - sequence maintain karo
+      if (!req.body.name || req.body.name.trim().length < 2) {
+        fieldErrors.name = "Product name kam se kam 2 characters ka hona chahiye!";
+      }
+
+      const price = parseFloat(req.body.price);
+      if (!req.body.price || isNaN(price) || price <= 0) {
+        fieldErrors.price = "Valid price daalna zaroori hai!";
+      }
+
+      if (!req.body.description || req.body.description.trim().length < 10) {
+        fieldErrors.description = "Description kam se kam 10 characters ki honi chahiye!";
+      }
+
+      if (!req.body.category) {
+        fieldErrors.category = "Category select karna zaroori hai!";
+      }
+
+      // Images check
+      let imageUrls = [];
       if (req.files && req.files.length > 0) {
         const uploadPromises = req.files.map(
           (file) =>
@@ -153,8 +172,14 @@ router.post(
       }
 
       if (imageUrls.length < 2) {
+        fieldErrors.images = "Kam se kam 2 product photos zaroori hain!";
+      }
+
+      // Agar koi bhi field error ho to return karo
+      if (Object.keys(fieldErrors).length > 0) {
         return res.status(400).json({
-          message: "Kam se kam 2 photos zaroori hain!",
+          message: "Kuch fields mein error hai!",
+          fieldErrors,
         });
       }
 
@@ -176,7 +201,6 @@ router.post(
       }
 
       // Discount calculate
-      const price = parseFloat(req.body.price) || 0;
       const originalPrice = parseFloat(req.body.originalPrice) || 0;
       const discountPercent =
         originalPrice > price

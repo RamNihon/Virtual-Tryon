@@ -7,7 +7,11 @@ const tryonHistorySchema = new mongoose.Schema({
   },
   product: String,
   resultImage: String,
-  humanImage: String
+  humanImage: String,
+    garmentImage: String,
+  productName: String,
+  category: String,
+  createdAt: { type: Date, default: Date.now }
 }, { timestamps: true })
 
 module.exports = mongoose.models.TryonHistory || 

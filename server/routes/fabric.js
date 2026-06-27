@@ -5,6 +5,7 @@ const Seller = require("../models/seller");
 const cloudinary = require("../config/cloudinary");
 const upload = require("../middleware/upload");
 const Replicate = require("replicate");
+
 const { generateGarmentFromFabric, useCredits } = require("../config/openai");
 const { authMiddleware } = require("./seller");
 
@@ -42,6 +43,61 @@ const GARMENT_LABELS = {
   salwar_suit: "Salwar Suit",
   kurti: "Kurti",
   saree: "Saree",
+};
+
+// ─── Fashn.ai Helper ─────────────────────
+const runFashnTryon = async (humanUrl, garmentUrl, category) => {
+  if (!process.env.FASHN_API_KEY) throw new Error("FASHN_API_KEY missing!");
+  if (!category || category === "auto")
+    throw new Error("Fashn category required! (bottoms/one-pieces)");
+
+  console.log(`🎯 Fashn.ai starting... category: ${category}`);
+  const submitRes = await fetch("https://api.fashn.ai/v1/run", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.FASHN_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model_name: "tryon-v1.6",
+
+      inputs: {
+        model_image: humanUrl,
+        garment_image: garmentUrl,
+        category: category,
+        mode: "quality",
+        garment_photo_type: "flat-lay",
+        segmentation_free: true,
+      },
+    }),
+  });
+
+  const submitData = await submitRes.json();
+  console.log("Fashn submit:", submitData);
+
+  if (!submitData.id) {
+    throw new Error(`Fashn error: ${JSON.stringify(submitData)}`);
+  }
+
+  let attempts = 0;
+  while (attempts < 40) {
+    await new Promise((r) => setTimeout(r, 2000));
+    const statusRes = await fetch(
+      `https://api.fashn.ai/v1/status/${submitData.id}`,
+      { headers: { Authorization: `Bearer ${process.env.FASHN_API_KEY}` } },
+    );
+    const s = await statusRes.json();
+    console.log(`Fabric Fashn poll ${attempts + 1}: ${s.status}`);
+    if (s.status === "completed") {
+      const url = s.output?.[0];
+      if (!url) throw new Error("Fashn: output URL missing!");
+      return url;
+    }
+    if (s.status === "failed")
+      throw new Error(`Fashn failed: ${JSON.stringify(s.error || "")}`);
+    attempts++;
+  }
+  throw new Error("Fashn timeout");
 };
 
 // ─── Add Fabric Product ───────────────────
@@ -398,11 +454,17 @@ router.post("/tryon", upload.single("humanImage"), async (req, res) => {
     ];
     const fabricDressKeywords = [
       "dress",
+      "saree",
+      "kurti",
+      "kurta",
       "salwar_suit",
       "salwar suit",
       "suit",
       "gown",
       "jumpsuit",
+      "lehenga",
+      "lehnga",
+      "anarkali",
     ];
 
     let fabricGarmentType = "upper body shirt clothing";
@@ -429,49 +491,101 @@ router.post("/tryon", upload.single("humanImage"), async (req, res) => {
     console.log("Fabric garment type:", fabricGarmentType);
 
     // Human image upload
+    console.log("📸 Fabric try-on started...");
+
+    // Human image upload
     const humanUrl = await uploadToCloudinary(req.file.buffer, "fabric/humans");
 
-    // IDM-VTON for try-on
-    const output = await replicate.run(
-      "cuuupid/idm-vton:906425dbca90663ff5427624839572cc56ea7d380343d13e2a4c4b09d3f0c30f",
-      {
-        input: {
-          human_img: humanUrl,
-          garm_img: garmentUrl,
-          garment_des: fabricGarmentType,
-          is_checked: true,
-          is_checked_crop: fabricIsCrop,
-          denoise_steps: 30,
-          seed: 42,
-        },
-      },
-    );
+    // Category for Fashn.ai
+    let fashnCategory = "tops";
+    if (isFabricLower) fashnCategory = "bottoms";
+    else if (isFabricDress) fashnCategory = "one-pieces";
 
-    // Replicate URL ko Cloudinary par save karo
-    let savedImageUrl = output;
-    try {
-      const imageResponse = await fetch(output);
-      const imageBuffer = await imageResponse.arrayBuffer();
-      const buffer = Buffer.from(imageBuffer);
+    let savedImageUrl = "";
 
-      savedImageUrl = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          { folder: "fabric/tryons" },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result.secure_url);
+    // ─── SMART ROUTING ───────────────────────────────────────────
+    // Upper body → SIRF IDM-VTON (Fashn stomach distort karta hai)
+    // Lower body + Dress/Full → SIRF Fashn.ai
+    // ─────────────────────────────────────────────────────────────
+
+    if (isFabricLower || isFabricDress) {
+      // ── FASHN.AI (Lower + Dress only) ──────────────────────────
+      if (!process.env.FASHN_API_KEY) {
+        return res.status(500).json({
+          message:
+            "FASHN_API_KEY missing! Lower/Dress try-on ke liye zaroori hai.",
+        });
+      }
+      console.log(
+        `🎯 Fashn.ai route: ${isFabricLower ? "bottoms" : "one-pieces"}`,
+      );
+      savedImageUrl = await runFashnTryon(humanUrl, garmentUrl, fashnCategory);
+      console.log("✅ Fabric Fashn result:", savedImageUrl);
+    } else {
+      // ── IDM-VTON (Upper body ONLY) ──────────────────────────────
+      console.log("👕 IDM-VTON route: upper body");
+      const output = await replicate.run(
+        "cuuupid/idm-vton:906425dbca90663ff5427624839572cc56ea7d380343d13e2a4c4b09d3f0c30f",
+        {
+          input: {
+            human_img: humanUrl,
+            garm_img: garmentUrl,
+            garment_des: fabricGarmentType,
+            is_checked: true,
+            is_checked_crop: fabricIsCrop,
+            denoise_steps: 30,
+            seed: 42,
           },
-        );
-        stream.end(buffer);
-      });
-      console.log("✅ Tryon saved to Cloudinary!");
-    } catch (saveError) {
-      console.log("Cloudinary save error:", saveError.message);
-      // Fallback: original URL use karo
-      savedImageUrl = output;
+        },
+      );
+      if (typeof output === "string") {
+        savedImageUrl = output;
+      } else if (Array.isArray(output)) {
+        const item = output[0];
+        if (typeof item === "string") {
+          savedImageUrl = item;
+        } else if (item && item.href) {
+          savedImageUrl = item.href;
+        } else if (item && typeof item.url === "function") {
+          savedImageUrl = item.url();
+        } else {
+          savedImageUrl = String(item);
+        }
+      } else if (output && output.href) {
+        savedImageUrl = output.href;
+      } else if (output && typeof output.url === "function") {
+        savedImageUrl = output.url();
+      }
+      console.log("✅ IDM-VTON result:", savedImageUrl);
     }
 
     console.log("🎉 Fabric try-on done!");
+
+    // // Replicate URL ko Cloudinary par save karo
+    // let savedImageUrl = output;
+    // try {
+    //   const imageResponse = await fetch(output);
+    //   const imageBuffer = await imageResponse.arrayBuffer();
+    //   const buffer = Buffer.from(imageBuffer);
+
+    //   savedImageUrl = await new Promise((resolve, reject) => {
+    //     const stream = cloudinary.uploader.upload_stream(
+    //       { folder: "fabric/tryons" },
+    //       (error, result) => {
+    //         if (error) reject(error);
+    //         else resolve(result.secure_url);
+    //       },
+    //     );
+    //     stream.end(buffer);
+    //   });
+    //   console.log("✅ Tryon saved to Cloudinary!");
+    // } catch (saveError) {
+    //   console.log("Cloudinary save error:", saveError.message);
+    //   // Fallback: original URL use karo
+    //   savedImageUrl = output;
+    // }
+
+    // console.log("🎉 Fabric try-on done!");
 
     // Style advice (optional - 1 credit)
     let styleAdvice = null;
@@ -494,7 +608,7 @@ router.post("/tryon", upload.single("humanImage"), async (req, res) => {
         };
         styleBody = {
           model: "claude-haiku-4-5",
-          max_tokens: 300,
+          max_tokens: 800,
           messages: [
             {
               role: "user",
@@ -533,7 +647,7 @@ Short aur friendly jawab den!`,
         };
         styleBody = {
           model: "anthropic/claude-3-haiku",
-          max_tokens: 300,
+          max_tokens: 800,
           messages: [
             {
               role: "user",

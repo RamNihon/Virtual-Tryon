@@ -1971,7 +1971,7 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
                                hover:opacity-90 transition
                                flex items-center justify-center gap-2"
                   >
-                    ✨ Try-On Now! (8 credits)
+                    ✨ Try-On Now! (11 credits)
                   </button>
                 </div>
               </div>

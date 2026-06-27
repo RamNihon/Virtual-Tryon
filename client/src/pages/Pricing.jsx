@@ -69,7 +69,7 @@ export default function Pricing() {
         "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90",
       popular: true,
       features: [
-        { text: "3,500 credits/month", available: true, highlight: true },
+        { text: "3,000 credits/month", available: true, highlight: true },
         { text: "~500 ready-made try-ons", available: true },
         { text: "~200 fabric generations", available: true },
         { text: "Fabric shop access", available: true },
@@ -383,13 +383,13 @@ export default function Pricing() {
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { action: "👗 Ready Try-On", credits: "5 credits", cost: "~₹5" },
+              { action: "👗 Ready Try-On", credits: "10 credits", cost: "~₹10" },
               {
                 action: "🧵 Fabric Generation",
                 credits: "12 credits",
                 cost: "~₹12",
               },
-              { action: "🪡 Fabric Try-On", credits: "8 credits", cost: "~₹8" },
+              { action: "🪡 Fabric Try-On", credits: "11 credits", cost: "~₹11" },
               { action: "✨ Style Advice", credits: "1 credit", cost: "~₹1" },
             ].map((item, i) => (
               <div

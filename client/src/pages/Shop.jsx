@@ -3838,7 +3838,7 @@ function ProductModal({ product, shop, onClose, onTryOn, onOrder }) {
                   className="text-sm font-semibold
                             text-gray-700 mb-2"
                 >
-                  Size Select Karo
+                  Size Select
                 </p>
                 <div className="flex gap-2 flex-wrap">
                   {product.sizes.map((size) => (
@@ -4545,7 +4545,7 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
 
                       {/* यहाँ से पुराना '✨' हटा दिया है ताकि दो-दो स्टार न दिखें */}
                       <span className="tracking-wide drop-shadow-md">
-                        ✨Try On Karen!
+                        ✨Try On Karen! (10 credits)
                       </span>
 
                       <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]"></span>

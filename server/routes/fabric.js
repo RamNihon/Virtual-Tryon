@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const FabricProduct = require("../models/FabricProduct");
 const Seller = require("../models/seller");
+const TryonHistory = require("../models/TryonHistory");
 const cloudinary = require("../config/cloudinary");
 const upload = require("../middleware/upload");
 const Replicate = require("replicate");
@@ -392,7 +393,7 @@ router.post("/generate", async (req, res) => {
 // ─── Fabric Try-On ────────────────────────
 router.post("/tryon", upload.single("humanImage"), async (req, res) => {
   try {
-    const { garmentImageUrl, apiKey, productId } = req.body;
+    const { garmentImageUrl, apiKey, productId, productName } = req.body;
 
     // garmentImageUrl string check karo
     const garmentUrl =
@@ -701,9 +702,37 @@ Short aur friendly jawab den!`,
     }
 
     // Legacy count
+    // Legacy count
     await Seller.findByIdAndUpdate(seller._id, {
       $inc: { tryonCount: 1 },
     });
+
+    // ── Fabric TryonHistory save (Gallery ke liye) ───────────────
+    try {
+      const displayName =
+        productName ||
+        req.body.garmentType ||
+        "Fabric Try-On";
+
+      await TryonHistory.create({
+        seller: seller._id,
+        resultImage: savedImageUrl,
+        garmentImage: garmentUrl,
+        humanImage: humanUrl,
+        productName: displayName,
+        category: isFabricLower
+          ? "lower_body"
+          : isFabricDress
+            ? "dress"
+            : "upper_body",
+        source: "fabric",
+      });
+      console.log("✅ Fabric TryonHistory saved to gallery!");
+    } catch (historyErr) {
+      // Gallery save fail ho to try-on result block mat karo
+      console.log("⚠️ TryonHistory save skip:", historyErr.message);
+    }
+    // ────────────────────────────────────────────────────────────
 
     res.json({
       success: true,

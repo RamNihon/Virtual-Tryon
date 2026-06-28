@@ -4,7 +4,7 @@ import axios from "axios";
 import API_URL from "../api";
 import { useCustomer } from "../context/CustomerContext";
 import VoiceAssistant, { speakText } from "../components/VoiceAssistant";
-import TryOnGallery from '../components/TryOnGallery'
+import TryOnGallery from "../components/TryOnGallery";
 
 // ─── Garment Labels ───────────────────────
 const GARMENT_LABELS = {
@@ -786,11 +786,11 @@ function FabricAnimation({ step }) {
         }
         return next;
       });
-    }, 3500);
-  
+    }, 4500);
+
     return () => {
       clearInterval(t);
-        // eslint-disable-next-line
+      // eslint-disable-next-line
       spokenRef.current.clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1131,13 +1131,17 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
         return;
       }
 
-      const formData = new FormData();
+     const formData = new FormData();
       formData.append("humanImage", humanImage);
       formData.append("garmentImageUrl", garmentUrl);
       formData.append("apiKey", apiKey);
       formData.append("productId", product._id);
-      // Garment type bhi bhejo taki lower/upper detect ho sake
       formData.append("garmentType", selectedGarment || "");
+      // Gallery ke liye product name bhi bhejo
+      formData.append(
+        "productName",
+        `${product.name || "Fabric"} - ${GARMENT_LABELS[selectedGarment] || selectedGarment || "Try-On"}`
+      );
 
       const res = await axios.post(`${API_URL}/api/fabric/tryon`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -1923,44 +1927,61 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
                     </div>
                   )}
 
-                   {(selectedGarment === "kurta" ||
-  selectedGarment === "salwar_suit" ||
-  selectedGarment === "saree" ||
-  selectedGarment === "kurti" ||
-  selectedGarment === "lehenga" ||
-  selectedGarment === "gown") && (
-  <div className="relative overflow-hidden bg-white border border-slate-200/80 rounded-2xl p-4.5 mb-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(99,102,241,0.06)] font-sans group">
-    {/* 🌌 बैकग्राउंड में सॉफ्ट और एलिगेंट इंडिगो/पर्पल ग्लो (भद्दा नहीं लगेगा) */}
-    <div className="absolute top-0 right-0 -mt-8 -mr-8 w-24 h-24 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 rounded-full blur-2xl group-hover:from-indigo-500/8 group-hover:to-purple-500/8 transition-all duration-500"></div>
+                  {(selectedGarment === "kurta" ||
+                    selectedGarment === "salwar_suit" ||
+                    selectedGarment === "saree" ||
+                    selectedGarment === "kurti" ||
+                    selectedGarment === "lehenga" ||
+                    selectedGarment === "gown") && (
+                    <div className="relative overflow-hidden bg-white border border-slate-200/80 rounded-2xl p-4.5 mb-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(99,102,241,0.06)] font-sans group">
+                      {/* 🌌 बैकग्राउंड में सॉफ्ट और एलिगेंट इंडिगो/पर्पल ग्लो (भद्दा नहीं लगेगा) */}
+                      <div className="absolute top-0 right-0 -mt-8 -mr-8 w-24 h-24 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 rounded-full blur-2xl group-hover:from-indigo-500/8 group-hover:to-purple-500/8 transition-all duration-500"></div>
 
-    <div className="flex items-start gap-4 relative z-10">
-      {/* 🔮 सॉफ्ट पर्पल ग्रेडिएंट बैकग्राउंड वाला एडवांस कैमरा फोकस आइकन */}
-      <div className="flex-shrink-0 relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 text-indigo-600 shadow-sm">
-        <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4.5 h-4.5">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 3.75H6A2.25 2.25 0 003.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0120.25 6v1.5m0 9V18A2.25 2.25 0 0118 20.25h-1.5m-9 0H6A2.25 2.25 0 013.75 18v-1.5M10.125 9h3.75M10.125 12h3.75M10.125 15h3.75" />
-        </svg>
-        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-indigo-500 animate-ping"></span>
-      </div>
-      
-      {/* 📝 क्रिस्प और प्रीमियम डार्क स्लेट टेक्स्ट */}
-      <div className="flex-1 space-y-1">
-        <div className="flex items-center gap-2">
-          <h4 className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 bg-clip-text text-transparent text-[11px] font-bold tracking-widest uppercase">
-            AI Draping Intelligence
-          </h4>
-          <span className="px-1.5 py-0.5 text-[9px] font-extrabold tracking-wider text-purple-600 bg-purple-50 border border-purple-100 rounded-md">
-            REQUIRED
-          </span>
-        </div>
-        
-        <p className="text-slate-600 text-xs leading-relaxed font-medium">
-          For Traditional & Full-Length outfits, please upload a <strong className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent font-bold underline decoration-indigo-500/30 decoration-2 underline-offset-2">Straight, Full-Body Photo</strong>. Your entire frame (head-to-toe) must be visible for flawless AI garment stitching and texture mapping.
-        </p>
-      </div>
-    </div>
-  </div>
-)}
+                      <div className="flex items-start gap-4 relative z-10">
+                        {/* 🔮 सॉफ्ट पर्पल ग्रेडिएंट बैकग्राउंड वाला एडवांस कैमरा फोकस आइकन */}
+                        <div className="flex-shrink-0 relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 text-indigo-600 shadow-sm">
+                          <svg
+                            xmlns="http://w3.org"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={2}
+                            stroke="currentColor"
+                            className="w-4.5 h-4.5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M7.5 3.75H6A2.25 2.25 0 003.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0120.25 6v1.5m0 9V18A2.25 2.25 0 0118 20.25h-1.5m-9 0H6A2.25 2.25 0 013.75 18v-1.5M10.125 9h3.75M10.125 12h3.75M10.125 15h3.75"
+                            />
+                          </svg>
+                          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-indigo-500 animate-ping"></span>
+                        </div>
 
+                        {/* 📝 क्रिस्प और प्रीमियम डार्क स्लेट टेक्स्ट */}
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 bg-clip-text text-transparent text-[11px] font-bold tracking-widest uppercase">
+                              AI Draping Intelligence
+                            </h4>
+                            <span className="px-1.5 py-0.5 text-[9px] font-extrabold tracking-wider text-purple-600 bg-purple-50 border border-purple-100 rounded-md">
+                              REQUIRED
+                            </span>
+                          </div>
+
+                          <p className="text-slate-600 text-xs leading-relaxed font-medium">
+                            For Traditional & Full-Length outfits, please upload
+                            a{" "}
+                            <strong className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent font-bold underline decoration-indigo-500/30 decoration-2 underline-offset-2">
+                              Straight, Full-Body Photo
+                            </strong>
+                            . Your entire frame (head-to-toe) must be visible
+                            for flawless AI garment stitching and texture
+                            mapping.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <button
                     onClick={handleTryOn}
@@ -2997,10 +3018,7 @@ export default function FabricShop() {
       />
 
       {/* Try-On Gallery */}
-<TryOnGallery
-  shop={shop}
-  apiKey={shop?.apiKey}
-/>
+      <TryOnGallery shop={shop} apiKey={shop?.apiKey} />
     </div>
   );
 }

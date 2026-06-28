@@ -8,9 +8,14 @@ const tryonHistorySchema = new mongoose.Schema({
   product: String,
   resultImage: String,
   humanImage: String,
-    garmentImage: String,
+  garmentImage: String,
   productName: String,
   category: String,
+  source: {
+    type: String,
+    enum: ['shop', 'fabric'],
+    default: 'shop'
+  },
   createdAt: { type: Date, default: Date.now }
 }, { timestamps: true })
 

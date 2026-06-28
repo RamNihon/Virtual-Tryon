@@ -2444,7 +2444,7 @@ function TryOnAnimation() {
         }
         return next;
       });
-    }, 4000);
+    }, 4500);
 
     return () => {
       clearInterval(t);

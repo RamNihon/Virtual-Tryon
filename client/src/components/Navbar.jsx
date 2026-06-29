@@ -561,4 +561,4 @@ export default function Navbar() {
       <div className="nb-spacer" />
     </>
   );
-            }
+}

@@ -587,7 +587,7 @@ export default function Home() {
                 name: "Pro",
                 emoji: "💎",
                 price: "₹2,499",
-                credits: "3,500 credits",
+                credits: "3,000 credits",
                 limit: "Fabric shop + try-ons",
                 color: "border-purple-500",
                 btn: "bg-purple-700",
@@ -764,7 +764,7 @@ export default function Home() {
             className="text-purple-200 text-lg mb-10
                         max-w-xl mx-auto"
           >
-            Start with free 50-try-ons. No need any credit card !
+            Start with free 100 credits. No need any credit card !
           </p>
 
           <div className="flex flex-wrap gap-4 justify-center">

@@ -533,7 +533,7 @@ export default function Pricing() {
               },
               {
                 q: "Koi bhi kapde ka try-on ho sakta hai?",
-                a: "Abhi upper body (shirts, t-shirts, jackets) best results deta hai. Lower body bhi kaam karta hai.",
+                a: "Yes , we support all types of  upper body (shirts, t-shirts, jackets) and Lower body (trousers, pants,jeans etc) and also Full dress (saree, kurti, kurta, lehnga, suits, gown etc). This all gives best result on Try-ons",
               },
               {
                 q: "Support kaise milega?",
@@ -586,7 +586,7 @@ export default function Pricing() {
               Get started now - for free!
             </h3>
             <p className="text-purple-200 mb-6 max-w-md mx-auto">
-              Test with 50 free trials. Upgrade if you like it!
+              Test with 100 credits trials. Upgrade if you like it!
             </p>
             <button
               onClick={() => navigate(seller ? "/dashboard" : "/register")}

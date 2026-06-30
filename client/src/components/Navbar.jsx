@@ -11,21 +11,14 @@ export default function Navbar() {
   const menuRef = useRef(null);
 
   const isHome = location.pathname === "/";
-  const isDashboard =
-    location.pathname === "/dashboard" ||
-    location.pathname.startsWith("/dashboard");
 
-  // Excluded pages
-  const excluded = ["/shop/", "/order/", "/fabric/"];
-  if (excluded.some((p) => location.pathname.startsWith(p))) return null;
-
+  // ✅ Hooks pehle — sab useEffect yahan rakho
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close menu on outside click
   useEffect(() => {
     const handler = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -36,8 +29,13 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Close menu on route change
   useEffect(() => setMenuOpen(false), [location.pathname]);
+
+  // ✅ Return null BAAD me — hooks ke baad
+  const excluded = ["/shop/", "/order/", "/fabric/"];
+  if (excluded.some((p) => location.pathname.startsWith(p))) return null;
+
+  // ... baaki sab same rehega
 
   const handleLogout = () => {
     logout();
@@ -45,11 +43,26 @@ export default function Navbar() {
   };
 
   const planMeta = {
-    elite: { label: "ELITE", gradient: "linear-gradient(135deg,#f59e0b,#ef4444)", glow: "#f59e0b", icon: "⚡" },
-    pro:   { label: "PRO",   gradient: "linear-gradient(135deg,#a855f7,#d946ef)", glow: "#d946ef", icon: "👑" },
-    basic: { label: "BASIC", gradient: "linear-gradient(135deg,#3b82f6,#06b6d4)", glow: "#06b6d4", icon: "✦" },
+    elite: {
+      label: "ELITE",
+      gradient: "linear-gradient(135deg,#f59e0b,#ef4444)",
+      glow: "#f59e0b",
+      icon: "⚡",
+    },
+    pro: {
+      label: "PRO",
+      gradient: "linear-gradient(135deg,#a855f7,#d946ef)",
+      glow: "#d946ef",
+      icon: "👑",
+    },
+    basic: {
+      label: "BASIC",
+      gradient: "linear-gradient(135deg,#3b82f6,#06b6d4)",
+      glow: "#06b6d4",
+      icon: "✦",
+    },
   };
-  const plan = seller?.plan ? planMeta[seller.plan] : null;
+  const plan = seller?.plan ? planMeta[seller.plan.toLowerCase()  ] : null;
 
   return (
     <>
@@ -84,13 +97,15 @@ export default function Navbar() {
           border-bottom: 1px solid transparent;
         }
 
-        /* Home page — transparent, blends into purple hero */
-        .nb.home-top {
-          background: transparent;
-          border-bottom: 1px solid transparent;
-        }
+       /* Home page top — solid dark purple jo hero ke saath match kare */
+.nb.home-top {
+  background: rgba(13, 1, 24, 0.95);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+}
         .nb.home-scrolled {
-          background: rgba(13, 1, 24, 0.72);
+          background: rgba(13, 1, 24, 0.82);
           backdrop-filter: blur(20px) saturate(160%);
           -webkit-backdrop-filter: blur(20px) saturate(160%);
           border-bottom: 1px solid var(--nb-border);
@@ -417,26 +432,31 @@ export default function Navbar() {
           box-shadow: 0 0 20px rgba(217,70,239,0.45);
         }
 
-        /* ── BOTTOM ACCENT LINE ── */
-        .nb-accent {
-          position: absolute;
-          bottom: 0; left: 0; right: 0;
-          height: 1px;
-          background: linear-gradient(
-            90deg,
-            transparent 0%,
-            rgba(217,70,239,0.0) 10%,
-            rgba(168,85,247,0.7) 40%,
-            rgba(217,70,239,0.9) 55%,
-            rgba(168,85,247,0.7) 70%,
-            rgba(217,70,239,0.0) 90%,
-            transparent 100%
-          );
-          opacity: 0;
-          transition: opacity 0.4s ease;
-        }
-        .nb.solid .nb-accent,
-        .nb.home-scrolled .nb-accent { opacity: 1; }
+      /* ── BOTTOM NEON SHIMMER LINE ── */
+.nb-accent {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1.4px;
+  background: linear-gradient(
+    90deg,
+    #7c3aed,
+    #a855f7,
+    #d946ef,
+    #ec4899,
+    #f59e0b,
+    #06b6d4,
+    #7c3aed
+  );
+  background-size: 300% 100%;
+  animation: nb-neon-slide 4s linear infinite;
+  opacity: 1;
+  filter: blur(0.5px) brightness(1.4);
+}
+
+@keyframes nb-neon-slide {
+  0%   { background-position: 0% 0%; }
+  100% { background-position: 300% 0%; }
+}
 
         /* ── SPACER ── */
         .nb-spacer { height: var(--nb-h); }
@@ -445,13 +465,10 @@ export default function Navbar() {
       {/* ── NAVBAR ── */}
       <nav
         className={`nb ${
-          isHome
-            ? scrolled ? "home-scrolled" : "home-top"
-            : "solid"
+          isHome ? (scrolled ? "home-scrolled" : "home-top") : "solid"
         }`}
       >
         <div className="nb-inner">
-
           {/* Logo */}
           <Link to="/" className="nb-logo">
             <div className="nb-logo-ring" />
@@ -511,8 +528,12 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link to="/login" className="nb-login">Login</Link>
-                <Link to="/register" className="nb-register">Register</Link>
+                <Link to="/login" className="nb-login">
+                  Login
+                </Link>
+                <Link to="/register" className="nb-register">
+                  Register
+                </Link>
               </>
             )}
           </div>
@@ -526,7 +547,7 @@ export default function Navbar() {
       {seller && (
         <div className={`nb-drawer ${menuOpen ? "open" : ""}`}>
           <div className="nb-drawer-seller">
-            <span className="nb-drawer-name">👋 {seller.name}</span>
+            <span className="nb-drawer-name">👋 Hello, {seller.name}</span>
             {plan && (
               <span
                 className="nb-plan"
@@ -550,7 +571,10 @@ export default function Navbar() {
             </Link>
             <button
               className="nb-drawer-logout"
-              onClick={() => { setMenuOpen(false); handleLogout(); }}
+              onClick={() => {
+                setMenuOpen(false);
+                handleLogout();
+              }}
             >
               Logout
             </button>

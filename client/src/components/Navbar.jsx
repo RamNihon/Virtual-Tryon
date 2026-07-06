@@ -12,6 +12,8 @@ export default function Navbar() {
 
   const isHome = location.pathname === "/";
 
+
+  
   // ✅ Hooks pehle — sab useEffect yahan rakho
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -63,6 +65,21 @@ export default function Navbar() {
     },
   };
   const plan = seller?.plan ? planMeta[seller.plan.toLowerCase()  ] : null;
+
+  if (location.pathname.startsWith("/privacy")) {
+    return null;
+  }
+
+  if (location.pathname.startsWith("/terms")) {
+    return null;
+  }
+
+  if (location.pathname.startsWith("/refund")) {
+    return null;
+  }
+    if (location.pathname.startsWith("/faq")) {
+    return null;
+  }
 
   return (
     <>

@@ -16,7 +16,14 @@ const isValidEmail = (email) => {
   const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$/;
   if (!regex.test(email)) return false;
   const domain = email.split("@")[1]?.toLowerCase() || "";
-  const blocked = ["test.com","abc.com","xyz.com","example.com","fake.com","asdf.com"];
+  const blocked = [
+    "test.com",
+    "abc.com",
+    "xyz.com",
+    "example.com",
+    "fake.com",
+    "asdf.com",
+  ];
   return !blocked.includes(domain);
 };
 
@@ -34,53 +41,85 @@ export function LoginRequiredPopup({ onClose, onLoginClick }) {
         {/* Rainbow top bar */}
         <div
           className="h-1.5 w-full"
-          style={{ background: "linear-gradient(90deg,#8B5CF6,#EC4899,#F59E0B)" }}
+          style={{
+            background: "linear-gradient(90deg,#8B5CF6,#EC4899,#F59E0B)",
+          }}
         />
 
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100
+        <div className="p-8 text-center relative overflow-hidden bg-white rounded-3xl select-none shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border border-neutral-100">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100
                      hover:bg-gray-200 flex items-center justify-center
                      text-gray-500 text-sm transition"
-        >
-          ✕
-        </button>
+          >
+            ✕
+          </button>
 
-        <div className="p-8 text-center">
+          {/* SaaS Premium Ambient Background Aura */}
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-pink-500/5 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Ultra Premium Glowing Lock Icon Container */}
           <div
-            className="w-20 h-20 mx-auto mb-5 rounded-full flex items-center
-                       justify-center text-4xl"
+            className="w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center relative group transition-all duration-300 hover:scale-105"
             style={{
-              background: "linear-gradient(135deg,#8B5CF6,#EC4899)",
-              boxShadow: "0 10px 30px rgba(139,92,246,0.4)",
+              background: "linear-gradient(135deg, #8B5CF6, #EC4899)",
+              boxShadow: "0 12px 30px rgba(139, 92, 246, 0.3)",
             }}
           >
-            🔒
+            {/* Inner Shimmer Effect */}
+            <div className="absolute inset-0 rounded-2xl bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+            {/* Advanced SaaS Lock/Shield SVG Icon */}
+            <svg
+              className="w-6 h-6 text-white animate-[pulse_3s_infinite]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://w3.org"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.5"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
           </div>
 
-          <h2 className="text-xl font-black text-gray-800 mb-2">
-            Login Zaroori Hai!
+          {/* Premium Modern Heading (आपकी अपनी वॉर्डिंग सुरक्षित है) */}
+          <h2 className="text-xl font-extrabold text-neutral-900 mb-3 tracking-normal">
+            Sign in to continue ✨
           </h2>
-          <p className="text-gray-500 text-sm leading-relaxed mb-6">
-            Virtual try-on aur apni gallery dekhne ke liye pehle login ya
-            register karein. Aapki photos sirf aapko dikhegi — kisi aur ko
-            nahi. 🔐
+
+          {/* Optimized Typography Contrast (आपकी अपनी वॉर्डिंग पूरी तरह सुरक्षित है) */}
+          <p className="text-neutral-600 font-medium leading-7 text-sm max-w-sm mx-auto mb-7 px-1">
+            Please Login or Create a free account to experience the virtual
+            try-on and save your styles. Your uploaded photos are completely
+            private, securely encrypted, and visible only to you. 🔐
           </p>
 
+          {/* Elite Centered Call-to-Action Button */}
           <button
             onClick={onLoginClick}
-            className="w-full text-white py-3.5 rounded-2xl font-bold text-sm
-                       transition hover:opacity-90 active:scale-[0.98]"
+            className="relative overflow-hidden w-full text-white h-12 flex items-center justify-center rounded-xl font-bold text-sm tracking-wide shadow-[0_10px_25px_rgba(139,92,246,0.3)] hover:shadow-[0_12px_30px_rgba(139,92,246,0.4)] active:scale-[0.98] transition-all duration-200 ease-out group"
             style={{
-              background: "linear-gradient(135deg,#8B5CF6,#EC4899)",
-              boxShadow: "0 10px 25px rgba(139,92,246,0.35)",
+              background: "linear-gradient(135deg, #8B5CF6, #EC4899)",
             }}
           >
-            🚀 Login / Register Karein
+            {/* Glossy Reflection Wave Effect on Hover */}
+            <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+
+            <span className="flex items-center justify-center gap-2">
+              🚀 Login / Register Now
+            </span>
           </button>
-          <p className="text-xs text-gray-400 mt-4">
-            Sirf 30 second lagega, promise! 😊
-          </p>
+
+          {/* Clean Minimalist Subtext Badge (बिना ग्रीन डॉट के एकदम प्रीमियम साएस लुक) */}
+          <div className="mt-5 inline-flex items-center justify-center bg-purple-500/[0.04] border border-purple-500/10 px-4 py-1.5 rounded-full text-[11px] text-purple-600/80 font-bold tracking-wide uppercase">
+            Takes less than 30 seconds!
+          </div>
         </div>
       </div>
     </div>
@@ -90,7 +129,12 @@ export function LoginRequiredPopup({ onClose, onLoginClick }) {
 // ─── Auth Modal (Login + Register) ────────
 export default function AuthModal({ mode = "login", onClose, onSuccess }) {
   const [activeMode, setActiveMode] = useState(mode);
-  const [form, setForm] = useState({ name: "", email: "", mobile: "", password: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    mobile: "",
+    password: "",
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sellerError, setSellerError] = useState(false);
@@ -101,14 +145,15 @@ export default function AuthModal({ mode = "login", onClose, onSuccess }) {
   const pwdChecks = checkPwd(form.password);
   const isPwdStrong = Object.values(pwdChecks).every(Boolean);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
     if (!isValidEmail(form.email)) {
-      setError("Sahi email daalo! (jaise: name@gmail.com)");
+      setError("Please enter a valid email address (e.g., name@gmail.com).");
       return;
     }
     if (activeMode === "register" && !isPwdStrong) {
       setPwdTouched(true);
-      setError("Password strong nahi hai — niche dekho!");
+      setError("Password does not meet the requirements — please check below.");
       return;
     }
     setLoading(true);
@@ -116,7 +161,9 @@ export default function AuthModal({ mode = "login", onClose, onSuccess }) {
     setSellerError(false);
     try {
       const endpoint =
-        activeMode === "login" ? "/api/customer/login" : "/api/customer/register";
+        activeMode === "login"
+          ? "/api/customer/login"
+          : "/api/customer/register";
       const res = await axios.post(`${API_URL}${endpoint}`, form);
       loginCustomer(res.data.customer, res.data.token);
       onSuccess();
@@ -153,8 +200,8 @@ export default function AuthModal({ mode = "login", onClose, onSuccess }) {
           </h2>
           <p className="text-purple-200 text-xs mt-1">
             {activeMode === "login"
-              ? "Apne try-ons dekhne ke liye login karein"
-              : "Free mein register karein aur try-on karein"}
+              ? "Sign in to access and view your virtual try-ons"
+              : "Create a free account to unlock virtual try-ons"}
           </p>
         </div>
 
@@ -164,11 +211,16 @@ export default function AuthModal({ mode = "login", onClose, onSuccess }) {
             {["login", "register"].map((m) => (
               <button
                 key={m}
-                onClick={() => { setActiveMode(m); setError(""); setSellerError(false); }}
+                onClick={() => {
+                  setActiveMode(m);
+                  setError("");
+                  setSellerError(false);
+                }}
                 className={`flex-1 py-2 rounded-lg text-sm font-semibold transition capitalize
-                  ${activeMode === m
-                    ? "bg-white text-purple-700 shadow-sm"
-                    : "text-gray-500"
+                  ${
+                    activeMode === m
+                      ? "bg-white text-purple-700 shadow-sm"
+                      : "text-gray-500"
                   }`}
               >
                 {m === "login" ? "Login" : "Register"}
@@ -190,18 +242,19 @@ export default function AuthModal({ mode = "login", onClose, onSuccess }) {
                 ⚠️ Seller Account Detected!
               </p>
               <p className="text-amber-700 text-xs">
-                Yeh email seller account ke liye hai. Shop se login nahi kar sakte.
+                This email is registered as a seller account. Please use the
+                dashboard to Log in, as shop login is not supported.
               </p>
               <button
                 onClick={() => (window.location.href = "/login")}
                 className="mt-2 text-purple-600 text-xs font-bold underline"
               >
-                Seller Dashboard →
+                Login via Seller Dashboard →
               </button>
             </div>
           )}
 
-          <div className="space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-3">
             {activeMode === "register" && (
               <input
                 type="text"
@@ -263,13 +316,17 @@ export default function AuthModal({ mode = "login", onClose, onSuccess }) {
                   { c: pwdChecks.length, t: "8+ characters" },
                   { c: pwdChecks.upper, t: "Capital letter (A-Z)" },
                   { c: pwdChecks.lower, t: "Small letter (a-z)" },
-                  { c: pwdChecks.num,   t: "Number (0-9)" },
+                  { c: pwdChecks.num, t: "Number (0-9)" },
                 ].map((r, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <span className={`text-sm ${r.c ? "text-green-500" : "text-gray-300"}`}>
+                    <span
+                      className={`text-sm ${r.c ? "text-green-500" : "text-gray-300"}`}
+                    >
                       {r.c ? "✓" : "○"}
                     </span>
-                    <span className={`text-xs ${r.c ? "text-green-600 font-medium" : "text-gray-400"}`}>
+                    <span
+                      className={`text-xs ${r.c ? "text-green-600 font-medium" : "text-gray-400"}`}
+                    >
                       {r.t}
                     </span>
                   </div>
@@ -278,6 +335,7 @@ export default function AuthModal({ mode = "login", onClose, onSuccess }) {
             )}
 
             <button
+              type="submit"
               onClick={handleSubmit}
               disabled={loading}
               className="w-full text-white py-3 rounded-xl font-bold
@@ -287,10 +345,10 @@ export default function AuthModal({ mode = "login", onClose, onSuccess }) {
               {loading
                 ? "⏳ Please wait..."
                 : activeMode === "login"
-                ? "🚀 Login Now"
-                : "✅ Register Now"}
+                  ? "🚀 Login Now"
+                  : "✅ Register Now"}
             </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>

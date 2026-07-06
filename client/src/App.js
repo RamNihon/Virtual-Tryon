@@ -28,6 +28,7 @@ import { useAuth } from "./context/AuthContext";
 import ScrollToTop from "./components/ScrollToTop";
 import WidgetGuide from "./pages/WidgetGuide";
 import CreditHistory from './pages/CreditHistory'
+import ShopFAQ from "./pages/ShopFAQ";
 
 const RedirectIfLogin = ({ children }) => {
   const { token } = useAuth();
@@ -89,6 +90,7 @@ function AppContent() {
           <Route path="/widget-guide" element={<WidgetGuide />} />
           <Route path="/order/:orderId" element={<OrderDetail />} />
           <Route path="/credits" element={<CreditHistory />} />
+          <Route path="/faq" element={<ShopFAQ />} />
         </Routes>
       </main>
 

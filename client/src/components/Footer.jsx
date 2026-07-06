@@ -5,7 +5,7 @@ import {
 
 const footerLinks = {
   product: [
-    { label: "Features", href: "/#features" },
+    { label: "What You Get", href: "/#what-you-get" },
     { label: "How it works", href: "/#how-it-works" },
     { label: "Pricing", href: "/#pricing" },
     { label: "Dashboard", href: "/dashboard" },
@@ -13,7 +13,7 @@ const footerLinks = {
   support: [
     { label: "Contact Us", href: "/contact" },
     { label: "Email Support", href:"mailto:virtualtryon.service@gmail.com" },  
-    { label: "FAQ", href: "/faq" },
+    { label: "FAQ", href: "#" },
   ],
   legal: [
     { label: "Privacy Policy", href: "/privacy" },
@@ -37,6 +37,9 @@ export default function Footer() {
     return null;
   }
    if (location.pathname.startsWith("/order")) {
+    return null;
+  }
+     if (location.pathname.startsWith("/faq")) {
     return null;
   }
   //  if (location.pathname.startsWith("/fabric")) {

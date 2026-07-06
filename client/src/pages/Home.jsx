@@ -141,8 +141,7 @@ export default function Home() {
 
               <p className="text-purple-200/80 text-lg mb-9 max-w-lg leading-relaxed">
                 Upload your products, share one link, and start taking orders on
-                WhatsApp today. AI virtual try-on comes built in — so customers
-                see how it looks before they buy.
+                WhatsApp today. AI virtual try-on comes built in — so every customer gets a virtual trial room before they buy.
               </p>
 
               {/* CTA Buttons */}
@@ -246,7 +245,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════
           HOW IT WORKS
       ═══════════════════════════════════════════════════ */}
-      <div className="py-24 px-6 bg-gray-50">
+      <div id='how-it-works' className="py-24 px-6 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <SectionEyebrow>How It Works</SectionEyebrow>
           <h2 className="text-3xl md:text-[2.5rem] font-extrabold text-gray-900 mt-4 mb-4 text-center tracking-tight">
@@ -352,9 +351,9 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════
           FEATURES
       ═══════════════════════════════════════════════════ */}
-      <div className="py-24 px-6 bg-gray-50">
+      <div id='what-you-get' className="py-24 px-6 bg-gray-50">
         <div className="max-w-6xl mx-auto">
-          <SectionEyebrow>What You Get</SectionEyebrow>
+          <SectionEyebrow >What You Get</SectionEyebrow>
           <h2 className="text-3xl md:text-[2.5rem] font-extrabold text-gray-900 mt-4 mb-16 text-center tracking-tight">
             Everything to run your store online
           </h2>
@@ -429,7 +428,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════
           PRICING
       ═══════════════════════════════════════════════════ */}
-      <div className="py-24 px-6 bg-white">
+      <div id='pricing' className="py-24 px-6 bg-white">
         <div className="max-w-5xl mx-auto">
           <SectionEyebrow>Pricing</SectionEyebrow>
           <h2 className="text-3xl md:text-[2.5rem] font-extrabold text-gray-900 mt-4 mb-4 text-center tracking-tight">
@@ -718,7 +717,7 @@ function TryOnShowcase() {
           <div className="flex items-center gap-4">
             <div
               onClick={() => resultImg && setShowModal(true)}
-              className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center overflow-hidden shrink-0 cursor-pointer"
+              className="relative w-24 h-28 sm:w-28 sm:h-28 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center overflow-hidden shrink-0 cursor-pointer"
             >
               {resultImg ? (
                 <>
@@ -743,6 +742,27 @@ function TryOnShowcase() {
               <p className="text-purple-100/90 text-xs mt-0.5">
                 Ready to share with the customer
               </p>
+              <div
+                onClick={() => resultImg && setShowModal(true)}
+                className="inline-flex items-center justify-center gap-1.5 mt-2.5 bg-black/15 border border-white/10 text-purple-200 hover:text-white hover:bg-black/25 font-bold text-[8px] uppercase tracking-widest px-3 py-1.5 rounded-lg backdrop-blur-md shadow-inner transition-all cursor-pointer"
+              >
+                <span>View Preview</span>
+                {/* 💡 नीले इमोजी को रोकने के लिए एक स्लीक प्रीमियम SVG एरो */}
+                <svg
+                  className="w-2.5 h-2.5 text-current"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://w3.org"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.5"
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                  />
+                </svg>
+              </div>
             </div>
             <Check
               className="w-5 h-5 text-white ml-auto shrink-0"
@@ -822,7 +842,7 @@ function ShowcaseTile({ image, icon: Icon, label }) {
   return (
     <div className="flex-1 min-w-0">
       <div
-        className="aspect-square rounded-2xl overflow-hidden
+        className="w-full h-56 rounded-2xl overflow-hidden
                    bg-white/[0.06] border border-white/[0.1]
                    flex items-center justify-center relative"
       >
@@ -839,7 +859,7 @@ function ShowcaseTile({ image, icon: Icon, label }) {
             <img
               src={image}
               alt={label}
-              className="relative w-full h-full object-contain"
+              className="relative w-full h-full object-cover"
             />
           </>
         ) : (

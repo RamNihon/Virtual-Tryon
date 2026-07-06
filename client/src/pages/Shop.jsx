@@ -526,7 +526,16 @@ function LoginRequiredPopup({ onClose, onLoginClick }) {
             background: "linear-gradient(90deg,#8B5CF6,#EC4899,#F59E0B)",
           }}
         />
-        <button
+        {/* <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100
+                     hover:bg-gray-200 flex items-center justify-center
+                     text-gray-500 text-sm transition"
+        >
+          ✕
+        </button> */}
+        <div className="p-8 text-center relative overflow-hidden bg-white rounded-3xl select-none shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border border-neutral-100">
+         <button
           onClick={onClose}
           className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100
                      hover:bg-gray-200 flex items-center justify-center
@@ -534,39 +543,62 @@ function LoginRequiredPopup({ onClose, onLoginClick }) {
         >
           ✕
         </button>
-        <div className="p-8 text-center">
-          <div
-            className="w-20 h-20 mx-auto mb-5 rounded-full flex items-center
-                       justify-center text-4xl"
-            style={{
-              background: "linear-gradient(135deg,#8B5CF6,#EC4899)",
-              boxShadow: "0 10px 30px rgba(139,92,246,0.4)",
-            }}
-          >
-            🔒
-          </div>
-          <h2 className="text-xl font-black text-gray-800 mb-2">
-            Login Zaroori Hai!
-          </h2>
-          <p className="text-gray-500 text-sm leading-relaxed mb-6">
-            Virtual try-on aur apni gallery dekhne ke liye pehle login ya
-            register karein. Aapki photos sirf aapko dikhegi! 🔐
-          </p>
-          <button
-            onClick={onLoginClick}
-            className="w-full text-white py-3.5 rounded-2xl font-bold text-sm
-                       transition hover:opacity-90 active:scale-[0.98]"
-            style={{
-              background: "linear-gradient(135deg,#8B5CF6,#EC4899)",
-              boxShadow: "0 10px 25px rgba(139,92,246,0.35)",
-            }}
-          >
-            🚀 Login / Register Karein
-          </button>
-          <p className="text-xs text-gray-400 mt-4">
-            Sirf 30 second lagega! 😊
-          </p>
-        </div>
+  
+  {/* SaaS Premium Ambient Background Aura */}
+  <div className="absolute -top-24 -left-24 w-48 h-48 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
+  <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-pink-500/5 rounded-full blur-3xl pointer-events-none" />
+
+  {/* Ultra Premium Glowing Lock Icon Container */}
+  <div
+    className="w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center relative group transition-all duration-300 hover:scale-105"
+    style={{
+      background: "linear-gradient(135deg, #8B5CF6, #EC4899)",
+      boxShadow: "0 12px 30px rgba(139, 92, 246, 0.3)",
+    }}
+  >
+    {/* Inner Shimmer Effect */}
+    <div className="absolute inset-0 rounded-2xl bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    
+    {/* Advanced SaaS Lock/Shield SVG Icon */}
+    <svg className="w-6 h-6 text-white animate-[pulse_3s_infinite]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://w3.org">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+    </svg>
+  </div>
+
+  {/* Premium Modern Heading (आपकी अपनी वॉर्डिंग सुरक्षित है) */}
+  <h2 className="text-xl font-extrabold text-neutral-900 mb-3 tracking-normal">
+    Sign in to continue ✨
+  </h2>
+
+  {/* Optimized Typography Contrast (आपकी अपनी वॉर्डिंग पूरी तरह सुरक्षित है) */}
+  <p className="text-neutral-600 font-medium leading-7 text-sm max-w-sm mx-auto mb-7 px-1">
+    Please Login or Create a free account to experience the virtual
+    try-on and save your styles. Your uploaded photos are completely
+    private, securely encrypted, and visible only to you. 🔐
+  </p>
+
+  {/* Elite Centered Call-to-Action Button */}
+  <button
+    onClick={onLoginClick}
+    className="relative overflow-hidden w-full text-white h-12 flex items-center justify-center rounded-xl font-bold text-sm tracking-wide shadow-[0_10px_25px_rgba(139,92,246,0.3)] hover:shadow-[0_12px_30px_rgba(139,92,246,0.4)] active:scale-[0.98] transition-all duration-200 ease-out group"
+    style={{
+      background: "linear-gradient(135deg, #8B5CF6, #EC4899)",
+    }}
+  >
+    {/* Glossy Reflection Wave Effect on Hover */}
+    <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+    
+    <span className="flex items-center justify-center gap-2">
+      🚀 Login / Register Now
+    </span>
+  </button>
+
+  {/* Clean Minimalist Subtext Badge (बिना ग्रीन डॉट के एकदम प्रीमियम साएस लुक) */}
+  <div className="mt-5 inline-flex items-center justify-center bg-purple-500/[0.04] border border-purple-500/10 px-4 py-1.5 rounded-full text-[11px] text-purple-600/80 font-bold tracking-wide uppercase">
+    Takes less than 30 seconds!
+  </div>
+
+</div>
       </div>
     </div>
   );
@@ -593,7 +625,7 @@ function CustomerAuthModal({ mode, onClose, onSuccess }) {
   const handleSubmit = async () => {
     // ✅ Email validation
     if (!isValidEmail(form.email)) {
-      setError("Sahi email daalo! (jaise: name@gmail.com)");
+      setError("Please enter a valid email address (e.g., name@gmail.com).");
       return;
     }
     // Prevent weak passwords on registration
@@ -649,6 +681,11 @@ function CustomerAuthModal({ mode, onClose, onSuccess }) {
           <h2 className="text-xl font-bold">
             {activeMode === "login" ? "Welcome Back!" : "Create Account"}
           </h2>
+            <p className="text-purple-200 text-xs mt-1">
+            {activeMode === "login"
+              ? "Sign in to access and view your virtual try-ons"
+              : "Create a free account to unlock virtual try-ons"}
+          </p>
         </div>
         <div className="p-6">
           <div
@@ -688,15 +725,14 @@ function CustomerAuthModal({ mode, onClose, onSuccess }) {
                 ⚠️ Seller Account Detected!
               </p>
               <p className="text-amber-700 text-xs">
-                Yeh email seller account ke liye registered hai. Shop page se
-                login nahi kar sakte.
+               This email is registered as a seller account. Shop page login is not supported for seller credentials.
               </p>
               <button
                 onClick={() => (window.location.href = "/login")}
                 className="mt-2 text-purple-600 text-xs
                  font-bold underline"
               >
-                Seller Dashboard Mein Login Karein →
+                Login via Seller Dashboard →
               </button>
             </div>
           )}
@@ -5143,6 +5179,9 @@ export default function Shop() {
     try {
       const res = await axios.get(`${API_URL}/api/seller/shop/${sellerId}`);
       setShop(res.data.shop);
+      if (res.data && res.data.shop) {
+  localStorage.setItem("live_shop_whatsapp", res.data.shop.whatsapp || "");
+}
       setProducts(res.data.products);
       // console.log("Shop apiKey:", res.data.shop?.apiKey);
     } catch {

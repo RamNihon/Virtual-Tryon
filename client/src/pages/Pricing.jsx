@@ -16,7 +16,7 @@ export default function Pricing() {
       key: "free",
       emoji: "🆓",
       name: "Free",
-      tagline: "Try karne ke liye",
+      tagline: "Good for Testing the Platform",
       price: "₹0",
       credits: 100,
       color: "border-gray-200",
@@ -38,7 +38,7 @@ export default function Pricing() {
       key: "basic",
       emoji: "🚀",
       name: "Basic",
-      tagline: "Ready-made sellers ke liye",
+      tagline: "Perfect for Instagram Sellers",
       price: "₹999",
       credits: 1500,
       color: "border-blue-400",
@@ -60,7 +60,7 @@ export default function Pricing() {
       key: "pro",
       emoji: "💎",
       name: "Pro",
-      tagline: "Fabric sellers ke liye",
+      tagline: "Best for Growing Fashion Stores",
       price: "₹2,499",
       credits: 3000,
       color: "border-purple-500",
@@ -83,7 +83,7 @@ export default function Pricing() {
       key: "elite",
       emoji: "👑",
       name: "Elite",
-      tagline: "Bade boutiques ke liye",
+      tagline: "For Fashion Brands",
       price: "₹4,999",
       credits: 10000,
       color: "border-yellow-500",
@@ -95,6 +95,7 @@ export default function Pricing() {
         { text: "~1200 ready-made try-ons", available: true },
         { text: "~500 fabric generations", available: true },
         { text: "Fabric shop access", available: true },
+         { text: "Garment shop access", available: true },
         { text: "Website widget", available: true },
         { text: "Full analytics", available: true },
         { text: "Priority support", available: true },
@@ -272,8 +273,8 @@ export default function Pricing() {
       </div>
 
       {/* Plans */}
-      <div className="max-w-6xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto px-6 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {plans.map((plan) => (
             <div
               key={plan.key}

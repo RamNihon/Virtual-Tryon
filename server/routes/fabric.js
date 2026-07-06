@@ -9,6 +9,7 @@ const Replicate = require("replicate");
 
 const { generateGarmentFromFabric, useCredits } = require("../config/openai");
 const { authMiddleware } = require("./seller");
+const { customerAuth } = require("./customer");
 
 const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN,
@@ -390,8 +391,8 @@ router.post("/generate", async (req, res) => {
   }
 });
 
-// ─── Fabric Try-On ────────────────────────
-router.post("/tryon", upload.single("humanImage"), async (req, res) => {
+// ─── Fabric Try-On (Login Required) ───────
+router.post("/tryon", customerAuth, upload.single("humanImage"), async (req, res) => {
   try {
     const { garmentImageUrl, apiKey, productId, productName } = req.body;
 
@@ -714,8 +715,9 @@ Short aur friendly jawab den!`,
         req.body.garmentType ||
         "Fabric Try-On";
 
-      await TryonHistory.create({
+    await TryonHistory.create({
         seller: seller._id,
+        customer: req.customerId,   // ✅ Privacy fix
         resultImage: savedImageUrl,
         garmentImage: garmentUrl,
         humanImage: humanUrl,

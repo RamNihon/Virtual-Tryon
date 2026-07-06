@@ -1,4 +1,26 @@
 import { Link, useLocation } from "react-router-dom";
+import {
+  Shirt
+} from "lucide-react";
+
+const footerLinks = {
+  product: [
+    { label: "Features", href: "/#features" },
+    { label: "How it works", href: "/#how-it-works" },
+    { label: "Pricing", href: "/#pricing" },
+    { label: "Dashboard", href: "/dashboard" },
+  ],
+  support: [
+    { label: "Contact Us", href: "/contact" },
+    { label: "Email Support", href:"mailto:virtualtryon.service@gmail.com" },  
+    { label: "FAQ", href: "/faq" },
+  ],
+  legal: [
+    { label: "Privacy Policy", href: "/privacy" },
+    { label: "Terms of Service", href: "/terms" },
+    { label: "Refund Policy", href: "/refund" },
+  ],
+};
 
 export default function Footer() {
   const location = useLocation();
@@ -14,6 +36,9 @@ export default function Footer() {
   if (location.pathname.startsWith("/refund")) {
     return null;
   }
+   if (location.pathname.startsWith("/order")) {
+    return null;
+  }
   //  if (location.pathname.startsWith("/fabric")) {
   //   return null;
   // }
@@ -22,130 +47,75 @@ export default function Footer() {
   // }
 
   return (
-    <footer
-      className="bg-gray-900 text-gray-400 
-                       py-12 px-6 mt-auto"
-    >
-      <div className="max-w-6xl mx-auto">
-        {/* Top Section */}
-        <div
-          className="grid grid-cols-1 md:grid-cols-4 
-                        gap-8 mb-8"
-        >
-          {/* Brand */}
-          <div className="md:col-span-1">
-            <h3
-              className="text-white text-xl 
-                           font-bold mb-3"
-            >
-              👗 VirtualTryOn
-            </h3>
-            <p className="text-sm leading-relaxed">
-              AI powered virtual try-on solution for Indian fashion sellers.
+      
+      <footer className="bg-slate-950 px-6 py-16 text-white">
+        <div className="mx-auto grid max-w-6xl gap-12 md:grid-cols-[1.3fr_1fr_1fr_1fr]">
+          <div>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-fuchsia-500">
+                <Shirt className="h-5 w-5 text-white" />
+              </div>
+              <span className="text-xl font-bold">
+                Virtual<span className="text-purple-300">TryOn</span>
+              </span>
+            </div>
+            <p className="mt-4 max-w-sm text-sm leading-7 text-white/60">
+              AI-powered virtual try-on solution for Indian fashion sellers.
+              Create a store, share it, and let customers try before they buy.
             </p>
+           
           </div>
 
-          {/* Product */}
           <div>
-            <h4
-              className="text-white font-semibold 
-                           mb-3"
-            >
-              Product
-            </h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link to="/pricing" className="hover:text-white transition">
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link to="/register" className="hover:text-white transition">
-                  Free Trial
-                </Link>
-              </li>
-              <li>
-                <Link to="/dashboard" className="hover:text-white transition">
-                  Dashboard
-                </Link>
-              </li>
+            <h4 className="text-lg font-semibold text-white">Product</h4>
+            <ul className="mt-5 space-y-3 text-sm text-white/60">
+              {footerLinks.product.map((item) => (
+                <li key={item.label}>
+                  {item.href.startsWith("#") ? (
+                    <a href={item.href} className="transition hover:text-white">
+                      {item.label}
+                    </a>
+                  ) : (
+                    <Link to={item.href} className="transition hover:text-white">
+                      {item.label}
+                    </Link>
+                  )}
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Support */}
           <div>
-            <h4
-              className="text-white font-semibold 
-                           mb-3"
-            >
-              Support
-            </h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <a
-                  href="mailto:virtualtryon.service@gmail.com"
-                  className="hover:text-white transition"
-                >
-                  Email Support
-                </a>
-              </li>
-              {/* <li>
-                <a
-                  href="https://wa.me/+919801227970"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-white transition"
-                >
-                  WhatsApp Support
-                </a>
-              </li> */}
-              <li>
-                <Link to="/contact" className="hover:text-white transition">
-                  Contact Us
-                </Link>
-              </li>
+            <h4 className="text-lg font-semibold text-white">Support</h4>
+            <ul className="mt-5 space-y-3 text-sm text-white/60">
+              {footerLinks.support.map((item) => (
+                <li key={item.label}>
+                  <Link to={item.href} className="transition hover:text-white">
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Legal */}
           <div>
-            <h4
-              className="text-white font-semibold 
-                           mb-3 "
-            >
-              Legal
-            </h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link to="/privacy" className="hover:text-white transition">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link to="/terms" className="hover:text-white transition">
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link to="/refund" className="hover:text-white transition">
-                  Refund Policy
-                </Link>
-              </li>
+            <h4 className="text-lg font-semibold text-white">Legal</h4>
+            <ul className="mt-5 space-y-3 text-sm text-white/60">
+              {footerLinks.legal.map((item) => (
+                <li key={item.label}>
+                  <Link to={item.href} className="transition hover:text-white">
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
 
-        {/* Divider */}
-        <div
-          className="border-t border-gray-800 pt-6
-                        flex flex-col md:flex-row
-                        justify-between items-center
-                        gap-4"
-        >
-          <p className="text-sm">© 2025 VirtualTryOn. All rights reserved.</p>
-          <p className="text-sm">Made with ❤️ for Indian Sellers</p>
+        <div className="mx-auto mt-12 max-w-6xl border-t border-white/10 pt-6 text-center text-sm text-white/50">
+          © 2025 VirtualTryOn. All rights reserved.
+           <p className="mt-4 text-sm text-white/50">Made with ❤️ for Indian Sellers</p>
         </div>
-      </div>
-    </footer>
+      </footer>
   );
 }

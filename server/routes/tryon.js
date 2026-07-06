@@ -7,6 +7,7 @@ const Seller = require("../models/seller");
 const { useCredits } = require("../config/openai");
 const { sendLimitWarningEmail } = require("../config/email");
 const TryonHistory = require("../models/TryonHistory");
+const { customerAuth } = require("./customer");
 
 const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN,
@@ -96,8 +97,9 @@ const getStyleAdviceOpenRouter = async (imageUrl) => {
           "X-Title": "Virtual TryOn",
         },
         body: JSON.stringify({
-          model: "anthropic/claude-3-haiku",
-          max_tokens: 800,
+          model: "openai/gpt-4.1-mini",
+          max_tokens: 600,
+          temperature: 0.4,
           messages: [
             {
               role: "user",
@@ -110,18 +112,96 @@ const getStyleAdviceOpenRouter = async (imageUrl) => {
                 },
                 {
                   type: "text",
-                  text: `Tu ek expert fashion stylist hai.
-Is try-on image ko dekh kar Hindi mein batao:
+                  text: `
 
-1. 🎨 Color Rating: /10
-2. ✅ Kya yah achha lag raha hai
-3. 👖 Best combination (pant/bottom)
-4. ❌ Kya avoid karein
-5. 🎯 Kis occasion ke liye perfect
-6. 🎯 skin color kaisi hai and  skin color ke hisab se aur konse color combination achha dikhega
-7. 🎯 Aur kya accesories or hairstyle or other improvement kar sakte hain, taki bold and confident dikhen
+You are VirtualTryOn AI Stylist, a premium fashion consultant for an Indian Virtual Try-On platform.
 
-Short aur friendly jawab do!`,
+Analyze ONLY the FINAL try-on image.
+
+Your goal is NOT to describe the image.
+Your goal is to help the customer confidently decide whether this outfit looks good and whether they should buy it.
+
+Rules:
+
+• Write in simple Hindi mixed with easy English.
+
+• Sound like a real premium fashion stylist.
+• Keep the answer between 120-180 words.
+Each section should contain 1-2 meaningful sentences or 2-4 useful bullet points.
+Do not make the response too short..
+• Never mention AI.
+• Never mention image quality.
+• Never say "I cannot", "I think", "appears", or "looks like AI generated".
+• Never describe the background.
+• Write practical styling advice instead of generic compliments.
+Every suggestion should help the customer make a buying decision.
+
+If the outfit looks excellent, explain WHY it looks good in one sentence.
+
+If improvements are needed, suggest realistic alternatives instead of criticizing.,
+encourage the customer confidently.
+
+Use EXACTLY this format:
+
+✨ AI STYLE REPORT
+
+🟢 Overall Match
+Excellent Match / Good Match / Needs Improvement
+
+🛒 Purchase Recommendation
+(Choose ONLY one)
+
+★★★★★ Highly Recommended
+★★★★☆ Recommended
+★★★☆☆ Good Choice
+★★☆☆☆ Consider Better Styling
+★☆☆☆☆ Not Recommended
+
+👔 Overall Look
+(Write 1-2 sentences describing the overall appearance, fit and style confidence.)
+
+🎨 Color Combination
+(Explain why the colors work together and how they affect the overall look.)
+
+👖 Better Bottom Options
+Suggest 3 realistic bottom options suitable for the outfit.
+Include both color and type.
+Example:
+• Black Slim Fit Jeans
+• Beige Chinos
+• Dark Blue Denim
+
+🎉 Perfect For
+• Occasion 1
+• Occasion 2
+• Occasion 3
+
+✨ Complete The Look
+Suggest:
+• Footwear
+• Watch or Jewellery
+• Hairstyle
+• One optional accessory
+
+Keep every suggestion practical.
+
+💡 Pro Tip
+(Give one practical styling tip that noticeably improves the outfit.
+Avoid generic tips..)
+
+Never use numeric ratings like 7/10 or 8/10.
+
+Avoid repeating the same words across sections.
+
+Do not give generic fashion advice.
+
+Write naturally like an experienced fashion consultant.
+
+Every response should feel personalized for the uploaded outfit.
+
+Imagine you are the senior stylist for premium brands like Zara, H&M and Myntra Luxe.
+Write with confidence, clarity and warmth.
+The customer should finish reading the report feeling excited about wearing the outfit.`,
                 },
               ],
             },
@@ -147,6 +227,7 @@ const runFashnTryon = async (
   garmentUrl,
   category = "tops",
   isDress = false,
+  garmentDesc = "",
 ) => {
   console.log("🚀 FASH_AI starting...");
   if (!process.env.FASHN_API_KEY) {
@@ -328,6 +409,7 @@ const runIDMVTON = async (humanUrl, garmentUrl, garmentType, isCrop) => {
 // ─── Main Try-On Route ─────────────────────
 router.post(
   "/",
+  customerAuth,
   upload.fields([
     { name: "humanImage", maxCount: 1 },
     { name: "garmentImage", maxCount: 1 },
@@ -372,7 +454,7 @@ router.post(
       );
 
       const garmentUrl = req.body.garmentUrl;
-      const garmentDesc = (req.body.description || "upper_body").toLowerCase();
+      const garmentDesc = req.body.description || "upper_body";
 
       if (!garmentUrl) {
         return res.status(400).json({
@@ -482,6 +564,7 @@ router.post(
             garmentUrl,
             fashnCategory,
             isDress,
+            garmentDesc,
           );
         } catch (fashnErr) {
           console.log("⚠️ Fashn failed, IDM-VTON fallback:", fashnErr.message);
@@ -572,11 +655,13 @@ router.post(
 
       await TryonHistory.create({
         seller: seller._id,
+        customer: req.customerId, // ✅ Privacy fix
         resultImage: finalImageUrl,
         humanImage: humanUrl,
         garmentImage: garmentUrl || "",
         productName: req.body.productName || "",
         category: req.body.description || "upper_body",
+        source: "shop",
       });
     } catch (error) {
       console.error("❌Tryon Error:", error.message);
@@ -589,7 +674,8 @@ router.post(
 );
 
 // ─── Gallery Route ────────────────────────
-router.get("/gallery", async (req, res) => {
+// ─── Gallery Route (Privacy Protected) ────
+router.get("/gallery", customerAuth, async (req, res) => {
   try {
     const apiKey = req.headers["x-api-key"];
     if (!apiKey) {
@@ -601,10 +687,11 @@ router.get("/gallery", async (req, res) => {
       return res.status(401).json({ message: "Invalid API key!" });
     }
 
-    // Customer session ID se filter (optional)
-    const sessionId = req.query.sessionId;
-
-    const query = { seller: seller._id };
+    // ✅ PRIVACY: Sirf is customer ke apne try-ons
+    const query = {
+      seller: seller._id,
+      customer: req.customerId,
+    };
 
     const history = await TryonHistory.find(query)
       .sort({ createdAt: -1 })

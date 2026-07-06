@@ -133,9 +133,85 @@ function StarSelector({ value, onChange }) {
 }
 
 // ─── Shop Navbar ──────────────────────────
-function ShopNavbar({ shop, onLoginClick, onProfileClick }) {
+// ─── Shop Account Panel (My Account dropdown) ───
+function ShopAccountPanel({ customer, onClose, onProfileClick, onMyTryOnsClick, onLogout }) {
+  return (
+    <>
+      {/* Backdrop - click karke close ho jayega */}
+      <div className="fixed inset-0 z-[90]" onClick={onClose} />
+
+      <div
+        className="absolute right-0 top-full mt-3 w-72 z-[100]
+                   bg-[#150826]
+                   border border-white/15 rounded-2xl
+                   shadow-[0_20px_60px_-10px_rgba(0,0,0,0.6)]
+                   overflow-hidden
+                   animate-in fade-in slide-in-from-top-2 duration-200"
+      >
+        {/* Header strip */}
+        <div className="bg-[#2a1050] p-4 border-b border-white/15">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-11 h-11 rounded-xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500
+                         flex items-center justify-center text-white font-black text-lg
+                         shadow-lg shadow-purple-500/30 flex-shrink-0"
+            >
+              {customer?.name ? customer.name.charAt(0).toUpperCase() : "👤"}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-white font-bold text-sm truncate">
+                {customer?.name || "Guest User"}
+              </p>
+              <p className="text-purple-300 text-xs truncate">
+                {customer?.email || customer?.mobile || "Welcome back!"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="p-2">
+          <button
+            onClick={onProfileClick}
+            className="w-full flex items-center gap-2.5 text-left
+                       text-white text-sm font-semibold
+                       px-3 py-2.5 rounded-xl
+                       hover:bg-white/10 active:bg-white/20
+                       transition-all duration-200"
+          >
+            <span>👤</span> My Account
+          </button>
+          <button
+            onClick={onMyTryOnsClick}
+            className="w-full flex items-center gap-2.5 text-left
+                       text-white text-sm font-semibold
+                       px-3 py-2.5 rounded-xl
+                       hover:bg-white/10 active:bg-white/20
+                       transition-all duration-200"
+          >
+            <span>✨</span> My Try-Ons
+          </button>
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center gap-2.5 text-left
+                       text-red-300 text-sm font-semibold
+                       px-3 py-2.5 rounded-xl
+                       hover:bg-red-500/10 active:bg-red-500/20
+                       transition-all duration-200"
+          >
+            <span>🔓</span> Logout
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function ShopNavbar({ shop, onLoginClick, onProfileClick, onMyTryOnsClick }) {
   const { customer, logoutCustomer } = useCustomer();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [textIndex, setTextIndex] = useState(0);
   const [displayText, setDisplayText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -150,6 +226,12 @@ function ShopNavbar({ shop, onLoginClick, onProfileClick }) {
     "↩️ Easy Returns",
     "💳 Secure Payments",
   ];
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 8);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const current = features[textIndex];
@@ -174,62 +256,107 @@ function ShopNavbar({ shop, onLoginClick, onProfileClick }) {
   }, [displayText, isDeleting, textIndex]);
 
   return (
-    <div className="sticky top-0 z-30 shadow-md">
+   <div
+      className={`sticky top-0 z-30 relative transition-shadow duration-500 ${
+        scrolled ? "shadow-xl shadow-purple-950/60" : "shadow-lg shadow-purple-950/40"
+      }`}
+    >
+      {/* Subtle top glow line */}
+      {/* <div className="h-[2px] w-full bg-gradient-to-r from-fuchsia-500 via-purple-400 to-cyan-400 opacity-80" /> */}
       <div
-        className="bg-gradient-to-r from-purple-700
-                      via-purple-600 to-indigo-700 px-4 py-3"
+        className="transition-all duration-500 px-4 py-3 relative
+                   bg-gradient-to-r from-[#1a0b2e] via-[#3b0764] to-[#1e1b4b]"
       >
+        {/* Soft glow accent */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_100%_at_50%_0%,rgba(217,70,239,0.12),transparent)]" />
         <div
           className="max-w-6xl mx-auto flex
-                        items-center justify-between"
+                        items-center justify-between relative"
         >
-          <h1
-            className="text-xl md:text-2xl font-bold
-                         text-white italic"
-            style={{ fontFamily: "Georgia, serif" }}
-          >
-            👗 {shop?.name}
-          </h1>
-          <div className="hidden md:flex items-center gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <h1
+              className="text-xl md:text-2xl font-bold
+                           text-white italic truncate"
+              style={{ fontFamily: "Georgia, serif" }}
+            >
+              👗 {shop?.name}
+            </h1>
+          </div>
+
+          <div className="hidden md:flex items-center gap-3 relative z[95]">
             {customer ? (
-              <>
-                <button
-                  onClick={onProfileClick}
-                  className="text-purple-200 text-sm
-                             hover:text-white transition"
+              <div className="relative">
+            <button
+                  onClick={() => setAccountOpen((v) => !v)}
+                  className="flex items-center gap-2 bg-white/[0.07] hover:bg-white/[0.14]
+                             border border-white/15 rounded-full pl-1.5 pr-4 py-1.5
+                             shadow-[0_0_0_1px_rgba(255,255,255,0.03),0_4px_20px_-4px_rgba(217,70,239,0.25)]
+                             transition-all duration-200 cursor-pointer"
                 >
-                  Hi, {customer.name}! 👋
+                  <span
+                    className="w-7 h-7 rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500
+                               flex items-center justify-center text-white font-bold text-xs"
+                  >
+                    {customer?.name ? customer.name.charAt(0).toUpperCase() : "👤"}
+                  </span>
+                  <span className="text-white text-sm font-semibold">
+                    {customer.name?.split(" ")[0]}
+                  </span>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`text-purple-300 transition-transform duration-300 ${
+                      accountOpen ? "rotate-180" : ""
+                    }`}
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
                 </button>
-                <button
-                  onClick={onProfileClick}
-                  className="bg-white text-purple-700
-                             px-4 py-1.5 rounded-full text-sm
-                             font-semibold hover:bg-purple-50"
-                >
-                  My Account
-                </button>
-                <button
-                  onClick={logoutCustomer}
-                  className="text-purple-200 text-sm
-                             hover:text-white transition"
-                >
-                  Logout
-                </button>
-              </>
+
+                {accountOpen && (
+                  <ShopAccountPanel
+                    customer={customer}
+                    onClose={() => setAccountOpen(false)}
+                    onProfileClick={() => {
+                      setAccountOpen(false);
+                      onProfileClick();
+                    }}
+                    onMyTryOnsClick={() => {
+                      setAccountOpen(false);
+                      onMyTryOnsClick();
+                    }}
+                    onLogout={() => {
+                      setAccountOpen(false);
+                      logoutCustomer();
+                    }}
+                  />
+                )}
+              </div>
             ) : (
               <>
                 <button
                   onClick={() => onLoginClick("login")}
-                  className="text-white text-sm
-                             hover:text-purple-200 transition"
+                  className="text-white/90 text-sm font-semibold px-4 py-2
+                             hover:text-white transition-colors duration-200 cursor-pointer"
                 >
                   Login
                 </button>
                 <button
                   onClick={() => onLoginClick("register")}
-                  className="bg-white text-purple-700 px-4
-                             py-1.5 rounded-full text-sm
-                             font-semibold hover:bg-purple-50"
+                  className="relative overflow-hidden text-white text-sm font-bold
+                             px-5 py-2.5 rounded-full
+                             bg-gradient-to-r from-[#ff007f] via-[#7928ca] to-[#00dfd8]
+                             bg-[size:200%_auto] hover:bg-[position:right_center]
+                             shadow-[0_0_20px_rgba(121,40,202,0.35)]
+                             hover:shadow-[0_0_30px_rgba(255,0,127,0.45)]
+                             transition-all duration-500 ease-out
+                             transform hover:-translate-y-0.5 active:scale-95 cursor-pointer"
                 >
                   Register
                 </button>
@@ -272,6 +399,22 @@ function ShopNavbar({ shop, onLoginClick, onProfileClick }) {
           <div className="md:hidden mt-3 p-2 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/10 space-y-1 shadow-xl shadow-purple-950/20 animate-in fade-in slide-in-from-top-3 duration-300">
             {customer ? (
               <>
+                <div className="flex items-center gap-2.5 px-3 py-2.5">
+                  <span
+                    className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500
+                               flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
+                  >
+                    {customer?.name ? customer.name.charAt(0).toUpperCase() : "👤"}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-white text-sm font-bold truncate">
+                      {customer.name}
+                    </p>
+                    <p className="text-purple-300 text-xs truncate">
+                      {customer?.email || "Welcome back!"}
+                    </p>
+                  </div>
+                </div>
                 <button
                   onClick={() => {
                     onProfileClick();
@@ -280,6 +423,15 @@ function ShopNavbar({ shop, onLoginClick, onProfileClick }) {
                   className="flex items-center gap-2.5 w-full text-left text-white text-sm font-semibold px-3 py-2.5 rounded-xl hover:bg-white/10 active:bg-white/20 transition-all"
                 >
                   <span>👤</span> My Account
+                </button>
+                <button
+                  onClick={() => {
+                    onMyTryOnsClick();
+                    setMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2.5 w-full text-left text-white text-sm font-semibold px-3 py-2.5 rounded-xl hover:bg-white/10 active:bg-white/20 transition-all"
+                >
+                  <span>✨</span> My Try-Ons
                 </button>
                 <button
                   onClick={() => {
@@ -307,7 +459,7 @@ function ShopNavbar({ shop, onLoginClick, onProfileClick }) {
                     onLoginClick("register");
                     setMenuOpen(false);
                   }}
-                  className="flex items-center gap-2.5 w-full text-left text-white text-sm font-semibold px-3 py-2.5 rounded-xl hover:bg-white/10 active:bg-white/20 transition-all"
+                  className="flex items-center gap-2.5 w-full text-left text-white text-sm font-semibold px-3 py-2.5 rounded-xl bg-gradient-to-r from-[#ff007f]/80 via-[#7928ca]/80 to-[#00dfd8]/80 hover:opacity-90 active:scale-[0.98] transition-all"
                 >
                   <span>📝</span> Register
                 </button>
@@ -316,10 +468,11 @@ function ShopNavbar({ shop, onLoginClick, onProfileClick }) {
           </div>
         )}
       </div>
-
+{/* Subtle top glow line */}
+      <div className="h-[2px] w-full bg-gradient-to-r from-fuchsia-500 via-purple-400 to-cyan-400 opacity-80" />
       {/* --- 3. PREMIUM RUNNING TICKER BAR --- */}
-      <div className="bg-gradient-to-r from-indigo-700 via-purple-600 to-indigo-700 py-2.5 px-4 text-center border-t border-white/5 relative overflow-hidden">
-        {/* बैकग्राउंड शाइन इफ़ेक्ट */}
+     <div className="bg-gradient-to-r from-[#1e1b4b] via-[#4c1d95] to-[#1e1b4b] py-2.5 px-4 text-center border-t border-white/10 relative overflow-hidden">
+        {/* बैकग्राउंड शाइन इफ़ेक्ट */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-shimmery"></div>
 
         <p className="text-white text-xs sm:text-sm font-bold tracking-wide min-h-6 flex items-center justify-center gap-1 drop-shadow-sm relative z-10">
@@ -340,6 +493,85 @@ const checkPwd = (p) => ({
   num: /[0-9]/.test(p),
 });
 
+// ✅ Email validation
+const isValidEmail = (email) => {
+  const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$/;
+  if (!regex.test(email)) return false;
+  const domain = email.split("@")[1]?.toLowerCase() || "";
+  const blocked = [
+    "test.com",
+    "abc.com",
+    "xyz.com",
+    "example.com",
+    "fake.com",
+    "asdf.com",
+  ];
+  return !blocked.includes(domain);
+};
+
+// ─── Login Required Popup ─────────────────
+function LoginRequiredPopup({ onClose, onLoginClick }) {
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+      style={{ background: "rgba(15,12,41,0.75)", backdropFilter: "blur(6px)" }}
+    >
+      <div
+        className="relative w-full max-w-sm rounded-3xl overflow-hidden bg-white"
+        style={{ boxShadow: "0 25px 60px rgba(139,92,246,0.3)" }}
+      >
+        <div
+          className="h-1.5 w-full"
+          style={{
+            background: "linear-gradient(90deg,#8B5CF6,#EC4899,#F59E0B)",
+          }}
+        />
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100
+                     hover:bg-gray-200 flex items-center justify-center
+                     text-gray-500 text-sm transition"
+        >
+          ✕
+        </button>
+        <div className="p-8 text-center">
+          <div
+            className="w-20 h-20 mx-auto mb-5 rounded-full flex items-center
+                       justify-center text-4xl"
+            style={{
+              background: "linear-gradient(135deg,#8B5CF6,#EC4899)",
+              boxShadow: "0 10px 30px rgba(139,92,246,0.4)",
+            }}
+          >
+            🔒
+          </div>
+          <h2 className="text-xl font-black text-gray-800 mb-2">
+            Login Zaroori Hai!
+          </h2>
+          <p className="text-gray-500 text-sm leading-relaxed mb-6">
+            Virtual try-on aur apni gallery dekhne ke liye pehle login ya
+            register karein. Aapki photos sirf aapko dikhegi! 🔐
+          </p>
+          <button
+            onClick={onLoginClick}
+            className="w-full text-white py-3.5 rounded-2xl font-bold text-sm
+                       transition hover:opacity-90 active:scale-[0.98]"
+            style={{
+              background: "linear-gradient(135deg,#8B5CF6,#EC4899)",
+              boxShadow: "0 10px 25px rgba(139,92,246,0.35)",
+            }}
+          >
+            🚀 Login / Register Karein
+          </button>
+          <p className="text-xs text-gray-400 mt-4">
+            Sirf 30 second lagega! 😊
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CustomerAuthModal({ mode, onClose, onSuccess }) {
   const [activeMode, setActiveMode] = useState(mode);
   const [form, setForm] = useState({
@@ -359,6 +591,11 @@ function CustomerAuthModal({ mode, onClose, onSuccess }) {
   const isPwdStrong = Object.values(pwdChecks).every(Boolean);
 
   const handleSubmit = async () => {
+    // ✅ Email validation
+    if (!isValidEmail(form.email)) {
+      setError("Sahi email daalo! (jaise: name@gmail.com)");
+      return;
+    }
     // Prevent weak passwords on registration
     if (activeMode === "register" && !isPwdStrong) {
       setPwdTouched(true);
@@ -832,8 +1069,7 @@ function OrderModal({ product, shop, onClose, tryonResult }) {
                 </button>
               )}
 
-
-{/* direct order button hai yahan par jo google se advance kiya hai  */}
+              {/* direct order button hai yahan par jo google se advance kiya hai  */}
               {/* 💳 मुख्य अल्ट्रा-एडवांस ऑर्डर कार्ड बटन (100% वर्किंग इन-लाइन पॉपअप) */}
               <button
                 onClick={(e) => {
@@ -2444,7 +2680,7 @@ function TryOnAnimation() {
         }
         return next;
       });
-    }, 4500);
+    }, 5000);
 
     return () => {
       clearInterval(t);
@@ -4188,7 +4424,15 @@ function ProductModal({ product, shop, onClose, onTryOn, onOrder }) {
 }
 
 // ─── Try-On Modal ─────────────────────────
-function TryOnModal({ product, shop, onClose, selectedProduct }) {
+function TryOnModal({
+  product,
+  shop,
+  onClose,
+  selectedProduct,
+  onLoginRequired,
+}) {
+  const { customerToken } = useCustomer();
+  const [showLoginRequired, setShowLoginRequired] = useState(false);
   const [humanImage, setHumanImage] = useState(null);
   const [humanPreview, setHumanPreview] = useState(null);
   const [tryonLoading, setTryonLoading] = useState(false);
@@ -4223,6 +4467,11 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
   };
 
   const handleTryOn = async () => {
+    // ✅ Login check — try-on se pehle login zaroori
+    if (!customerToken) {
+      setShowLoginRequired(true);
+      return;
+    }
     if (!humanImage) {
       alert("Upload your photo first!");
       return;
@@ -4233,8 +4482,7 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
     try {
       const formData = new FormData();
       formData.append("humanImage", humanImage);
-      formData.append("garmentUrl", product.imageUrl); // imageUrl sahi hai
-      // Category sahi se bhejo
+      formData.append("garmentUrl", product.imageUrl);
       const category = product.category || "upper_body";
       formData.append("description", category);
       console.log("Sending category:", category);
@@ -4242,7 +4490,8 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
 
       const res = await axios.post(`${API_URL}/api/tryon`, formData, {
         headers: {
-          "x-api-key": shop.apiKey, // ← Yeh hai na?
+          "x-api-key": shop.apiKey,
+          Authorization: `Bearer ${customerToken}`, // ✅ Auth header
           "Content-Type": "multipart/form-data",
         },
       });
@@ -4263,6 +4512,18 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
   return (
     <>
       {tryonLoading && <TryOnAnimation />}
+
+      {/* ✅ Login Required Popup */}
+      {showLoginRequired && (
+        <LoginRequiredPopup
+          onClose={() => setShowLoginRequired(false)}
+          onLoginClick={() => {
+            setShowLoginRequired(false);
+            onClose();
+            if (onLoginRequired) onLoginRequired();
+          }}
+        />
+      )}
 
       <div
         className="fixed inset-0 bg-black bg-opacity-70
@@ -4582,7 +4843,6 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
                 {/* Fullscreen Result */}
                 <div className="fixed inset-0 bg-black z-50 flex flex-col">
                   {/* Header */}
-                  {/* Header */}
                   <div className="flex justify-between items-center px-4 py-3 bg-neutral-900 border-b border-white/10 z-50 w-full relative">
                     <div>
                       <p className="text-white font-bold text-sm sm:text-base">
@@ -4627,18 +4887,19 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
                   </div>
 
                   {/* Result Image - Fullscreen Container with Scroll Support for Zoom */}
-                  <div className="flex-1 flex items-center justify-center p-4 overflow-auto bg-neutral-950 select-none">
+                  <div className="flex-1 flex items-center justify-center p-4 overflow-auto bg-neutral-950 select-none h-[65vh] max-h-[65vh]">
                     <img
                       src={tryonResult}
                       alt="Try-on result"
                       style={{
+                        top: 10,
                         transform: `scale(${zoomScale})`,
                         cursor: zoomScale === 1 ? "zoom-in" : "zoom-out",
                       }}
                       onClick={() =>
-                        setZoomScale((prev) => (prev === 1 ? 2 : 1))
+                        setZoomScale((prev) => (prev === 1 ? 2.5 : 1))
                       }
-                      className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl transition-transform duration-300 ease-out origin-center"
+                      className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl transition-transform duration-300 ease-out origin-top"
                       onLoad={() => {
                         console.log("✅ Result image loaded:", tryonResult);
                       }}
@@ -4672,84 +4933,107 @@ function TryOnModal({ product, shop, onClose, selectedProduct }) {
                   </div>
 
                   {/* Style Advice */}
-                  {styleAdvice && (
-                    <div
-                      className="bg-gradient-to-t from-black
-                        to-transparent px-4 pb-2"
-                    >
-                      <div
-                        className="bg-white bg-opacity-10
-                          backdrop-blur-sm rounded-2xl
-                          p-4 mb-3"
-                      >
-                        <p
-                          className="text-purple-300 font-bold
-                          text-sm mb-2"
-                        >
-                          ✨ AI Style Advice
-                        </p>
-                        <p
-                          className="text-white text-xs
-                          leading-relaxed
-                          whitespace-pre-line
-                          max-h-24 overflow-y-auto"
-                        >
-                          {styleAdvice}
-                        </p>
-                      </div>
-                    </div>
-                  )}
+              {styleAdvice && (
+  <div className="bg-gradient-to-t from-black to-transparent px-6 pb-2">
+    <div className="relative overflow-hidden bg-neutral-900/60 border border-white/10 backdrop-blur-md rounded-2xl p-5 shadow-2xl transition-all duration-300 group hover:border-purple-500/40">
+      
+      {/* SaaS Premium Ambient Glow Effect Background */}
+      <div className="absolute -top-12 -left-12 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
+      <div className="absolute -bottom-12 -right-12 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
+
+      {/* Header Container */}
+      <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center justify-center w-6 h-5 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 text-purple-300 shadow-inner">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://w3.org">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+        </div>
+        <p className="bg-gradient-to-r from-purple-300 via-pink-200 to-white bg-clip-text text-transparent font-extrabold text-sm tracking-wide uppercase">
+          Personal Style Analysis
+        </p>
+      </div>
+
+      {/* Style Advice Text with Customized SaaS Scrollbar */}
+      {/* 💡 यहाँ max-h-24 को बढ़ाकर max-h-40 (लगभग डबल साइज) कर दिया है */}
+      <div className="text-neutral-300 text-xs leading-relaxed whitespace-pre-line max-h-40 overflow-y-auto pr-2 
+        [&::-webkit-scrollbar]:w-1.5
+        [&::-webkit-scrollbar-track]:bg-white/5
+        [&::-webkit-scrollbar-track]:rounded-full
+        [&::-webkit-scrollbar-thumb]:bg-gradient-to-b
+        [&::-webkit-scrollbar-thumb]:from-purple-500/30
+        [&::-webkit-scrollbar-thumb]:to-pink-500/20
+        [&::-webkit-scrollbar-thumb]:rounded-full
+        [scrollbar-width:thin]
+        [scrollbar-color:rgba(168,85,247,0.3)_rgba(255,255,255,0.05)]"
+      >
+        {styleAdvice}
+      </div>
+    </div>
+  </div>
+)}
+
 
                   {/* Action Buttons */}
-                  <div
-                    className="bg-black bg-opacity-80
-                      px-4 pb-6 pt-2 space-y-2 mt-4"
-                  >
-                    {shop?.whatsapp && (
-                      <a
-                        href={`https://wa.me{shop.whatsapp}?text=${encodeURIComponent(
-                          `Hi! Maine try on kiya!\n\n` +
-                            `👗 Fabric: ${product?.name || "N/A"}\n` +
-                            `💰 Price: ₹${product?.price || "0"}\n\n` +
-                            `📸 Fabric Preview: ${product?.imageUrl || product?.fabricImageUrl || "N/A"}\n` +
-                            `${tryonResult ? `✨ Try-on Result: ${tryonResult}\n\n` : ""}` +
-                            `Yah order karna hai!`,
-                        )}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        onClick={() => trackOrder(selectedProduct, "whatsapp")}
-                        className="block w-full bg-green-500 text-white py-4 rounded-2xl font-bold text-center text-base hover:bg-green-600 transition"
-                      >
-                        📱 Like it ! Order Now
-                      </a>
-                    )}
-
-                    {shop?.upiId && (
+                  {/* Premium, Advanced & Ultra-Compact Action Buttons Container */}
+                  <div className="bg-neutral-900/60 backdrop-blur-md px-6 py-3 border-t border-white/5 rounded-t-2xl shadow-[0_-8px_24px_rgba(0,0,0,0.4)]">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 max-w-4xl mx-auto">
+                      {/* 1. Try Another Style - Left Side */}
                       <button
-                        onClick={() => {
-                          trackOrder(product, "upi");
-                          navigator.clipboard.writeText(shop.upiId);
-                          alert(
-                            `UPI: ${shop.upiId}\nAmount: ₹${product?.price}`,
-                          );
-                        }}
-                        className="w-full border-2 border-white
-                       border-opacity-30 text-white
-                       py-3 rounded-2xl font-semibold
-                       hover:bg-white hover:bg-opacity-10
-                       transition"
+                        onClick={() => setTryonResult(null)}
+                        className="w-full sm:w-auto order-3 sm:order-1 text-neutral-400 text-xs font-semibold px-4 py-2 hover:text-white transition-colors duration-200 tracking-wider uppercase whitespace-nowrap"
                       >
-                        💳 UPI Se Pay Karen
+                        ← Try another
                       </button>
-                    )}
 
-                    <button
-                      onClick={() => setTryonResult(null)}
-                      className="w-full text-gray-400 text-sm
-                     py-2 hover:text-white transition"
-                    >
-                      ← Try again
-                    </button>
+                      {/* Right Side Buttons Group */}
+                      <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto order-1 sm:order-2 flex-1 sm:justify-end">
+                        {shop?.upiId && (
+                          <button
+                            onClick={() => {
+                              trackOrder(product, "upi");
+                              navigator.clipboard.writeText(shop.upiId);
+                              alert(
+                                `UPI: ${shop.upiId}\nAmount: ₹${product?.price}`,
+                              );
+                            }}
+                            className="flex items-center justify-center gap-2 w-full sm:w-auto sm:px-6 h-10 bg-white/5 border border-white/10 text-white rounded-xl font-medium text-xs tracking-wide hover:bg-white/10 hover:border-white/20 active:scale-[0.98] transition-all duration-200 backdrop-blur-sm whitespace-nowrap"
+                          >
+                            <span className="text-sm text-blue-400">💳</span>{" "}
+                            UPI Se Pay Karen
+                          </button>
+                        )}
+
+                        {shop?.whatsapp && (
+                          <a
+                            href={`https://wa.me/${shop?.whatsapp}?text=${encodeURIComponent(
+                              `Hi! Maine try on kiya!\n\n` +
+                                `👗 Fabric: ${product?.name || "N/A"}\n` +
+                                `💰 Price: ₹${product?.price || "0"}\n\n` +
+                                `📸 Fabric Preview: ${product?.imageUrl || product?.fabricImageUrl || "N/A"}\n` +
+                                // `${tryonResult ? `✨ Try-on Result: ${tryonResult}\n\n` : ""}` +
+                                `Yah order karna hai!`,
+                            )}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={() =>
+                              trackOrder(selectedProduct, "whatsapp")
+                            }
+                            className="relative flex items-center justify-center gap-2 w-full sm:w-auto sm:px-8 h-10 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-xl font-bold text-xs tracking-wide uppercase shadow-[0_4px_12px_rgba(16,185,129,0.2)] hover:opacity-95 active:scale-[0.98] transition-all duration-200 overflow-hidden group whitespace-nowrap"
+                          >
+                            <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+                            {/* प्रीमियम व्हाट्सएप एसवीजी लोगो (Premium WhatsApp SVG Logo) */}
+                            <svg
+                              className="w-5 h-5 fill-current text-white animate-pulse"
+                              viewBox="0 0 24 24"
+                              xmlns="http://w3.org"
+                            >
+                              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.503-5.714-1.458L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.413 9.863-9.864.001-2.641-1.03-5.124-2.904-6.999-1.875-1.875-4.361-2.906-7.004-2.907-5.44 0-9.864 4.414-9.867 9.866-.001 1.748.457 3.456 1.326 4.965l-.995 3.636 3.73-.978zm11.381-5.308c-.312-.156-1.848-.912-2.134-1.017-.286-.105-.495-.156-.703.156-.208.312-.807 1.017-.989 1.225-.182.208-.364.234-.676.078-.312-.156-1.318-.486-2.51-1.549-.928-.827-1.554-1.849-1.737-2.161-.182-.312-.02-.481.136-.636.141-.14.312-.364.468-.546.156-.182.208-.312.312-.52.104-.208.052-.39-.026-.546-.078-.156-.703-1.693-.963-2.319-.253-.611-.512-.528-.703-.537-.181-.009-.39-.01-.599-.01-.208 0-.546.078-.832.39-.286.312-1.092 1.067-1.092 2.601 0 1.533 1.117 3.018 1.272 3.226.156.208 2.199 3.359 5.328 4.709.745.322 1.325.515 1.779.659.749.238 1.431.205 1.969.125.6-.09 1.847-.755 2.107-1.444.259-.689.259-1.277.182-1.404-.078-.127-.286-.203-.597-.36z" />
+                            </svg>
+                            Order Now
+                          </a>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -4780,6 +5064,10 @@ export default function Shop() {
   const [filter, setFilter] = useState("all");
   const [zoomImages, setZoomImages] = useState(null);
   const [zoomIndex, setZoomIndex] = useState(0);
+    // ✅ Navbar se "My Try-Ons" trigger karne ke liye signal
+  const [galleryOpenSignal, setGalleryOpenSignal] = useState(0);
+  // eslint-disable-next-line
+  const { customer, customerToken } = useCustomer();
 
   const filteredProducts = products.filter((p) => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
@@ -4916,6 +5204,14 @@ export default function Shop() {
           setShowAuthModal(true);
         }}
         onProfileClick={() => setShowProfile(true)}
+        onMyTryOnsClick={() => {
+          if (!customer) {
+            setAuthMode("login");
+            setShowAuthModal(true);
+            return;
+          }
+          setGalleryOpenSignal((n) => n + 1);
+        }}
       />
       {/* <div
         className="bg-gradient-to-r from-purple-600
@@ -5272,6 +5568,10 @@ export default function Shop() {
           product={selectedProduct}
           shop={shop}
           onClose={() => setShowTryOn(false)}
+          onLoginRequired={() => {
+            setAuthMode("login");
+            setShowAuthModal(true);
+          }}
         />
       )}
 
@@ -5306,7 +5606,12 @@ export default function Shop() {
       />
 
       {/* Try-On Gallery */}
-      <TryOnGallery shop={shop} apiKey={shop?.apiKey} />
+      <TryOnGallery
+        shop={shop}
+        apiKey={shop?.apiKey}
+        customerToken={customerToken}
+        openSignal={galleryOpenSignal}
+      />
     </div>
   );
 }

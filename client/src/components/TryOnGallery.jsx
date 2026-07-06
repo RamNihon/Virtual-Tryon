@@ -51,18 +51,25 @@ function GalleryDetailModal({ item, onClose }) {
 
         {/* Result Image - Main */}
         <div className="relative rounded-3xl overflow-hidden
-                        shadow-2xl mb-4"
+                        shadow-2xl mb-4 "
           style={{
             background: 'linear-gradient(135deg, #1a1a2e, #16213e)',
             border: '1px solid rgba(255,255,255,0.1)'
           }}>
+                     <a
+               href={item.resultImage} 
+    // target="_blank" 
+    rel="noreferrer"
+    className="block w-full h-full cursor-zoom-in flex items-center justify-center"
+    title="Click to view full image"
+  >
           <img
             src={item.resultImage}
             alt="Try-on result"
-            className="w-full object-cover"
-            style={{ maxHeight: '55vh' }}
+            className="w-full h-full object-cover object-top"
+            style={{ maxHeight: '60vh' }}
           />
-
+</a>
           {/* Gradient overlay bottom */}
           <div className="absolute bottom-0 left-0 right-0 h-16"
             style={{
@@ -102,7 +109,7 @@ function GalleryDetailModal({ item, onClose }) {
                                 border border-white border-opacity-20">
                   <img src={item.garmentImage}
                     alt="Garment"
-                    className="w-full h-full object-cover"/>
+                    className="w-full h-full object-contain"/>
                 </div>
               </div>
             )}
@@ -116,7 +123,7 @@ function GalleryDetailModal({ item, onClose }) {
                                 border border-white border-opacity-20">
                   <img src={item.humanImage}
                     alt="User Preview"
-                    className="w-full h-full object-cover"/>
+                    className="w-full h-full object-contain"/>
                 </div>
               </div>
             )}
@@ -180,7 +187,7 @@ function GalleryDetailModal({ item, onClose }) {
 }
 
 // ─── Main Gallery Component ───────────────
-export default function TryOnGallery({ shop, apiKey }) {
+export default function TryOnGallery({ shop, apiKey, customerToken,openSignal }) {
   const [isOpen, setIsOpen] = useState(false)
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(false)
@@ -208,13 +215,26 @@ export default function TryOnGallery({ shop, apiKey }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
-  const fetchGallery = async () => {
-    if (!apiKey) return
+   // ✅ Navbar se "My Try-Ons" click hone par gallery kholne ke liye
+  useEffect(() => {
+    if (openSignal) {
+      handleOpen()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openSignal])
+
+const fetchGallery = async () => {
+    if (!apiKey || !customerToken) return   // ✅ Token nahi to fetch mat karo
     setLoading(true)
     try {
       const res = await axios.get(
         `${API_URL}/api/tryon/gallery`,
-        { headers: { 'x-api-key': apiKey } }
+        {
+          headers: {
+            'x-api-key': apiKey,
+            'Authorization': `Bearer ${customerToken}`,  // ✅ Customer auth
+          }
+        }
       )
       setHistory(res.data.history || [])
     } catch (e) {

@@ -5,6 +5,7 @@ import API_URL from "../api";
 import { useCustomer } from "../context/CustomerContext";
 import VoiceAssistant, { speakText } from "../components/VoiceAssistant";
 import TryOnGallery from "../components/TryOnGallery";
+import AuthModal, { LoginRequiredPopup } from "../components/AuthModal";
 
 // ─── Garment Labels ───────────────────────
 const GARMENT_LABELS = {
@@ -16,6 +17,290 @@ const GARMENT_LABELS = {
   kurti: "👘 Kurti",
   saree: "🥻 Saree",
 };
+
+// ─── Fabric Account Panel (My Account dropdown) ───
+function FabricAccountPanel({ customer, onClose, onLogout,onMyTryOnsClick }) {
+  return (
+    <>
+      {/* Backdrop - click karke close ho jayega */}
+      <div className="fixed inset-0 z-40" onClick={onClose} />
+
+      <div
+        className="absolute right-0 top-full mt-3 w-72 z-50
+                   bg-slate-900/95 backdrop-blur-2xl
+                   border border-white/10 rounded-2xl
+                   shadow-[0_20px_60px_-15px_rgba(124,58,237,0.5)]
+                   overflow-hidden
+                   animate-in fade-in slide-in-from-top-2 duration-200"
+      >
+        {/* Header strip */}
+        <div className="bg-gradient-to-br from-purple-600/30 via-indigo-600/20 to-transparent p-4 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-11 h-11 rounded-xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500
+                         flex items-center justify-center text-white font-black text-lg
+                         shadow-lg shadow-purple-500/30 flex-shrink-0"
+            >
+              {customer?.name ? customer.name.charAt(0).toUpperCase() : "👤"}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-white font-bold text-sm truncate">
+                {customer?.name || "Guest User"}
+              </p>
+              <p className="text-purple-300/80 text-xs truncate">
+                {customer?.email || customer?.mobile || "Welcome back!"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+       {/* Actions */}
+        <div className="p-2">
+          <button
+            onClick={onMyTryOnsClick}
+            className="w-full flex items-center gap-2.5 text-left
+                       text-white text-sm font-semibold
+                       px-3 py-2.5 rounded-xl
+                       hover:bg-white/10 active:bg-white/20
+                       transition-all duration-200"
+          >
+            <span>✨</span> My Try-Ons
+          </button>
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center gap-2.5 text-left
+                       text-red-300 text-sm font-semibold
+                       px-3 py-2.5 rounded-xl
+                       hover:bg-red-500/10 active:bg-red-500/20
+                       transition-all duration-200"
+          >
+            <span>🔓</span> Logout
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Fabric Shop Navbar (Premium Glassmorphic) ────
+function FabricNavbar({ shop, onLoginClick, customer, onLogout, onMyTryOnsClick }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 8);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <div
+    className={`sticky top-0 z-40 transition-all duration-500 ${
+        scrolled
+          ? "bg-gradient-to-r from-slate-900/95 via-purple-900/95 to-indigo-900/95 backdrop-blur-xl shadow-lg shadow-purple-950/40"
+          : "bg-gradient-to-r from-slate-900/90 via-purple-900/90 to-indigo-900/90 backdrop-blur-md"
+      } border-b border-white/40`}
+    >
+      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between relative">
+        {/* Brand */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="text-xl">🧵</span>
+          <h1
+            className="text-lg md:text-xl font-black text-white truncate italic"
+            style={{ fontFamily: "Georgia, serif" }}
+          >
+            {shop?.name}
+          </h1>
+          <span
+            className="hidden sm:inline-flex items-center gap-1.5
+                       bg-white/5 border border-white/10 backdrop-blur-sm
+                       rounded-full px-3 py-1 ml-1"
+          >
+            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+            <span className="text-[11px] font-semibold text-purple-200 tracking-wide">
+              AI Fabric Studio
+            </span>
+          </span>
+        </div>
+
+        {/* Desktop Actions */}
+        <div className="hidden md:flex items-center gap-3 relative">
+          {customer ? (
+            <div className="relative">
+              <button
+                onClick={() => setAccountOpen((v) => !v)}
+                className="flex items-center gap-2 bg-white/5 hover:bg-white/10
+                           border border-white/10 rounded-full pl-1.5 pr-4 py-1.5
+                           transition-all duration-200 group cursor-pointer"
+              >
+                <span
+                  className="w-7 h-7 rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500
+                             flex items-center justify-center text-white font-bold text-xs"
+                >
+                  {customer?.name ? customer.name.charAt(0).toUpperCase() : "👤"}
+                </span>
+                <span className="text-white text-sm font-semibold">
+                  {customer.name?.split(" ")[0]}
+                </span>
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={`text-purple-300 transition-transform duration-300 ${
+                    accountOpen ? "rotate-180" : ""
+                  }`}
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+
+              {accountOpen && (
+                <FabricAccountPanel
+                  customer={customer}
+                  onClose={() => setAccountOpen(false)}
+                  onLogout={() => {
+                    setAccountOpen(false);
+                    onLogout();
+                  }}
+                  onMyTryOnsClick={() => {
+                    setAccountOpen(false);
+                    onMyTryOnsClick();
+                  }}
+                />
+              )}
+            </div>
+          ) : (
+            <>
+              <button
+                onClick={() => onLoginClick("login")}
+                className="text-white/90 text-sm font-semibold px-4 py-2
+                           hover:text-white transition-colors duration-200 cursor-pointer"
+              >
+                Login
+              </button>
+              <button
+                onClick={() => onLoginClick("register")}
+                className="relative overflow-hidden text-white text-sm font-bold
+                           px-5 py-2.5 rounded-full
+                           bg-gradient-to-r from-[#ff007f] via-[#7928ca] to-[#00dfd8]
+                           bg-[size:200%_auto] hover:bg-[position:right_center]
+                           shadow-[0_0_20px_rgba(121,40,202,0.35)]
+                           hover:shadow-[0_0_30px_rgba(255,0,127,0.45)]
+                           transition-all duration-500 ease-out
+                           transform hover:-translate-y-0.5 active:scale-95 cursor-pointer"
+              >
+                Register
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Mobile Hamburger */}
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="md:hidden relative w-10 h-10 flex flex-col items-center justify-center
+                     rounded-xl bg-white/5 hover:bg-white/10 active:scale-90
+                     transition-all duration-300 border border-white/10 cursor-pointer"
+          aria-label="Toggle Menu"
+        >
+          <div className="w-5 h-3.5 flex flex-col justify-between relative">
+            <span
+              className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 transform origin-center ${
+                menuOpen ? "rotate-45 translate-y-[6px]" : ""
+              }`}
+            />
+            <span
+              className={`w-full h-0.5 bg-white rounded-full transition-all duration-200 transform ${
+                menuOpen ? "opacity-0 scale-x-0" : ""
+              }`}
+            />
+            <span
+              className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 transform origin-center ${
+                menuOpen ? "-rotate-45 -translate-y-[6px]" : ""
+              }`}
+            />
+          </div>
+        </button>
+      </div>
+
+      {/* Mobile Dropdown Menu */}
+      {menuOpen && (
+        <div
+          className="md:hidden mx-4 mb-3 p-2 bg-white/5 backdrop-blur-lg
+                     rounded-2xl border border-white/10 space-y-1
+                     shadow-xl shadow-purple-950/20
+                     animate-in fade-in slide-in-from-top-3 duration-300"
+        >
+          {customer ? (
+            <>
+              <div className="flex items-center gap-2.5 px-3 py-2.5">
+                <span
+                  className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500
+                             flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
+                >
+                  {customer?.name
+                    ? customer.name.charAt(0).toUpperCase()
+                    : "👤"}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-white text-sm font-bold truncate">
+                    {customer.name}
+                  </p>
+                  <p className="text-purple-300 text-xs truncate">
+                    {customer?.email || "Welcome back!"}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  onLogout();
+                  setMenuOpen(false);
+                }}
+                className="flex items-center gap-2.5 w-full text-left text-red-300
+                           text-sm font-semibold px-3 py-2.5 rounded-xl
+                           hover:bg-red-500/10 active:bg-red-500/20 transition-all"
+              >
+                <span>🔓</span> Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => {
+                  onLoginClick("login");
+                  setMenuOpen(false);
+                }}
+                className="flex items-center gap-2.5 w-full text-left text-white
+                           text-sm font-semibold px-3 py-2.5 rounded-xl
+                           hover:bg-white/10 active:bg-white/20 transition-all"
+              >
+                <span>🔑</span> Login
+              </button>
+              <button
+                onClick={() => {
+                  onLoginClick("register");
+                  setMenuOpen(false);
+                }}
+                className="flex items-center gap-2.5 w-full text-left text-white
+                           text-sm font-semibold px-3 py-2.5 rounded-xl
+                           bg-gradient-to-r from-[#ff007f]/80 via-[#7928ca]/80 to-[#00dfd8]/80
+                           hover:opacity-90 active:scale-[0.98] transition-all"
+              >
+                <span>📝</span> Register
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── Measurement Guide ────────────────────
 function MeasurementGuide({ onClose, onSave, existingMeasurements }) {
@@ -1034,6 +1319,11 @@ function FabricAnimation({ step }) {
 
 // ─── Product Detail Modal ─────────────────
 function FabricProductModal({ product, shop, apiKey, onClose }) {
+  // ✅ Auth states
+  const { customerToken } = useCustomer();
+  const [showLoginRequired, setShowLoginRequired] = useState(false);
+  const [showFabricAuthModal, setShowFabricAuthModal] = useState(false);
+  //---------------------
   const [selectedGarment, setSelectedGarment] = useState(null);
   const [generatedImage, setGeneratedImage] = useState(null);
   const [generating, setGenerating] = useState(false);
@@ -1111,13 +1401,17 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
     }
   };
 
-  const handleTryOn = async () => {
+ const handleTryOn = async () => {
+    // ✅ Login check — try-on se pehle login zaroori
+    if (!customerToken) {
+      setShowLoginRequired(true);
+      return;
+    }
     if (!humanImage || !generatedImage) return;
     setTryonStep(true);
     setTryonResult(null);
 
     try {
-      // generatedImage string hai check karo
       const garmentUrl =
         typeof generatedImage === "string"
           ? generatedImage
@@ -1131,20 +1425,22 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
         return;
       }
 
-     const formData = new FormData();
+      const formData = new FormData();
       formData.append("humanImage", humanImage);
       formData.append("garmentImageUrl", garmentUrl);
       formData.append("apiKey", apiKey);
       formData.append("productId", product._id);
       formData.append("garmentType", selectedGarment || "");
-      // Gallery ke liye product name bhi bhejo
       formData.append(
         "productName",
         `${product.name || "Fabric"} - ${GARMENT_LABELS[selectedGarment] || selectedGarment || "Try-On"}`
       );
 
       const res = await axios.post(`${API_URL}/api/fabric/tryon`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          "Content-Type": "multipart/form-data",
+          "Authorization": `Bearer ${customerToken}`,   // ✅ Auth header
+        },
       });
 
       setTryonResult(res.data.resultImage);
@@ -1172,6 +1468,26 @@ function FabricProductModal({ product, shop, apiKey, onClose }) {
     <>
       {(generating || tryonStep) && (
         <FabricAnimation step={generating ? "generate" : "tryon"} />
+      )}
+
+      {/* ✅ Login Required Popup */}
+      {showLoginRequired && (
+        <LoginRequiredPopup
+          onClose={() => setShowLoginRequired(false)}
+          onLoginClick={() => {
+            setShowLoginRequired(false);
+            setShowFabricAuthModal(true);
+          }}
+        />
+      )}
+
+      {/* ✅ Auth Modal for FabricShop */}
+      {showFabricAuthModal && (
+        <AuthModal
+          mode="login"
+          onClose={() => setShowFabricAuthModal(false)}
+          onSuccess={() => setShowFabricAuthModal(false)}
+        />
       )}
 
       {/* ─── 1. सबसे बाहरी बैकड्रॉप ओवरले (लाइन 888) ─── */}
@@ -2142,10 +2458,14 @@ export default function FabricShop() {
   const [shop, setShop] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+   // ✅ Filter change par sirf products grid refresh ho, poora page nahi
+  const [isRefetching, setIsRefetching] = useState(false);
   const [error, setError] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  // eslint-disable-next-line
+  const { customer, customerToken, logoutCustomer } = useCustomer();
   // Advanced filters
   const [selectedColors, setSelectedColors] = useState([]);
   const [selectedBrand, setSelectedBrand] = useState("");
@@ -2158,6 +2478,11 @@ export default function FabricShop() {
   const [textIndex, setTextIndex] = useState(0);
   const [displayText, setDisplayText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  // ✅ Navbar Auth Modal state
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState("login");
+  // ✅ Navbar se "My Try-Ons" trigger karne ke liye signal
+  const [galleryOpenSignal, setGalleryOpenSignal] = useState(0);
 
   const features = [
     "🧵 Unstitched to Stitched AI Magic",
@@ -2231,8 +2556,8 @@ export default function FabricShop() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayText, isDeleting, textIndex]);
 
-  const fetchShop = useCallback(
-    async (filters = {}) => {
+ const fetchShop = useCallback(
+    async (filters = {}, isInitial = false) => {
       try {
         const params = new URLSearchParams();
         if (filters.color) params.append("color", filters.color);
@@ -2259,7 +2584,11 @@ export default function FabricShop() {
       } catch (error) {
         setError("Fabric shop nahi mili!");
       } finally {
-        setLoading(false);
+        if (isInitial) {
+          setLoading(false);
+        } else {
+          setIsRefetching(false);
+        }
       }
     },
     [sellerId],
@@ -2267,12 +2596,13 @@ export default function FabricShop() {
 
   useEffect(() => {
     if (sellerId) {
-      fetchShop();
+      fetchShop({}, true);
     }
-  }, [sellerId, fetchShop]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sellerId]);
 
   const applyFilters = () => {
-    setLoading(true);
+    setIsRefetching(true);
     fetchShop({
       color: selectedColors.join(","),
       brand: selectedBrand,
@@ -2292,14 +2622,44 @@ export default function FabricShop() {
     setSelectedPattern("all");
     setSortBy("newest");
     setPriceRange({ min: "", max: "" });
-    setLoading(true);
+    setIsRefetching(true);
     fetchShop({});
   };
 
-  const toggleColorFilter = (color) => {
-    setSelectedColors((prev) =>
-      prev.includes(color) ? prev.filter((c) => c !== color) : [...prev, color],
-    );
+const toggleColorFilter = (color) => {
+    setSelectedColors((prev) => {
+      const updated = prev.includes(color)
+        ? prev.filter((c) => c !== color)
+        : [...prev, color];
+
+      // ✅ Filter hatate/badhate hi turant server se naye products le aao
+      setIsRefetching(true);
+      fetchShop({
+        color: updated.join(","),
+        brand: selectedBrand,
+        occasion: selectedOccasion,
+        pattern: selectedPattern,
+        sort: sortBy,
+        minPrice: priceRange.min,
+        maxPrice: priceRange.max,
+      });
+
+      return updated;
+    });
+  };
+
+  const removeBrandFilter = () => {
+    setSelectedBrand("");
+    setIsRefetching(true);
+    fetchShop({
+      color: selectedColors.join(","),
+      brand: "",
+      occasion: selectedOccasion,
+      pattern: selectedPattern,
+      sort: sortBy,
+      minPrice: priceRange.min,
+      maxPrice: priceRange.max,
+    });
   };
 
   const activeFilterCount = [
@@ -2322,7 +2682,8 @@ export default function FabricShop() {
     return matchSearch && matchFilter;
   });
 
-  if (loading)
+  // ✅ Sirf pehli baar (jab shop data hi nahi aaya) full-screen loader dikhao
+  if (loading && !shop)
     return (
       <div
         className="min-h-screen flex items-center
@@ -2336,6 +2697,8 @@ export default function FabricShop() {
         </div>
       </div>
     );
+
+    
 
   if (error)
     return (
@@ -2352,6 +2715,25 @@ export default function FabricShop() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Shop Navbar - Login/Register/My Account */}
+      <FabricNavbar
+        shop={shop}
+        customer={customer}
+        onLoginClick={(mode) => {
+          setAuthMode(mode);
+          setShowAuthModal(true);
+        }}
+        onLogout={logoutCustomer}
+        onMyTryOnsClick={() => {
+          if (!customer) {
+            setAuthMode("login");
+            setShowAuthModal(true);
+            return;
+          }
+          setGalleryOpenSignal((n) => n + 1);
+        }}
+      />
+
       {/* Hero Header */}
       <div
         className="relative bg-gradient-to-br
@@ -2392,12 +2774,12 @@ export default function FabricShop() {
               className="w-2 h-2 bg-green-400
                              rounded-full animate-pulse"
             />
-            <span className="text-white text-sm font-medium">
+            {/* <span className="text-white text-sm font-medium">
               🧵 AI Fabric Studio
-            </span>
+            </span> */}
           </div>
 
-          <h1
+          {/* <h1
             className="text-3xl md:text-5xl font-black
                          text-white mb-2"
             style={{ fontFamily: "Georgia, serif" }}
@@ -2406,7 +2788,7 @@ export default function FabricShop() {
           </h1>
           <p className="text-purple-200 text-sm md:text-base mb-3">
             Unstitched fabric ko AI se try karein!
-          </p>
+          </p> */}
 
           {/* Typewriter */}
           <div
@@ -2494,9 +2876,9 @@ export default function FabricShop() {
             {/* Sort Dropdown */}
             <select
               value={sortBy}
-              onChange={(e) => {
+            onChange={(e) => {
                 setSortBy(e.target.value);
-                setLoading(true);
+                setIsRefetching(true);
                 fetchShop({
                   color: selectedColors.join(","),
                   brand: selectedBrand,
@@ -2697,7 +3079,7 @@ export default function FabricShop() {
                 <p className="text-sm font-semibold text-gray-700 mb-2">
                   💰 Price Range (₹)
                 </p>
-                <div className="flex gap-2 items-center">
+               <div className="flex gap-2 items-center">
                   <input
                     type="number"
                     placeholder={`Min (${filterMeta?.priceRange?.min || 0})`}
@@ -2705,11 +3087,11 @@ export default function FabricShop() {
                     onChange={(e) =>
                       setPriceRange((p) => ({ ...p, min: e.target.value }))
                     }
-                    className="flex-1 border border-gray-200 rounded-xl
+                    className="flex-1 min-w-0 border border-gray-200 rounded-xl
                        px-3 py-2 text-sm focus:outline-none
                        focus:border-purple-400"
                   />
-                  <span className="text-gray-400 text-sm">—</span>
+                  <span className="text-gray-400 text-sm flex-shrink-0">—</span>
                   <input
                     type="number"
                     placeholder={`Max (${filterMeta?.priceRange?.max || ""})`}
@@ -2717,7 +3099,7 @@ export default function FabricShop() {
                     onChange={(e) =>
                       setPriceRange((p) => ({ ...p, max: e.target.value }))
                     }
-                    className="flex-1 border border-gray-200 rounded-xl
+                    className="flex-1 min-w-0 border border-gray-200 rounded-xl
                        px-3 py-2 text-sm focus:outline-none
                        focus:border-purple-400"
                   />
@@ -2793,7 +3175,7 @@ export default function FabricShop() {
                 >
                   {selectedBrand}
                   <button
-                    onClick={() => setSelectedBrand("")}
+                    onClick={removeBrandFilter}
                     className="hover:text-red-500"
                   >
                     ✕
@@ -2804,24 +3186,40 @@ export default function FabricShop() {
           )}
         </div>
 
-        {filtered.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-5xl mb-3">🧵</div>
-            <p className="text-gray-400 text-lg">No any fabric found !</p>
-          </div>
-        ) : (
-          <div
-            className="grid grid-cols-2 md:grid-cols-3
-                          lg:grid-cols-4 gap-4"
-          >
-            {filtered.map((product) => {
-              const hasPreview = product.generatedPreviews?.length > 0;
-              return (
-                <div
-                  key={product._id}
-                  onClick={() => setSelectedProduct(product)}
-                  className="bg-white rounded-2xl overflow-hidden
-                             shadow-sm hover:shadow-lg transition-all
+        <div className="relative min-h-[200px]">
+          {/* ✅ Filter/Sort refresh ke time chhota overlay - poora page nahi hilta */}
+          {isRefetching && (
+            <div
+              className="absolute inset-0 z-10 bg-white/70 backdrop-blur-[2px]
+                         flex items-start justify-center pt-16 rounded-2xl"
+            >
+              <div className="flex items-center gap-2 bg-white shadow-lg rounded-full px-4 py-2 border border-purple-100">
+                <div className="w-4 h-4 border-2 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+                <span className="text-purple-600 text-sm font-medium">
+                  Updating...
+                </span>
+              </div>
+            </div>
+          )}
+
+          {filtered.length === 0 ? (
+            <div className="text-center py-20">
+              <div className="text-5xl mb-3">🧵</div>
+              <p className="text-gray-400 text-lg">No any fabric found !</p>
+            </div>
+          ) : (
+            <div
+              className="grid grid-cols-2 md:grid-cols-3
+                            lg:grid-cols-4 gap-4"
+            >
+              {filtered.map((product) => {
+                const hasPreview = product.generatedPreviews?.length > 0;
+                return (
+                  <div
+                    key={product._id}
+                    onClick={() => setSelectedProduct(product)}
+                    className="bg-white rounded-2xl overflow-hidden
+                               shadow-sm hover:shadow-lg transition-all
                              duration-300 hover:-translate-y-1 cursor-pointer
                              border border-gray-100 group"
                 >
@@ -2998,6 +3396,7 @@ export default function FabricShop() {
             })}
           </div>
         )}
+        </div>
       </div>
 
       {/* Product Detail Modal */}
@@ -3010,6 +3409,15 @@ export default function FabricShop() {
         />
       )}
 
+      {/* ✅ Navbar Login/Register Auth Modal */}
+      {showAuthModal && (
+        <AuthModal
+          mode={authMode}
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={() => setShowAuthModal(false)}
+        />
+      )}
+
       {/* Voice Assistant */}
       <VoiceAssistant
         pageType="fabric"
@@ -3018,7 +3426,7 @@ export default function FabricShop() {
       />
 
       {/* Try-On Gallery */}
-      <TryOnGallery shop={shop} apiKey={shop?.apiKey} />
+     <TryOnGallery shop={shop} apiKey={shop?.apiKey} customerToken={customerToken} openSignal={galleryOpenSignal} />
     </div>
   );
 }

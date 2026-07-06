@@ -5,6 +5,12 @@ const tryonHistorySchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Seller'
   },
+  // ✅ PRIVACY FIX: Kis customer ne try-on kiya
+  customer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Customer',
+    // required nahi — purana data break nahi hoga
+  },
   product: String,
   resultImage: String,
   humanImage: String,

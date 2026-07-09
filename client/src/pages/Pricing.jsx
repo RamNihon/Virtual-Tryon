@@ -3,6 +3,29 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../api";
+// --- Redesign note: swapped raw emoji icon-set for lucide-react so every
+// icon shares one stroke-weight/visual-language across the page (premium
+// SaaS pages almost never mix emoji + icons — pick one system and commit).
+import {
+  Sparkles,
+  ShieldCheck,
+  RotateCcw,
+  Zap,
+  Check,
+  X,
+  Gem,
+  Rocket,
+  Crown,
+  Gift,
+  CreditCard,
+  Shirt,
+  Scissors,
+  Wand2,
+  ArrowRight,
+  LayoutDashboard,
+  Loader2,
+  BadgeCheck,
+} from "lucide-react";
 
 export default function Pricing() {
   const { seller, token } = useAuth();
@@ -11,17 +34,23 @@ export default function Pricing() {
   // eslint-disable-next-line
   const [billingType] = useState("monthly");
 
+  // --- Redesign note: kept every plan/feature/pricing value 100% identical.
+  // Only added an `icon` component reference + a couple of visual tokens
+  // (accent / iconBg) so the markup below can render a consistent icon set
+  // instead of emoji, and so the "popular" plan can get a premium glow ring.
   const plans = [
     {
       key: "free",
-      emoji: "🆓",
+      icon: Gift,
       name: "Free",
       tagline: "Good for Testing the Platform",
       price: "₹0",
       credits: 100,
-      color: "border-gray-200",
-      headerBg: "bg-gray-50",
-      btnStyle: "bg-gray-800 hover:bg-gray-900 text-white",
+      color: "border-slate-200",
+      headerBg: "bg-slate-50",
+      accent: "text-slate-600",
+      iconBg: "bg-slate-100",
+      btnStyle: "bg-slate-900 hover:bg-black text-white",
       features: [
         { text: "100 credits included", available: true, highlight: true },
         { text: "~10 ready-made try-ons", available: true },
@@ -36,13 +65,15 @@ export default function Pricing() {
     },
     {
       key: "basic",
-      emoji: "🚀",
+      icon: Rocket,
       name: "Basic",
       tagline: "Perfect for Instagram Sellers",
       price: "₹999",
       credits: 1500,
-      color: "border-blue-400",
+      color: "border-blue-300",
       headerBg: "bg-blue-50",
+      accent: "text-blue-600",
+      iconBg: "bg-blue-100",
       btnStyle: "bg-blue-600 hover:bg-blue-700 text-white",
       features: [
         { text: "1,500 credits/month", available: true, highlight: true },
@@ -58,15 +89,17 @@ export default function Pricing() {
     },
     {
       key: "pro",
-      emoji: "💎",
+      icon: Gem,
       name: "Pro",
       tagline: "Best for Growing Fashion Stores",
       price: "₹2,499",
       credits: 3000,
-      color: "border-purple-500",
-      headerBg: "bg-purple-50",
+      color: "border-violet-400",
+      headerBg: "bg-violet-50",
+      accent: "text-violet-600",
+      iconBg: "bg-violet-100",
       btnStyle:
-        "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90",
+        "bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:opacity-90",
       popular: true,
       features: [
         { text: "3,000 credits/month", available: true, highlight: true },
@@ -81,21 +114,23 @@ export default function Pricing() {
     },
     {
       key: "elite",
-      emoji: "👑",
+      icon: Crown,
       name: "Elite",
       tagline: "For Fashion Brands",
       price: "₹4,999",
       credits: 10000,
-      color: "border-yellow-500",
-      headerBg: "bg-yellow-50",
+      color: "border-amber-400",
+      headerBg: "bg-amber-50",
+      accent: "text-amber-600",
+      iconBg: "bg-amber-100",
       btnStyle:
-        "bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:opacity-90",
+        "bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90",
       features: [
         { text: "10,000 credits/month", available: true, highlight: true },
         { text: "~1200 ready-made try-ons", available: true },
         { text: "~500 fabric generations", available: true },
         { text: "Fabric shop access", available: true },
-         { text: "Garment shop access", available: true },
+        { text: "Garment shop access", available: true },
         { text: "Website widget", available: true },
         { text: "Full analytics", available: true },
         { text: "Priority support", available: true },
@@ -202,70 +237,182 @@ export default function Pricing() {
     }
   };
 
+  // --- Redesign note: credit-cost + top-up pack data now carry a lucide
+  // icon reference instead of a leading emoji character, so the icon and
+  // label render as separate, properly aligned elements.
+  const creditCosts = [
+    { icon: Shirt, action: "Ready Try-On", credits: "10 credits", cost: "~₹10" },
+    { icon: Scissors, action: "Fabric Generation", credits: "12 credits", cost: "~₹12" },
+    { icon: Wand2, action: "Fabric Try-On", credits: "11 credits", cost: "~₹11" },
+    { icon: Sparkles, action: "Style Advice", credits: "1 credit", cost: "~₹1" },
+  ];
+
+  const topUpPacks = [
+    {
+      key: "mini",
+      name: "Mini",
+      price: "₹149",
+      credits: 200,
+      desc: "~20 try-ons",
+      color: "border-slate-200",
+    },
+    {
+      key: "starter",
+      name: "Starter",
+      price: "₹299",
+      credits: 450,
+      desc: "~45 try-ons",
+      color: "border-blue-200",
+    },
+    {
+      key: "growth",
+      name: "Growth",
+      price: "₹599",
+      credits: 1000,
+      desc: "~100 try-ons",
+      color: "border-violet-300",
+      popular: true,
+    },
+    {
+      key: "power",
+      name: "Power",
+      price: "₹999",
+      credits: 1800,
+      desc: "~180 try-ons",
+      color: "border-indigo-300",
+    },
+    {
+      key: "mega",
+      name: "Mega",
+      price: "₹1,999",
+      credits: 4000,
+      desc: "~400 try-ons",
+      color: "border-amber-300",
+    },
+  ];
+
+  const faqs = [
+    {
+      q: "Kya free trial mein card chahiye?",
+      a: "Bilkul nahi! Free plan mein koi card nahi chahiye. Direct register karo aur shuru karo!",
+    },
+    {
+      q: "Try-on limit khatam hone par kya hoga?",
+      a: "Aapko email aayega. Aap plan upgrade kar sakte ho ya agle mahine tak wait kar sakte ho.",
+    },
+    {
+      q: "Refund policy kya hai?",
+      a: "7 din ke andar refund milega agar 10 se kam try-ons use kiye ho. Full details refund page par.",
+    },
+    {
+      q: "Website nahi hai to kya hoga?",
+      a: "Koi baat nahi! Hamara free shop page milega jiska link Instagram ya WhatsApp par share karo.",
+    },
+    {
+      q: "Koi bhi kapde ka try-on ho sakta hai?",
+      a: "Yes, we support all types of upper body (shirts, t-shirts, jackets) and lower body (trousers, pants, jeans etc) and also full dress (saree, kurti, kurta, lehnga, suits, gown etc). This all gives best result on try-ons.",
+    },
+    {
+      q: "Support kaise milega?",
+      a: "Email aur WhatsApp pe support available hai. Starter aur Pro users ko priority support milti hai.",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    // --- Redesign note: base background moved from flat bg-gray-50 to a
+    // very soft slate/violet-tinted gradient so white cards later in the
+    // page get subtle depth instead of sitting on pure white/gray.
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-violet-50/40">
       {/* Hero */}
       <div
-        className="bg-gradient-to-br from-slate-900
-                      via-purple-900 to-indigo-900
-                      py-20 px-6 text-center relative
+        className="bg-gradient-to-br from-slate-950
+                      via-violet-950 to-indigo-950
+                      py-24 px-6 text-center relative
                       overflow-hidden"
       >
+        {/* --- Redesign note: added a faint grid overlay under the glow
+            blobs — this is the kind of texture premium SaaS marketing
+            pages (Linear, Stripe, Vercel) use to keep a dark hero from
+            feeling empty without adding visual noise. */}
+        <div
+          className="absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage:
+              "linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+          }}
+        />
         <div className="absolute inset-0">
           <div
             className="absolute top-0 left-1/4 w-72 h-72
-                          bg-purple-500 opacity-20 rounded-full
+                          bg-violet-500 opacity-25 rounded-full
                           blur-3xl animate-pulse"
           />
           <div
             className="absolute bottom-0 right-1/4 w-64 h-64
-                          bg-indigo-500 opacity-20 rounded-full
+                          bg-indigo-500 opacity-25 rounded-full
                           blur-3xl animate-pulse"
             style={{ animationDelay: "1s" }}
+          />
+          {/* --- Redesign note: extra rose accent blob breaks the
+              purple-only monotony and pairs with the pink used in the
+              headline gradient below. */}
+          <div
+            className="absolute top-1/3 right-1/3 w-56 h-56
+                          bg-fuchsia-500 opacity-10 rounded-full
+                          blur-3xl animate-pulse"
+            style={{ animationDelay: "2s" }}
           />
         </div>
         <div className="relative z-10">
           <span
-            className="bg-white bg-opacity-10 backdrop-blur-sm
-                           border border-white border-opacity-20
+            className="bg-white/10 backdrop-blur-md
+                           border border-white/20
                            text-white px-4 py-2 rounded-full
-                           text-sm font-medium inline-block mb-6"
+                           text-sm font-medium inline-flex
+                           items-center gap-2 mb-6 shadow-lg
+                           shadow-violet-900/20"
           >
-            💰 Simple Pricing
+            <Sparkles className="w-4 h-4 text-violet-300" />
+            Simple, Transparent Pricing
           </span>
           <h1
-            className="text-3xl md:text-5xl font-black
-                         text-white mb-4"
+            className="text-4xl md:text-6xl font-black
+                         text-white mb-4 tracking-tight"
           >
-            For your business
+            Built for your business
             <span
               className=" block bg-gradient-to-r
-                             from-purple-400 to-pink-400
-                             bg-clip-text text-transparent"
+                             from-violet-400 via-fuchsia-300 to-pink-400
+                             bg-clip-text text-transparent
+                             pb-2"
             >
-              Choose the right plan!
+              Choose the right plan
             </span>
           </h1>
-          <p className="text-purple-200 text-lg max-w-xl mx-auto mb-8">
-            No hidden charges. No contracts. Cancel anytime!
+          <p className="text-violet-200/80 text-lg max-w-xl mx-auto mb-8">
+            No hidden charges. No contracts. Cancel anytime.
           </p>
 
           {/* Trust */}
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-wrap justify-center gap-3">
             {[
-              "✅ Free Trial",
-              "🔒 Secure Payment",
-              "↩️ 7-day Refund",
-              "⚡ Instant Activation",
+              { icon: BadgeCheck, label: "Free Trial" },
+              { icon: ShieldCheck, label: "Secure Payment" },
+              { icon: RotateCcw, label: "7-day Refund" },
+              { icon: Zap, label: "Instant Activation" },
             ].map((b, i) => (
               <span
                 key={i}
-                className="bg-white bg-opacity-10
-                           backdrop-blur-sm text-white
+                className="bg-white/10
+                           backdrop-blur-md text-white
                            px-4 py-2 rounded-full text-sm
-                           border border-white border-opacity-20"
+                           border border-white/20
+                           inline-flex items-center gap-1.5
+                           hover:bg-white/[0.15] transition-colors"
               >
-                {b}
+                <b.icon className="w-3.5 h-3.5 text-violet-300" />
+                {b.label}
               </span>
             ))}
           </div>
@@ -282,21 +429,37 @@ export default function Pricing() {
                border-2 ${plan.color} overflow-hidden
                hover:shadow-2xl transition-all
                duration-300 hover:-translate-y-2
-               ${plan.popular ? "shadow-xl shadow-purple-100" : "shadow-sm"}`}
+               ${
+                 plan.popular
+                   ? // --- Redesign note: "popular" card now gets a soft
+                     // glow ring behind it (via box-shadow) instead of just
+                     // a plain shadow, so it visually pops off the grid at
+                     // rest, not only on hover.
+                     "shadow-2xl shadow-violet-300/40 ring-1 ring-violet-200 md:scale-105 z-10"
+                   : "shadow-sm"
+               }`}
             >
               {plan.popular && (
                 <div
-                  className="bg-gradient-to-r from-purple-600
+                  className="bg-gradient-to-r from-violet-600
                       to-indigo-600 text-white text-center
-                      py-2 text-sm font-bold"
+                      py-2 text-sm font-bold flex items-center
+                      justify-center gap-1.5"
                 >
-                  ⭐ MOST POPULAR
+                  <Sparkles className="w-4 h-4" />
+                  MOST POPULAR
                 </div>
               )}
 
               <div className={`${plan.headerBg} p-6 border-b`}>
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="text-3xl">{plan.emoji}</span>
+                  <span
+                    className={`${plan.iconBg} ${plan.accent} w-12 h-12
+                       rounded-2xl flex items-center justify-center
+                       shadow-sm`}
+                  >
+                    <plan.icon className="w-6 h-6" strokeWidth={2.25} />
+                  </span>
                   <div>
                     <h3 className="text-xl font-black text-gray-800">
                       {plan.name}
@@ -313,11 +476,13 @@ export default function Pricing() {
                   )}
                 </div>
                 <div
-                  className="mt-2 bg-white rounded-xl px-3 py-1.5
-                      inline-block"
+                  className="mt-3 bg-white rounded-xl px-3 py-1.5
+                      inline-flex items-center gap-1.5
+                      border border-black/5 shadow-sm"
                 >
-                  <span className="text-purple-600 font-bold text-sm">
-                    💳 {plan.credits.toLocaleString()} Credits
+                  <CreditCard className={`w-4 h-4 ${plan.accent}`} />
+                  <span className={`${plan.accent} font-bold text-sm`}>
+                    {plan.credits.toLocaleString()} Credits
                   </span>
                 </div>
               </div>
@@ -329,14 +494,18 @@ export default function Pricing() {
                       <span
                         className={`w-5 h-5 rounded-full flex
                              items-center justify-center
-                             text-xs flex-shrink-0
+                             flex-shrink-0
                              ${
                                f.available
-                                 ? "bg-green-100 text-green-600"
+                                 ? "bg-emerald-100 text-emerald-600"
                                  : "bg-gray-100 text-gray-300"
                              }`}
                       >
-                        {f.available ? "✓" : "✕"}
+                        {f.available ? (
+                          <Check className="w-3.5 h-3.5" strokeWidth={3} />
+                        ) : (
+                          <X className="w-3.5 h-3.5" strokeWidth={3} />
+                        )}
                       </span>
                       <span
                         className={`text-sm
@@ -360,13 +529,26 @@ export default function Pricing() {
                   className={`${plan.btnStyle} w-full py-3.5
                    rounded-2xl font-bold text-base
                    transition-all duration-300
-                   disabled:opacity-50 shadow-md`}
+                   disabled:opacity-50 shadow-md
+                   flex items-center justify-center gap-2
+                   group`}
                 >
-                  {loading === plan.key
-                    ? "⏳ Loading..."
-                    : plan.key === "free"
-                      ? "🆓 Start with Free Plan"
-                      : `🚀 Buy ${plan.name} Plan Now →`}
+                  {loading === plan.key ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : plan.key === "free" ? (
+                    <>
+                      <Gift className="w-4 h-4" />
+                      Start with Free Plan
+                    </>
+                  ) : (
+                    <>
+                      Buy {plan.name} Plan Now
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -376,33 +558,30 @@ export default function Pricing() {
         {/* Credit Info Box */}
         <div
           className="max-w-4xl mx-auto mt-12 bg-gradient-to-br
-                from-purple-50 to-indigo-50 rounded-3xl
-                p-6 border border-purple-100"
+                from-violet-50 to-indigo-50 rounded-3xl
+                p-6 border border-violet-100"
         >
-          <h3 className="font-bold text-gray-800 text-lg mb-4 text-center">
-            💳 Credit System Kaise Kaam Karta Hai?
+          <h3 className="font-bold text-gray-800 text-lg mb-4 text-center flex items-center justify-center gap-2">
+            <CreditCard className="w-5 h-5 text-violet-600" />
+            How Does the Credit System Work?
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { action: "👗 Ready Try-On", credits: "10 credits", cost: "~₹10" },
-              {
-                action: "🧵 Fabric Generation",
-                credits: "12 credits",
-                cost: "~₹12",
-              },
-              { action: "🪡 Fabric Try-On", credits: "11 credits", cost: "~₹11" },
-              { action: "✨ Style Advice", credits: "1 credit", cost: "~₹1" },
-            ].map((item, i) => (
+            {creditCosts.map((item, i) => (
               <div
                 key={i}
                 className="bg-white rounded-2xl p-4 text-center
-                   border border-purple-100"
+                   border border-violet-100 hover:border-violet-200
+                   hover:shadow-md transition-all"
               >
-                <p className="text-xl mb-1">{item.action.split(" ")[0]}</p>
-                <p className="text-xs text-gray-500 mb-1">
-                  {item.action.split(" ").slice(1).join(" ")}
-                </p>
-                <p className="font-black text-purple-600">{item.credits}</p>
+                <span
+                  className="w-10 h-10 rounded-xl bg-violet-100
+                     text-violet-600 flex items-center justify-center
+                     mx-auto mb-2"
+                >
+                  <item.icon className="w-5 h-5" />
+                </span>
+                <p className="text-xs text-gray-500 mb-1">{item.action}</p>
+                <p className="font-black text-violet-600">{item.credits}</p>
                 <p className="text-xs text-gray-400">{item.cost}</p>
               </div>
             ))}
@@ -412,8 +591,9 @@ export default function Pricing() {
         {/* Top-Up Packs */}
         <div className="max-w-5xl mx-auto mt-16">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-black text-gray-800">
-              ⚡ Credit Top-Up Packs
+            <h2 className="text-3xl font-black text-gray-800 flex items-center justify-center gap-2">
+              <Zap className="w-7 h-7 text-amber-500" />
+              Credit Top-Up Packs
             </h2>
             <p className="text-gray-500 mt-2">
               Credits khatam? Turant top-up karen!
@@ -421,49 +601,7 @@ export default function Pricing() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {[
-              {
-                key: "mini",
-                name: "Mini",
-                price: "₹149",
-                credits: 200,
-                desc: "~20 try-ons",
-                color: "border-gray-200",
-              },
-              {
-                key: "starter",
-                name: "Starter",
-                price: "₹299",
-                credits: 450,
-                desc: "~45 try-ons",
-                color: "border-blue-200",
-              },
-              {
-                key: "growth",
-                name: "Growth",
-                price: "₹599",
-                credits: 1000,
-                desc: "~100 try-ons",
-                color: "border-purple-300",
-                popular: true,
-              },
-              {
-                key: "power",
-                name: "Power",
-                price: "₹999",
-                credits: 1800,
-                desc: "~180 try-ons",
-                color: "border-indigo-300",
-              },
-              {
-                key: "mega",
-                name: "Mega",
-                price: "₹1,999",
-                credits: 4000,
-                desc: "~400 try-ons",
-                color: "border-yellow-400",
-              },
-            ].map((pack) => (
+            {topUpPacks.map((pack) => (
               <div
                 key={pack.key}
                 className={`bg-white rounded-2xl p-4 text-center
@@ -474,7 +612,7 @@ export default function Pricing() {
                 {pack.popular && (
                   <span
                     className="absolute -top-2.5 left-1/2
-                           -translate-x-1/2 bg-purple-600
+                           -translate-x-1/2 bg-violet-600
                            text-white text-xs px-3 py-0.5
                            rounded-full font-bold"
                   >
@@ -482,7 +620,7 @@ export default function Pricing() {
                   </span>
                 )}
                 <h3 className="font-black text-gray-800 mb-1">{pack.name}</h3>
-                <p className="text-2xl font-black text-purple-600 mb-1">
+                <p className="text-2xl font-black text-violet-600 mb-1">
                   {pack.price}
                 </p>
                 <p className="text-sm font-bold text-gray-600 mb-0.5">
@@ -491,12 +629,13 @@ export default function Pricing() {
                 <p className="text-xs text-gray-400 mb-3">{pack.desc}</p>
                 <button
                   onClick={() => handleTopUp(pack.key)}
-                  className="w-full bg-gradient-to-r from-purple-600
+                  className="w-full bg-gradient-to-r from-violet-600
                      to-indigo-600 text-white py-2 rounded-xl
                      font-bold text-sm hover:opacity-90
-                     transition"
+                     transition flex items-center justify-center gap-1"
                 >
-                  Buy →
+                  Buy
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             ))}
@@ -509,49 +648,25 @@ export default function Pricing() {
             className="text-3xl font-black text-gray-800
                          text-center mb-10"
           >
-            Aksar Puche Jane Wale Sawaal(FAQ) ❓
+            Aksar Puche Jane Wale Sawaal (FAQ)
           </h2>
           <div
             className="grid grid-cols-1 md:grid-cols-2 gap-6
                           max-w-4xl mx-auto"
           >
-            {[
-              {
-                q: "Kya free trial mein card chahiye?",
-                a: "Bilkul nahi! Free plan mein koi card nahi chahiye. Direct register karo aur shuru karo!",
-              },
-              {
-                q: "Try-on limit khatam hone par kya hoga?",
-                a: "Aapko email aayega. Aap plan upgrade kar sakte ho ya agle mahine tak wait kar sakte ho.",
-              },
-              {
-                q: "Refund policy kya hai?",
-                a: "7 din ke andar refund milega agar 10 se kam try-ons use kiye ho. Full details refund page par.",
-              },
-              {
-                q: "Website nahi hai to kya hoga?",
-                a: "Koi baat nahi! Hamara free shop page milega jiska link Instagram ya WhatsApp par share karo.",
-              },
-              {
-                q: "Koi bhi kapde ka try-on ho sakta hai?",
-                a: "Yes , we support all types of  upper body (shirts, t-shirts, jackets) and Lower body (trousers, pants,jeans etc) and also Full dress (saree, kurti, kurta, lehnga, suits, gown etc). This all gives best result on Try-ons",
-              },
-              {
-                q: "Support kaise milega?",
-                a: "Email aur WhatsApp pe support available hai. Starter aur Pro users ko priority support milti hai.",
-              },
-            ].map((faq, i) => (
+            {faqs.map((faq, i) => (
               <div
                 key={i}
                 className="bg-white rounded-2xl p-6
                            border border-gray-100
-                           hover:shadow-md transition-all"
+                           hover:shadow-md hover:border-violet-100
+                           transition-all"
               >
                 <h4
                   className="font-bold text-gray-800 mb-2
                                flex items-start gap-2"
                 >
-                  <span className="text-purple-500 flex-shrink-0">Q.</span>
+                  <span className="text-violet-500 flex-shrink-0">Q.</span>
                   {faq.q}
                 </h4>
                 <p
@@ -567,8 +682,8 @@ export default function Pricing() {
 
         {/* Bottom CTA */}
         <div
-          className="mt-16 bg-gradient-to-br from-purple-600
-                        to-indigo-600 rounded-3xl p-10
+          className="mt-16 bg-gradient-to-br from-violet-600
+                        via-indigo-600 to-violet-700 rounded-3xl p-10
                         text-center text-white relative
                         overflow-hidden"
         >
@@ -582,22 +697,39 @@ export default function Pricing() {
             }}
           ></div>
           <div className="relative z-10">
-            <div className="text-5xl mb-4">🎉</div>
+            <span
+              className="w-16 h-16 rounded-2xl bg-white/15
+                 backdrop-blur-sm flex items-center justify-center
+                 mx-auto mb-4"
+            >
+              <Sparkles className="w-8 h-8" />
+            </span>
             <h3 className="text-2xl md:text-3xl font-black mb-3">
-              Get started now - for free!
+              Get started now — for free!
             </h3>
-            <p className="text-purple-200 mb-6 max-w-md mx-auto">
-              Test with 100 credits trials. Upgrade if you like it!
+            <p className="text-violet-200 mb-6 max-w-md mx-auto">
+              Test with 100 credit trials. Upgrade if you like it!
             </p>
             <button
               onClick={() => navigate(seller ? "/dashboard" : "/register")}
-              className="bg-white text-purple-700
+              className="bg-white text-violet-700
                          px-10 py-4 rounded-2xl
                          font-black text-lg
-                         hover:bg-purple-50 transition
-                         shadow-lg hover:-translate-y-1"
+                         hover:bg-violet-50 transition
+                         shadow-lg hover:-translate-y-1
+                         inline-flex items-center gap-2"
             >
-              {seller ? "📊 Open Dashboard" : "🚀 Create Your Free Account"}
+              {seller ? (
+                <>
+                  <LayoutDashboard className="w-5 h-5" />
+                  Open Dashboard
+                </>
+              ) : (
+                <>
+                  <Rocket className="w-5 h-5" />
+                  Create Your Free Account
+                </>
+              )}
             </button>
           </div>
         </div>

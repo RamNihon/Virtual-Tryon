@@ -178,7 +178,7 @@ router.post(
       // Agar koi bhi field error ho to return karo
       if (Object.keys(fieldErrors).length > 0) {
         return res.status(400).json({
-          message: "Kuch fields mein error hai!",
+          message: "Error in some fields!",
           fieldErrors,
         });
       }
@@ -242,6 +242,134 @@ router.get("/products", authMiddleware, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+// ─── EDIT PRODUCT ────────────────────────
+// Same field-specific validation and Cloudinary upload pattern
+// as the "add product" route above, so editing feels identical
+// to adding — just pre-filled. Existing images the seller kept
+// are passed back as `existingImages` (URLs); any new files are
+// uploaded and appended after them, so ordering is preserved.
+router.put(
+  "/products/:productId",
+  authMiddleware,
+  upload.array("productImages", 5),
+  async (req, res) => {
+    try {
+      const product = await Product.findOne({
+        _id: req.params.productId,
+        seller: req.sellerId,
+      });
+
+      if (!product) {
+        return res.status(404).json({ message: "Product nahi mila!" });
+      }
+
+      // ── FIELD-SPECIFIC VALIDATION ────────────────────────────
+      const fieldErrors = {};
+
+      if (!req.body.name || req.body.name.trim().length < 2) {
+        fieldErrors.name = "Product name kam se kam 2 characters ka hona chahiye!";
+      }
+
+      const price = parseFloat(req.body.price);
+      if (!req.body.price || isNaN(price) || price <= 0) {
+        fieldErrors.price = "Valid price daalna zaroori hai!";
+      }
+
+      if (!req.body.description || req.body.description.trim().length < 10) {
+        fieldErrors.description = "Description kam se kam 10 characters ki honi chahiye!";
+      }
+
+      if (!req.body.category) {
+        fieldErrors.category = "Category select karna zaroori hai!";
+      }
+
+      // Existing images the seller chose to keep (sent back as URLs)
+      let imageUrls = [];
+      if (req.body.existingImages) {
+        const existingArray = Array.isArray(req.body.existingImages)
+          ? req.body.existingImages
+          : [req.body.existingImages];
+        imageUrls = existingArray.filter(
+          (url) => url && url.startsWith("http"),
+        );
+      }
+
+      // Newly uploaded files get appended after the kept images
+      if (req.files && req.files.length > 0) {
+        const uploadPromises = req.files.map(
+          (file) =>
+            new Promise((resolve, reject) => {
+              const stream = cloudinary.uploader.upload_stream(
+                { folder: "products" },
+                (error, result) => {
+                  if (error) reject(error);
+                  else resolve(result.secure_url);
+                },
+              );
+              stream.end(file.buffer);
+            }),
+        );
+        const uploadedUrls = await Promise.all(uploadPromises);
+        imageUrls = [...imageUrls, ...uploadedUrls];
+      }
+
+      if (imageUrls.length < 2) {
+        fieldErrors.images = "Kam se kam 2 product photos zaroori hain!";
+      }
+
+      if (Object.keys(fieldErrors).length > 0) {
+        return res.status(400).json({
+          message: "Kuch fields mein error hai!",
+          fieldErrors,
+        });
+      }
+
+      // Parse sizes
+      let sizes = [];
+      if (req.body.sizes) {
+        sizes = Array.isArray(req.body.sizes)
+          ? req.body.sizes
+          : JSON.parse(req.body.sizes);
+      }
+
+      // Parse highlights
+      let highlights = {};
+      if (req.body.highlights) {
+        highlights =
+          typeof req.body.highlights === "string"
+            ? JSON.parse(req.body.highlights)
+            : req.body.highlights;
+      }
+
+      // Discount calculate
+      const originalPrice = parseFloat(req.body.originalPrice) || 0;
+      const discountPercent =
+        originalPrice > price
+          ? Math.round(((originalPrice - price) / originalPrice) * 100)
+          : 0;
+
+      product.brandName = req.body.brandName || "";
+      product.name = req.body.name;
+      product.description = req.body.description || "";
+      product.originalPrice = originalPrice;
+      product.price = price;
+      product.discountPercent = discountPercent;
+      product.category = req.body.category || "upper_body";
+      product.sizes = sizes;
+      product.highlights = highlights;
+      product.productUrl = req.body.productUrl || "";
+      product.imageUrl = imageUrls[0];
+      product.images = imageUrls;
+
+      await product.save();
+
+      res.json({ success: true, product });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+);
 
 // ─── DASHBOARD ───────────────────────────
 router.get("/dashboard", authMiddleware, async (req, res) => {
@@ -497,6 +625,136 @@ router.put("/update-profile", authMiddleware, async (req, res) => {
         tryonLimit: seller.tryonLimit,
       },
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ─── CHANGE PASSWORD ─────────────────────
+router.put("/change-password", authMiddleware, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        message: "Current aur new password dono zaroori hain!",
+      });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        message: "New password kam se kam 8 characters ka hona chahiye!",
+      });
+    }
+
+    const seller = await Seller.findById(req.sellerId);
+    if (!seller) {
+      return res.status(404).json({ message: "Seller nahi mila!" });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, seller.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Current password galat hai!",
+      });
+    }
+
+    seller.password = await bcrypt.hash(newPassword, 10);
+    await seller.save();
+
+    res.json({ success: true, message: "Password badal gaya!" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ─── NOTIFICATION PREFERENCES ────────────
+// Stored directly on the Seller doc (no new model needed) —
+// each key defaults to true if the seller has never set one,
+// so existing sellers don't silently lose alerts after this
+// feature ships.
+router.get("/notification-preferences", authMiddleware, async (req, res) => {
+  try {
+    const seller = await Seller.findById(req.sellerId);
+    const defaults = {
+      newOrders: true,
+      lowCreditAlerts: true,
+      weeklySummary: true,
+    };
+    res.json({
+      success: true,
+      preferences: { ...defaults, ...(seller.notificationPreferences || {}) },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.put("/notification-preferences", authMiddleware, async (req, res) => {
+  try {
+    const { newOrders, lowCreditAlerts, weeklySummary } = req.body;
+
+    const seller = await Seller.findByIdAndUpdate(
+      req.sellerId,
+      {
+        notificationPreferences: {
+          newOrders: !!newOrders,
+          lowCreditAlerts: !!lowCreditAlerts,
+          weeklySummary: !!weeklySummary,
+        },
+      },
+      { new: true },
+    );
+
+    res.json({
+      success: true,
+      message: "Preferences saved!",
+      preferences: seller.notificationPreferences,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ─── DELETE ACCOUNT ──────────────────────
+// Requires the seller to type their password to confirm — the
+// same protection banks/SaaS products use before anything
+// irreversible. Related data (products, fabric products) is
+// cleaned up so nothing orphaned is left behind; try-on history
+// and orders are kept for the seller's own records trail (the
+// account itself becomes unreachable once deleted, so this data
+// is no longer linked to anyone who can access it).
+router.delete("/delete-account", authMiddleware, async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({
+        message: "Password confirm karna zaroori hai!",
+      });
+    }
+
+    const seller = await Seller.findById(req.sellerId);
+    if (!seller) {
+      return res.status(404).json({ message: "Seller nahi mila!" });
+    }
+
+    const isMatch = await bcrypt.compare(password, seller.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Password galat hai!" });
+    }
+
+    await Product.deleteMany({ seller: req.sellerId });
+
+    try {
+      const FabricProduct = require("../models/FabricProduct");
+      await FabricProduct.deleteMany({ seller: req.sellerId });
+    } catch (e) {
+      // Model may not be required elsewhere in this file — safe to skip.
+    }
+
+    await Seller.findByIdAndDelete(req.sellerId);
+
+    res.json({ success: true, message: "Account deleted." });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

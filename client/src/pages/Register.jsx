@@ -247,7 +247,7 @@ export default function Register() {
               className="text-purple-200 text-lg mb-12
                           max-w-sm leading-relaxed"
             >
-              India's first Ai-powered virtual online platform for sellers!
+              Empower your business with AI Try-On and effortless WhatsApp sales!
             </p>
 
             {/* Features */}
@@ -410,7 +410,7 @@ export default function Register() {
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
-                      placeholder="Strong password daalo"
+                      placeholder="Create a secure password"
                       value={form.password}
                       onChange={(e) => {
                         setForm({ ...form, password: e.target.value });

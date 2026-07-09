@@ -322,7 +322,7 @@ export default function Login() {
               </a>
 
               <p className="text-center text-sm text-gray-400">
-                Don't have a account?{" "}
+                Don't have an account?{" "}
                 <Link
                   to="/register"
                   className="text-purple-600 font-semibold

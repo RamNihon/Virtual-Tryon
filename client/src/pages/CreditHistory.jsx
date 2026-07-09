@@ -80,7 +80,7 @@ export default function CreditHistory() {
           <h1 className="text-3xl font-black text-white mb-1">
             💳 Credit History
           </h1>
-          <p className="text-purple-200">The complete breakdown/account of your credits!</p>
+          <p className="text-purple-200">The complete breakdown of your credits!</p>
         </div>
       </div>
 

@@ -80,7 +80,15 @@ export default function Navbar() {
     if (location.pathname.startsWith("/faq")) {
     return null;
   }
-
+ if (location.pathname.startsWith("/dashboard")) {
+    return null;
+  }
+  if (location.pathname.startsWith("/credits")) {
+    return null;
+  }
+   if (location.pathname.startsWith("/analytics")) {
+    return null;
+  }
   return (
     <>
       <style>{`

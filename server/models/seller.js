@@ -32,7 +32,7 @@ const sellerSchema = new mongoose.Schema(
     tryonCount: { type: Number, default: 0 },
     fabricGenCount: { type: Number, default: 0 },
     allowedDomains: [String],
-    whatsapp: { type: String, default: "" },
+    whatsapp: { type: Number, default: "" },
     googleId: { type: String },
     upiId: { type: String, default: "" },
 

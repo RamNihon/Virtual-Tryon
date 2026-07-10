@@ -1,4 +1,4 @@
- // eslint-disable-next-line
+// eslint-disable-next-line
 import { useState } from "react";
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
@@ -258,17 +258,27 @@ function UpgradeBanner({ icon: Icon, title, desc, ctaLabel, tone = "red" }) {
   );
 }
 
+// Matches the actual `action` values the backend logs (confirmed
+// against CreditHistory.jsx) — the earlier guessed names (tryon,
+// fabricGen, purchase) didn't match what the API actually sends.
 const ACTION_LABELS = {
-  tryon: { label: "Shop Try-On", icon: "👗" },
+  readyTryon: { label: "Garment Shop Try-On", icon: "👗" },
   fabricGen: { label: "Fabric Generation", icon: "🧵" },
-  fabricTryon: { label: "Fabric Try-On", icon: "🧵" },
-  styleAdvice: { label: "Style Advice", icon: "✨" },
-  purchase: { label: "Credit Purchase", icon: "💳" },
+  fabricTryon: { label: "Fabric Shop Try-On", icon: "✨" },
+  styleAdvice: { label: "Style Advice", icon: "💡" },
+  planPurchase: { label: "Plan Purchase", icon: "🚀" },
+  topupPurchase: { label: "Credit Top-Up", icon: "💳" },
+  adminCredit: { label: "Bonus Credit", icon: "🎁" },
 };
 
 function TransactionRow({ tx }) {
   const meta = ACTION_LABELS[tx.action] || { label: tx.action, icon: "📌" };
-  const isPositive = tx.credits > 0;
+  // The backend always sends `credits` as a positive magnitude —
+  // whether it was added or spent is told by `tx.type` ("credit" vs
+  // "debit"), not by the sign of the number itself. Assuming the
+  // number's sign was the original bug: every transaction showed "+"
+  // because tx.credits > 0 was always true.
+  const isCredit = tx.type === "credit";
 
   return (
     <div className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
@@ -289,10 +299,10 @@ function TransactionRow({ tx }) {
       </div>
       <span
         className={`text-sm font-bold shrink-0 ${
-          isPositive ? "text-emerald-600" : "text-gray-500"
+          isCredit ? "text-emerald-600" : "text-red-500"
         }`}
       >
-        {isPositive ? "+" : ""}
+        {isCredit ? "+" : "-"}
         {tx.credits}
       </span>
     </div>

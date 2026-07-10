@@ -64,7 +64,7 @@ export default function DashboardSidebar({ activeSection, onSectionChange }) {
       {/* ─── MOBILE TOP BAR (hamburger trigger) ─────────────── */}
       <div
         className="lg:hidden sticky top-0 z-30 flex items-center
-                   justify-between bg-white border-b border-gray-100
+                   justify-between bg-white border-b border-gray-200
                    px-4 py-3"
       >
         <button
@@ -128,7 +128,7 @@ export default function DashboardSidebar({ activeSection, onSectionChange }) {
 
 function SidebarHeader({ seller, onClose }) {
   return (
-    <div className="px-5 pt-6 pb-5 border-b border-gray-100 flex items-start justify-between">
+    <div className="px-5 pt-6 pb-5 border-b border-gray-200 flex items-start justify-between">
       <div className="min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <div
@@ -139,7 +139,7 @@ function SidebarHeader({ seller, onClose }) {
             <span className="text-white font-black text-sm">V</span>
           </div>
           <span className="font-extrabold text-gray-800 text-[15px] truncate">
-            VirtualTryOn
+           <a href="/"> VirtualTryOn</a>
           </span>
         </div>
         <p className="text-gray-400 text-xs truncate pl-10">
@@ -196,7 +196,7 @@ function SidebarNav({ activeSection, onNavClick }) {
 
 function SidebarFooter({ onLogout }) {
   return (
-    <div className="px-3 py-4 border-t border-gray-100">
+    <div className="px-3 py-4 border-t border-gray-200">
       <button
         onClick={onLogout}
         className="w-full flex items-center gap-3 px-3 py-2.5

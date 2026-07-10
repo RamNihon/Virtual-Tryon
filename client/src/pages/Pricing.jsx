@@ -556,7 +556,7 @@ export default function Pricing() {
         </div>
 
         {/* Credit Info Box */}
-        <div
+        <div 
           className="max-w-4xl mx-auto mt-12 bg-gradient-to-br
                 from-violet-50 to-indigo-50 rounded-3xl
                 p-6 border border-violet-100"
@@ -589,14 +589,14 @@ export default function Pricing() {
         </div>
 
         {/* Top-Up Packs */}
-        <div className="max-w-5xl mx-auto mt-16">
+        <div id='top-up' className="max-w-5xl mx-auto mt-16">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-black text-gray-800 flex items-center justify-center gap-2">
               <Zap className="w-7 h-7 text-amber-500" />
               Credit Top-Up Packs
             </h2>
             <p className="text-gray-500 mt-2">
-              Credits khatam? Turant top-up karen!
+             Out of credits? Top up instantly!
             </p>
           </div>
 

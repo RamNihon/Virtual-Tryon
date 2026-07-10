@@ -4626,7 +4626,7 @@ function TryOnModal({
                     <img
                       src={humanPreview}
                       alt="you"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover object-top"
                     />
                   ) : (
                     <div className="text-center p-3">

@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Pencil,
   Check,
@@ -13,141 +14,89 @@ import {
   Shirt,
   Link2,
   Wallet,
-//   Phone,
-  Crown,
-  Sparkles,
-  Info,
   IndianRupee,
+  Gift,
+  Rocket,
+  Gem,
+  Crown,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Lock,
 } from "lucide-react";
 
 /*
   ─── STORE SETTINGS SECTION ─────────────────────────────────
-  "Atelier Ledger" v5 — motion pass.
+  Everything the seller needs to manage their store's identity:
+  account info, shop links (garment + fabric), and the WhatsApp
+  / UPI details customers and payments rely on.
 
-  Colors are untouched from v4 (one ink+brass family, rose only
-  on Garment) — that discipline is what fixed the "loud" problem
-  and it stays. This round adds dimensionality and motion on
-  top of it, kept deliberately narrow so it doesn't reopen the
-  same problem in a different form:
-
-  - A glass-like specular highlight is only on the "hero" badges
-    (the 3 card headers + the 2 shop-link tile icons — 5 spots
-    total). The small row icons (Email, Seller ID, Phone, etc.)
-    stay plain gradient, no highlight — they repeat 6-7 times
-    per screen, so adding a glint to each would just be v3's
-    mistake again, wearing a different costume.
-  - Entrance animation runs once on mount, hover-lift only
-    exists on interaction. Nothing loops or flashes at rest.
-  - The Plan badge gets a single shine-sweep ~0.6s after mount
-    — the one "wow" beat — then it's done for good.
-
-  On "3D animation jaisa Lottie deti hai": a real Lottie needs
-  either an actual .json export from After Effects/LottieFiles,
-  or the lottie-react package rendering one. I can't fabricate
-  legitimate Lottie animation data by hand, and pulling in a new
-  dependency for one checkmark felt like overkill. So the copy
-  success-check below is hand-built with SVG pathLength + a CSS
-  stroke-dashoffset transition — same "drawing in" feel Lottie
-  checkmarks are known for, zero new dependencies. If you later
-  want a genuine Lottie moment (e.g. a fancier save-success
-  burst), grab a .json from lottiefiles.com, add `lottie-react`,
-  and I'll wire the specific file in.
+  Note: `copied` / `onCopy` are passed down from Dashboard.jsx
+  because the same clipboard state is shared with the
+  Integration section — keeping it lifted avoids two separate
+  "copied" indicators fighting each other.
+--------------------------------------------------------------*/
+/* --- Redesign note: back to the original violet/indigo/white system —
+   same one used on the Pricing and Credit History pages, so the whole
+   seller dashboard reads as one product. A warm cream/gold "Atelier
+   Ledger" treatment was tried in between and didn't land well for the
+   seller ("aankh me chubhne jaisa"), so the palette reverts here. Every
+   functional upgrade built during that detour carries forward unchanged:
+     - nameMsg/settingsMsg render as auto-dismissing toasts instead of a
+       banner that sits on screen forever.
+     - The WhatsApp/UPI form tracks unsaved changes locally: Save is
+       disabled until something actually changed, shows a spinner while
+       saving, shows an "Unsaved changes" pill, and warns before an
+       accidental tab close.
+     - WhatsApp/UPI inputs get a live format-check tick.
+     - Shop Name editing supports Enter-to-save / Escape-to-cancel.
+     - The Plan row/badge icon swaps per tier (Gift/Rocket/Gem/Crown),
+       matching the plan iconography already used on the Pricing page.
+     - Shop links show a small "Live" indicator.
+   None of this changes how updateName / saveShopSettings / onCopy are
+   called — Dashboard.jsx doesn't need any changes.
 --------------------------------------------------------------*/
 
-const HEADING_FONT = "'Fraunces', ui-serif, Georgia, serif";
-
-const GEMS = {
-  ink: "linear-gradient(135deg, #3A3352, #1C1730)",
-  rose: "linear-gradient(135deg, #C48173, #9C4B3E)",
-   blue: "linear-gradient(135deg, #3b6fe8, #25deeb)",
-    green: "linear-gradient(135deg, #10B981, #05965c)",
-     gold: "linear-gradient(135deg, #F59E0B, #efe524)" 
+// Plan tier → icon + color, mirrors the tier icons on the Pricing page
+// so the same tier reads identically everywhere in the app.
+const PLAN_META = {
+  free: { icon: Gift, className: "bg-slate-100 text-slate-700" },
+  basic: { icon: Rocket, className: "bg-blue-100 text-blue-700" },
+  pro: { icon: Gem, className: "bg-violet-100 text-violet-700" },
+  elite: { icon: Crown, className: "bg-amber-100 text-amber-700" },
 };
 
-const GEM_ICON_COLOR = {
-  ink: "#E3C989",
-  rose: "#FFFDF7",
-  blue: "#F0F5FF", 
-  green:  "#FFFFFF",
-   gold: "#0807078e" 
-};
-
-const GEM_SHADOW =
-  "inset 0 1px 1px rgba(255,255,255,0.25), inset 0 -1px 2px rgba(0,0,0,0.18), 0 1px 3px rgba(28,23,48,0.25)";
-
-const GEM_SIZES = {
-  sm: { box: "w-[26px] h-[26px]", radius: "rounded-lg", icon: "w-[13px] h-[13px]" },
-  md: { box: "w-8 h-8", radius: "rounded-lg", icon: "w-4 h-4" },
-  lg: { box: "w-10 h-10", radius: "rounded-xl", icon: "w-[18px] h-[18px]" },
-};
-
-/* Scoped keyframes for the handful of one-shot animations. Safe, unlikely
-   class names so nothing collides with the rest of your app. Worth moving
-   into your global stylesheet once you're happy with it. */
-function AtelierStyles() {
-  return (
-    <style>{`
-      @keyframes al-card-in {
-        from { opacity: 0; transform: translateY(14px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .al-card-in { animation: al-card-in 0.55s cubic-bezier(0.16,1,0.3,1) both; }
-
-      @keyframes al-shine {
-        0% { transform: translateX(-160%) skewX(-20deg); opacity: 0; }
-        15% { opacity: 1; }
-        100% { transform: translateX(220%) skewX(-20deg); opacity: 0; }
-      }
-      .al-shine { position: relative; overflow: hidden; }
-      .al-shine::after {
-        content: "";
-        position: absolute;
-        top: 0; left: 0; height: 100%; width: 35%;
-        background: linear-gradient(120deg, transparent, rgba(255,255,255,0.5), transparent);
-        animation: al-shine 1.3s ease-in-out 0.7s 1 both;
-        pointer-events: none;
-      }
-    `}</style>
+// Light heuristic so a plain success/error string from Dashboard.jsx
+// still gets styled as success or error without needing a new prop.
+const isErrorMessage = (msg = "") => {
+  const lower = msg.toLowerCase();
+  return ["error", "fail", "wrong", "invalid", "nahi", "galat"].some((w) =>
+    lower.includes(w),
   );
-}
+};
 
-function GemIcon({ icon: Icon, tone = "ink", size = "sm", glossy = false }) {
-  const dims = GEM_SIZES[size];
+// Small "this shop link is live" signal.
+function LiveBadge() {
   return (
     <span
-      className={`${dims.box} ${dims.radius} flex items-center justify-center shrink-0
-                  transition-transform duration-300 ease-out
-                  group-hover:-translate-y-0.5 group-hover:scale-[1.07]`}
-      style={{ boxShadow: GEM_SHADOW }}
+      className="inline-flex items-center gap-1.5 text-[11px] font-semibold
+                 text-emerald-600 bg-emerald-50 border border-emerald-200
+                 px-2 py-0.5 rounded-full"
     >
-      <span
-        className={`relative w-full h-full ${dims.radius} overflow-hidden flex items-center justify-center`}
-        style={{ background: GEMS[tone] }}
-      >
-        {glossy && (
-          <span
-            className="absolute top-0.5 left-1 w-[45%] h-[35%] rounded-full
-                       bg-white/40 blur-[1px] pointer-events-none"
-            aria-hidden="true"
-          />
-        )}
-        <Icon
-          className={`${dims.icon} relative`}
-          strokeWidth={2.25}
-          style={{
-            color: GEM_ICON_COLOR[tone],
-            filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.2))",
-          }}
-        />
+      <span className="relative flex w-1.5 h-1.5">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
       </span>
+      Live
     </span>
   );
 }
 
-/* Hand-built draw-in checkmark (pathLength normalizes the path to 1, so the
-   stroke-dashoffset transition works regardless of the actual path shape).
-   Kept always-mounted and cross-faded against the plain Copy icon so the
-   "drawing" transition actually has something to animate from. */
+// Hand-drawn "draws in" checkmark (pathLength normalizes the path to 1,
+// so the stroke-dashoffset transition works regardless of path shape).
+// Reused for both the copy-confirmation icon and the WhatsApp/UPI field
+// validity ticks — one motif for "confirmed correct" everywhere instead
+// of mixing checkmark styles across the page.
 function DrawCheck({ className = "", active = false }) {
   return (
     <svg
@@ -191,56 +140,78 @@ function CopyIndicator({ copied, size = "w-3.5 h-3.5" }) {
   );
 }
 
-function InfoNote({ children }) {
-  if (!children) return null;
+// Floating, auto-dismissing toast — success/error styling decided by the
+// isErrorMessage heuristic above.
+function Toast({ message, visible, onClose }) {
+  const isError = isErrorMessage(message);
   return (
     <div
-      className="flex items-center justify-center gap-1.5 text-xs font-medium
-                 text-[#6B6577] bg-[#FBF9F5] border border-[#F1EDE4]
-                 rounded-lg px-3 py-2.5"
+      role={isError ? "alert" : "status"}
+      className={`flex items-start gap-2.5 w-full sm:w-80 bg-white
+                 border rounded-2xl shadow-lg px-4 py-3
+                 transition-all duration-300
+                 ${
+                   visible
+                     ? "opacity-100 translate-y-0"
+                     : "opacity-0 translate-y-2 pointer-events-none"
+                 }
+                 ${isError ? "border-red-200" : "border-emerald-200"}`}
     >
-      <Info className="w-3.5 h-3.5 text-[#B8873D] shrink-0" strokeWidth={2} />
-      <span>{children}</span>
+      {isError ? (
+        <AlertCircle className="w-[18px] h-[18px] text-red-500 flex-shrink-0 mt-0.5" />
+      ) : (
+        <CheckCircle2 className="w-[18px] h-[18px] text-emerald-500 flex-shrink-0 mt-0.5" />
+      )}
+      <p className="text-sm text-gray-700 flex-1">{message}</p>
+      <button
+        onClick={onClose}
+        aria-label="Dismiss"
+        className="text-gray-300 hover:text-gray-500 transition flex-shrink-0"
+      >
+        <X className="w-3.5 h-3.5" />
+      </button>
     </div>
+  );
+}
+
+// Small icon chip used for every row/header icon — plain colored tint,
+// no gradient/bevel, so it stays quiet and doesn't compete with the
+// gradient CTAs which are the page's one deliberate "shiny" element.
+function IconChip({ icon: Icon, className = "bg-violet-100 text-violet-600", size = "sm" }) {
+  const box = size === "lg" ? "w-10 h-10 rounded-2xl" : "w-8 h-8 rounded-xl";
+  const iconSize = size === "lg" ? "w-5 h-5" : "w-4 h-4";
+  return (
+    <span className={`${box} flex items-center justify-center shrink-0 ${className}`}>
+      <Icon className={iconSize} strokeWidth={2.25} />
+    </span>
   );
 }
 
 function SectionHeader({ icon, title, subtitle }) {
   return (
-    <div className="flex items-center gap-3 mb-5 group">
-      <GemIcon icon={icon} tone="ink" size="lg" glossy />
+    <div className="flex items-center gap-3 mb-5">
+      <IconChip icon={icon} size="lg" />
       <div>
-        <h2
-          className="text-lg font-bold text-[#1C1730] tracking-tight"
-          style={{ fontFamily: HEADING_FONT }}
-        >
-          {title}
-        </h2>
-        {subtitle && (
-          <p className="text-[11px] text-[#948E9F] font-medium">{subtitle}</p>
-        )}
+        <h2 className="text-lg font-bold text-gray-800">{title}</h2>
+        {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
       </div>
     </div>
   );
 }
 
 const CARD =
-  "bg-white rounded-2xl p-6 sm:p-7 border border-[#EFEAE0] al-card-in " +
-  "shadow-[0_1px_2px_rgba(28,23,48,0.05),0_12px_32px_-18px_rgba(28,23,48,0.2)] " +
-  "transition-[transform,box-shadow] duration-300 ease-out " +
-  "hover:-translate-y-1 hover:shadow-[0_1px_2px_rgba(28,23,48,0.06),0_20px_40px_-20px_rgba(28,23,48,0.3)]";
+  "bg-white rounded-2xl shadow-sm relative overflow-hidden hover:shadow-md transition-shadow";
+// Thin gradient accent bar — the one recurring "signature" element
+// repeated across all three cards instead of three different decorations.
+const CARD_ACCENT =
+  "absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-violet-500 via-indigo-500 to-violet-500";
 
 const PRIMARY_BTN =
-  "bg-gradient-to-br from-[#2E2748] to-[#140F22] text-white transition " +
-  "hover:-translate-y-0.5 hover:shadow-[0_6px_16px_-4px_rgba(28,23,48,0.5)] active:scale-[0.97]";
-const PRIMARY_BTN_SHADOW = {
-  boxShadow:
-    "inset 0 1px 0 rgba(255,255,255,0.1), 0 3px 8px -2px rgba(28,23,48,0.4)",
-};
-
+  "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-sm hover:shadow-md transition";
 const SECONDARY_BTN =
-  "bg-[#F5F3EE] text-[#5A5468] hover:bg-[#EFEAE0] hover:text-[#1C1730] transition active:scale-[0.97]";
-const SECONDARY_BTN_COPIED = "bg-[#E7F1EA] text-[#2F6F4E] active:scale-[0.97]";
+  "bg-violet-50 text-violet-700 hover:bg-violet-100 border border-violet-200/60 transition";
+const SECONDARY_BTN_COPIED =
+  "bg-emerald-50 text-emerald-600 border border-emerald-200 transition";
 
 export default function StoreSection({
   seller = {},
@@ -263,7 +234,8 @@ export default function StoreSection({
   const planLabel = planRaw
     ? planRaw.charAt(0).toUpperCase() + planRaw.slice(1).toLowerCase()
     : "—";
-  const isPremiumPlan = ["pro", "elite"].includes(planRaw.toLowerCase());
+  const planMeta = PLAN_META[planRaw.toLowerCase()];
+  const PlanIcon = planMeta?.icon || Gem;
 
   const showFabricShop =
     seller?.plan?.toLowerCase() === "pro" ||
@@ -283,256 +255,294 @@ export default function StoreSection({
     ).matches;
     window.open(url, isStandalone ? "_self" : "_blank", "noopener,noreferrer");
   };
-const WhatsAppIconSVG = () => (
-  // Ekdum asli WhatsApp logo ka math aur spacing fix kiya hai
-  <svg 
-    viewBox="0 0 24 24" 
-    width="15" 
-    height="15" 
-    fill="#FFFFFF"
-    style={{ display: 'block', margin: 'auto' }}
-  >
-    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.458 5.704 1.459h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-  </svg>
-);
 
+  const WhatsAppIconSVG = () => (
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="#FFFFFF" style={{ display: "block", margin: "auto" }}>
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.458 5.704 1.459h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+    </svg>
+  );
+
+  // Local toast visibility, decoupled from whatever Dashboard.jsx does
+  // with its own nameMsg/settingsMsg strings — these flip back to false
+  // on a timer regardless, so the message actually disappears on screen.
+  const [nameToastVisible, setNameToastVisible] = useState(false);
+  const [settingsToastVisible, setSettingsToastVisible] = useState(false);
+
+  useEffect(() => {
+    if (!nameMsg) return;
+    setNameToastVisible(true);
+    const t = setTimeout(() => setNameToastVisible(false), 4000);
+    return () => clearTimeout(t);
+  }, [nameMsg]);
+
+  useEffect(() => {
+    if (!settingsMsg) return;
+    setSettingsToastVisible(true);
+    const t = setTimeout(() => setSettingsToastVisible(false), 4000);
+    return () => clearTimeout(t);
+  }, [settingsMsg]);
+
+  // Local "saving" flag so Save Settings can show a spinner and disable
+  // itself mid-request, whether saveShopSettings is sync or async.
+  const [saving, setSaving] = useState(false);
+  const handleSaveSettings = async () => {
+    setSaving(true);
+    try {
+      await saveShopSettings();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Unsaved-changes tracking for the WhatsApp/UPI form. Captured once on
+  // mount, then resynced whenever a non-error settingsMsg comes back
+  // (read as "the save succeeded"). Powers the disabled Save button, the
+  // "Unsaved changes" pill, and the leave-page warning below.
+  const [savedSnapshot, setSavedSnapshot] = useState({
+    whatsapp: shopSettings?.whatsapp || "",
+    upiId: shopSettings?.upiId || "",
+  });
+
+  useEffect(() => {
+    if (settingsMsg && !isErrorMessage(settingsMsg)) {
+      setSavedSnapshot({
+        whatsapp: shopSettings?.whatsapp || "",
+        upiId: shopSettings?.upiId || "",
+      });
+    }
+    // eslint-disable-next-line
+  }, [settingsMsg]);
+
+  const isDirty =
+    (shopSettings?.whatsapp || "") !== savedSnapshot.whatsapp ||
+    (shopSettings?.upiId || "") !== savedSnapshot.upiId;
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  // Light inline format hints — purely advisory, they never block saving.
+  const whatsappValue = shopSettings?.whatsapp || "";
+  const upiValue = shopSettings?.upiId || "";
+  const whatsappLooksValid = /^\d{10,12}$/.test(whatsappValue);
+  const upiLooksValid = /^[\w.-]+@[a-zA-Z]+$/.test(upiValue);
 
   return (
-    <div className="space-y-6">
-      <AtelierStyles />
-      {/* Swap this for a <link> in your app's <head> once you're happy with it */}
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap"
-      />
-
+    <div className="space-y-5">
       {/* ─── Account Info Card ─────────────────────────── */}
-      <div className={CARD} style={{ animationDelay: "0s" }}>
-        <SectionHeader
-          icon={Store}
-          title="Account Overview"
-          subtitle="Your identity, plan & storefront name"
-        />
+      <div className={CARD}>
+        <div className={CARD_ACCENT} />
+        <div className="p-6">
+          <SectionHeader
+            icon={Store}
+            title="Account Overview"
+            subtitle="Your identity, plan & storefront name"
+          />
 
-        <div>
-          {/* Email */}
-          <div className="flex justify-between items-center py-3.5 border-b border-[#F1EDE4] group">
-            <span className="flex items-center gap-2.5 text-[#6B6577] text-sm">
-              <GemIcon icon={Mail} tone="ink" />
-              Email
-            </span>
-            <span className="font-medium text-sm text-[#1C1730]">
-              {seller?.email}
-            </span>
-          </div>
-
-          {/* Seller ID */}
-          <div className="flex justify-between items-center py-3.5 border-b border-[#F1EDE4] group">
-            <span className="flex items-center gap-2.5 text-[#6B6577] text-sm">
-              <GemIcon icon={Hash} tone="ink" />
-              Seller ID
-            </span>
-            <div className="flex items-center gap-1">
-              <span className="font-mono text-xs text-[#1C1730] font-medium">
-                {dashboard?.seller?.sellerId}
+          <div className="space-y-3">
+            {/* Email */}
+            <div className="flex justify-between items-center py-3 border-b border-gray-100">
+              <span className="flex items-center gap-2.5 text-gray-500 text-sm">
+                <IconChip icon={Mail} />
+                Email
+                <Lock className="w-3 h-3 text-gray-300" strokeWidth={2.5} />
               </span>
-              <button
-                onClick={() => onCopy(dashboard?.seller?.sellerId, "sellerId")}
-                aria-label="Copy Seller ID"
-                className="w-6 h-6 flex items-center justify-center rounded-md
-                           text-[#A6A0B0] hover:bg-[#F7F1E3] hover:text-[#B8873D]
-                           transition active:scale-90"
+              <span className="font-medium text-sm text-gray-800">
+                {seller?.email}
+              </span>
+            </div>
+
+            {/* Seller ID */}
+            <div className="flex justify-between items-center py-3 border-b border-gray-100">
+              <span className="flex items-center gap-2.5 text-gray-500 text-sm">
+                <IconChip icon={Hash} />
+                Seller ID
+                <Lock className="w-3 h-3 text-gray-300" strokeWidth={2.5} />
+              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-mono text-xs text-gray-800 font-medium">
+                  {dashboard?.seller?.sellerId}
+                </span>
+                <button
+                  onClick={() => onCopy(dashboard?.seller?.sellerId, "sellerId")}
+                  aria-label="Copy Seller ID"
+                  className="w-6 h-6 flex items-center justify-center rounded-md
+                             text-gray-300 hover:bg-violet-50 hover:text-violet-600
+                             transition active:scale-90"
+                >
+                  <CopyIndicator copied={copiedKey === "sellerId"} size="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+
+            {/* Plan */}
+            <div className="flex justify-between items-center py-3 border-b border-gray-100">
+              <span className="flex items-center gap-2.5 text-gray-500 text-sm">
+                <IconChip
+                  icon={PlanIcon}
+                  className={planMeta?.className || "bg-violet-100 text-violet-600"}
+                />
+                Plan
+              </span>
+              <span
+                className={`inline-flex items-center gap-1.5 text-xs font-bold
+                            px-2.5 py-1 rounded-full capitalize
+                            ${planMeta?.className || "bg-gray-100 text-gray-600"}`}
               >
-                <CopyIndicator
-                  copied={copiedKey === "sellerId"}
-                  size="w-3 h-3"
-                />
-              </button>
+                <PlanIcon className="w-3.5 h-3.5" strokeWidth={2.5} />
+                {planLabel}
+              </span>
             </div>
-          </div>
 
-          {/* Plan */}
-          <div className="flex justify-between items-center py-3.5 border-b border-[#F1EDE4] group">
-            <span className="flex items-center gap-2.5 text-[#6B6577] text-sm">
-              <GemIcon icon={Sparkles} tone="ink" />
-              Plan
-            </span>
-            <span
-              className={`al-shine inline-flex items-center gap-1 pl-2.5 pr-3 py-1.5
-                          rounded-full text-xs font-bold transition-transform
-                          duration-300 hover:scale-105 ${
-                            isPremiumPlan
-                              ? "text-[#E3C989] ring-1 ring-[#E3C989]/40"
-                              : "bg-[#F1EDE4] text-[#6B6577]"
-                          }`}
-              style={
-                isPremiumPlan
-                  ? {
-                      background: GEMS.ink,
-                      boxShadow:
-                        "inset 0 1px 0 rgba(255,255,255,0.08), 0 1px 3px rgba(28,23,48,0.25)",
-                    }
-                  : undefined
-              }
-            >
-              {isPremiumPlan && (
-                <Crown
-                  className="w-3 h-3"
-                  strokeWidth={2.5}
-                  style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.25))" }}
-                />
-              )}
-              {planLabel}
-            </span>
-          </div>
-
-          {/* Shop Name — editable */}
-          <div className="flex justify-between items-center py-3.5 group">
-            <span className="flex items-center gap-2.5 text-[#6B6577] text-sm">
-              <GemIcon icon={Store} tone="ink" />
-              Shop Name
-            </span>
-            <div className="flex items-center gap-2">
-              {editingName ? (
-                <>
-                  <input
-                    type="text"
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    className="border border-[#D8C9A3] rounded-lg
-                               px-3 py-1.5 text-sm focus:outline-none
-                               focus:border-[#B8873D] w-36 text-[#1C1730]"
-                    placeholder="Enter new name"
-                    autoFocus
-                  />
-                  <button
-                    onClick={updateName}
-                    disabled={nameLoading}
-                    aria-label="Save name"
-                    className="w-8 h-8 flex items-center justify-center
-                               rounded-lg bg-[#E7F1EA] text-[#2F6F4E]
-                               hover:bg-[#DAEBDF] transition
-                               disabled:opacity-50 active:scale-90"
-                  >
-                    {nameLoading ? (
-                      <span className="w-3.5 h-3.5 border-2 border-[#2F6F4E] border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Check className="w-4 h-4" strokeWidth={2.5} />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setEditingName(false)}
-                    aria-label="Cancel"
-                    className="w-8 h-8 flex items-center justify-center
-                               rounded-lg bg-[#F3F0EA] text-[#948E9F]
-                               hover:bg-[#FBEAE6] hover:text-[#9C4B3E] transition
-                               active:scale-90"
-                  >
-                    <X className="w-4 h-4" strokeWidth={2.5} />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <span className="font-medium text-sm text-[#1C1730]">
-                    {seller?.name}
-                  </span>
-                  <button
-                    onClick={() => {
-                      setNewName(seller?.name || "");
-                      setEditingName(true);
-                    }}
-                    className="flex items-center gap-1 text-[#9C7A2E] text-xs
-                               font-semibold hover:text-[#7A5F20] bg-[#FBF3E3]
-                               px-2.5 py-1.5 rounded-lg transition active:scale-95"
-                  >
-                    <Pencil className="w-3 h-3" strokeWidth={2.5} />
-                    Edit
-                  </button>
-                </>
-              )}
+            {/* Shop Name — editable */}
+            <div className="flex justify-between items-center py-3">
+              <span className="flex items-center gap-2.5 text-gray-500 text-sm">
+                <IconChip icon={Store} />
+                Shop Name
+              </span>
+              <div className="flex items-center gap-2">
+                {editingName ? (
+                  <>
+                    <input
+                      type="text"
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      // Enter saves, Escape cancels — no change in behaviour
+                      // for anyone who just clicks the buttons.
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") updateName();
+                        if (e.key === "Escape") setEditingName(false);
+                      }}
+                      onFocus={(e) => e.target.select()}
+                      className="border border-violet-300 rounded-lg
+                                 px-3 py-1.5 text-sm focus:outline-none
+                                 focus:border-violet-500 focus:ring-2
+                                 focus:ring-violet-100 w-36"
+                      placeholder="Enter new name"
+                      autoFocus
+                    />
+                    <button
+                      onClick={updateName}
+                      disabled={nameLoading}
+                      aria-label="Save name"
+                      className="w-8 h-8 flex items-center justify-center
+                                 rounded-lg bg-emerald-50 text-emerald-600
+                                 hover:bg-emerald-100 transition
+                                 disabled:opacity-50"
+                    >
+                      {nameLoading ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Check className="w-4 h-4" strokeWidth={2.5} />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setEditingName(false)}
+                      aria-label="Cancel"
+                      className="w-8 h-8 flex items-center justify-center
+                                 rounded-lg bg-gray-100 text-gray-500
+                                 hover:bg-red-50 hover:text-red-600 transition"
+                    >
+                      <X className="w-4 h-4" strokeWidth={2.5} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-medium text-sm text-gray-800">
+                      {seller?.name}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setNewName(seller?.name || "");
+                        setEditingName(true);
+                      }}
+                      className="flex items-center gap-1 text-violet-600 text-xs
+                                 font-semibold hover:text-violet-700 bg-violet-50
+                                 px-2.5 py-1.5 rounded-lg transition"
+                    >
+                      <Pencil className="w-3 h-3" strokeWidth={2.5} />
+                      Edit
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-          {nameMsg && (
-            <div className="pt-3">
-              <InfoNote>{nameMsg}</InfoNote>
-            </div>
-          )}
         </div>
       </div>
 
       {/* ─── Shop Links Card ───────────────────────────── */}
-      <div className={CARD + " space-y-5"} style={{ animationDelay: "0.08s" }}>
-        <SectionHeader
-          icon={Link2}
-          title="Shop Links"
-          subtitle="Share these with your customers"
-        />
+      <div className={CARD}>
+        <div className={CARD_ACCENT} />
+        <div className="p-6 space-y-4">
+          <SectionHeader
+            icon={Link2}
+            title="Shop Links"
+            subtitle="Share these with your customers"
+          />
 
-        {/* Garment Shop Link — the one deliberate color accent (rose) */}
-        <div>
-          <div className="flex items-center gap-2.5 mb-3 group">
-            <GemIcon icon={Shirt} tone="rose" size="md" glossy />
-            <p className="text-[#948E9F] text-[11px] font-bold uppercase tracking-wider">
-              Garment Shop
-            </p>
+          {/* Garment Shop Link */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <IconChip icon={Shirt} />
+              <p className="text-gray-500 text-xs font-semibold uppercase tracking-wide">
+                Garment Shop
+              </p>
+              {dashboard?.shopUrl && <LiveBadge />}
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div
+                className="flex-1 min-w-0 bg-violet-50/60 border border-violet-100
+                           rounded-xl px-3 py-2.5 font-mono text-xs text-violet-700
+                           truncate flex items-center"
+              >
+                {dashboard?.shopUrl}
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <button
+                  onClick={() => onCopy(dashboard?.shopUrl, "garment")}
+                  className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl
+                              text-xs font-bold shrink-0 ${
+                                copiedKey === "garment"
+                                  ? SECONDARY_BTN_COPIED
+                                  : SECONDARY_BTN
+                              }`}
+                >
+                  <CopyIndicator copied={copiedKey === "garment"} />
+                  {copiedKey === "garment" ? "Copied" : "Copy"}
+                </button>
+                <button
+                  onClick={() => openLink(dashboard?.shopUrl)}
+                  className={`flex items-center gap-1.5 font-bold px-3.5 py-2.5
+                              rounded-xl text-xs shrink-0 ${PRIMARY_BTN}`}
+                >
+                  View Shop
+                  <ExternalLink className="w-3.5 h-3.5" strokeWidth={2} />
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2">
-            <div
-              className="flex-1 min-w-0 bg-[#FBF9F5] border border-[#F1EDE4]
-                         rounded-xl px-3.5 py-2.5 font-mono text-xs text-[#5A5468]
-                         truncate flex items-center"
-            >
-              {dashboard?.shopUrl}
-            </div>
-            <div className="flex gap-2 shrink-0">
-              <button
-                onClick={() => onCopy(dashboard?.shopUrl, "garment")}
-                className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl
-                            text-xs font-bold shrink-0 ${
-                              copiedKey === "garment"
-                                ? SECONDARY_BTN_COPIED
-                                : SECONDARY_BTN
-                            }`}
-              >
-                <CopyIndicator copied={copiedKey === "garment"} />
-                {copiedKey === "garment" ? "Copied" : "Copy"}
-              </button>
-              <button
-                onClick={() => openLink(dashboard?.shopUrl)}
-                className={`flex items-center gap-1.5 font-bold px-3.5 py-2.5
-                            rounded-xl text-xs shrink-0 ${PRIMARY_BTN}`}
-                style={PRIMARY_BTN_SHADOW}
-              >
-                Open
-                <ExternalLink className="w-3.5 h-3.5" strokeWidth={2} />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Fabric Shop Link — Pro/Elite only, back in the base ink family */}
-        {showFabricShop && (
-          <div className="relative pt-6">
-            <div
-              className="absolute top-0 left-0 right-0 flex items-center justify-center"
-              aria-hidden="true"
-            >
-              <div className="w-full border-t-2 border-dashed border-[#E3C989]/70" />
-              <span className="absolute w-1.5 h-1.5 rounded-full bg-[#E3C989] ring-4 ring-white" />
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2.5 mb-3 group">
-                <GemIcon icon={Scissors} tone="blue" size="md" glossy />
-                <p className="text-[#948E9F] text-[11px] font-bold uppercase tracking-wider">
+          {/* Fabric Shop Link — Pro/Elite only */}
+          {showFabricShop && (
+            <div className="pt-4 border-t border-gray-100">
+              <div className="flex items-center gap-2 mb-2">
+                <IconChip icon={Scissors} className="bg-indigo-100 text-indigo-600" />
+                <p className="text-gray-500 text-xs font-semibold uppercase tracking-wide">
                   Fabric Shop
                 </p>
+                <LiveBadge />
               </div>
 
               <div
-                className="bg-[#FBF9F5] border border-[#F1EDE4] rounded-xl
-                           px-3.5 py-2.5 font-mono text-xs text-[#5A5468]
+                className="bg-violet-50/60 border border-violet-100 rounded-xl
+                           px-3 py-2.5 font-mono text-xs text-violet-700
                            break-all mb-3"
               >
                 {fabricUrl}
@@ -555,103 +565,162 @@ const WhatsAppIconSVG = () => (
                   onClick={() => openLink(fabricUrl)}
                   className={`flex items-center justify-center gap-1.5 py-2.5
                               rounded-xl text-xs font-bold ${PRIMARY_BTN}`}
-                  style={PRIMARY_BTN_SHADOW}
                 >
                   <ExternalLink className="w-3.5 h-3.5" strokeWidth={2} />
-                  Open Shop
+                  View Fabric Shop
                 </button>
               </div>
 
               <a
                 href={
                   "https://wa.me/?text=" +
-                  encodeURIComponent("View My Fabric Shop! 🧵 " + fabricUrl)
+                  encodeURIComponent("Fabric Shop dekhein! 🧵 " + fabricUrl)
                 }
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full
-                           bg-gradient-to-br from-[#22C55E] to-[#128C42]
+                           bg-gradient-to-r from-emerald-500 to-green-600
                            text-white py-2.5 rounded-xl text-xs font-bold
-                           transition hover:-translate-y-0.5 active:scale-[0.97]"
-                style={{
-                  boxShadow:
-                    "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 6px -1px rgba(18,140,66,0.4)",
-                }}
+                           shadow-sm hover:shadow-md transition"
               >
                 <MessageCircle className="w-3.5 h-3.5" strokeWidth={2} />
                 Share on WhatsApp
               </a>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-
       {/* ─── WhatsApp / UPI Settings Card ──────────────── */}
-      <div className={CARD} style={{ animationDelay: "0.16s" }}>
-        <SectionHeader
-          icon={Wallet}
-          title="Order & Payment Details"
-          subtitle="Shown to customers when they order"
-        />
-        <div className="space-y-5">
-          <div>
-            <label className="text-sm font-semibold text-[#1C1730] flex items-center gap-2.5 mb-1.5 group">
-              <GemIcon icon={WhatsAppIconSVG} tone="green" />
-              WhatsApp Number
-            </label>
-            <p className="text-[#948E9F] text-xs mb-2 ml-[34px]">
-              Orders will be sent to this number.
-            </p>
-            <input
-              type="text"
-              placeholder="91XXXXXXXXXX"
-              value={shopSettings.whatsapp}
-              onChange={(e) =>
-                setShopSettings({ ...shopSettings, whatsapp: e.target.value })
-              }
-              className="w-full border border-[#EFEAE0] rounded-xl
-                         px-4 py-2.5 text-sm focus:outline-none
-                         focus:border-[#B8873D] transition text-[#1C1730]"
+      <div className={CARD}>
+        <div className={CARD_ACCENT} />
+        <div className="p-6">
+          <div className="flex items-center justify-between gap-3 mb-1 flex-wrap">
+            <SectionHeader
+              icon={Wallet}
+              title="Order & Payment Details"
+              subtitle="These are shown to customers when they order."
             />
-          <p className="text-[#B8873D] text-xs mt-1.5">
-              Include the country code — e.g. 91XXXXXXXXXX
-            </p>
+            {/* Unsaved-changes pill, only shown once the seller has
+                actually edited something. */}
+            {isDirty && (
+              <span
+                className="inline-flex items-center gap-1.5 text-xs font-semibold
+                           text-amber-600 bg-amber-50 border border-amber-200
+                           px-2.5 py-1 rounded-full mb-5"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                Unsaved changes
+              </span>
+            )}
           </div>
 
-          <div>
-            <label className="text-sm font-semibold text-[#1C1730] flex items-center gap-2.5 mb-1.5 group">
-              <GemIcon icon={IndianRupee} tone="gold" />
-              UPI ID
-            </label>
-            <p className="text-[#948E9F] text-xs mb-2 ml-[34px]">
-              Used for payments.
-            </p>
-            <input
-              type="text"
-              placeholder="yourname@upi"
-              value={shopSettings.upiId}
-              onChange={(e) =>
-                setShopSettings({ ...shopSettings, upiId: e.target.value })
-              }
-              className="w-full border border-[#EFEAE0] rounded-xl
-                         px-4 py-2.5 text-sm focus:outline-none
-                         focus:border-[#B8873D] transition text-[#1C1730]"
-            />
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-1">
+                <IconChip icon={WhatsAppIconSVG} className="bg-emerald-500 text-white" />
+                WhatsApp Number
+              </label>
+              <p className="text-gray-400 text-xs mb-2 ml-10">
+                Orders will be sent to this number.
+              </p>
+              {/* Validity tick reuses the same hand-drawn checkmark used
+                  for Copy — one motif for "confirmed correct". */}
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="91XXXXXXXXXX"
+                  value={shopSettings.whatsapp}
+                  onChange={(e) =>
+                    setShopSettings({ ...shopSettings, whatsapp: e.target.value })
+                  }
+                  className="w-full border border-gray-200 rounded-xl
+                             px-4 pr-10 py-2.5 text-sm focus:outline-none
+                             focus:border-violet-500 focus:ring-2
+                             focus:ring-violet-100 transition"
+                />
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-500">
+                  <DrawCheck
+                    className="w-4 h-4"
+                    active={whatsappValue.length > 0 && whatsappLooksValid}
+                  />
+                </span>
+              </div>
+              <p className="text-amber-500 text-xs mt-1.5">
+                Include the country code — e.g. 91XXXXXXXXXX
+              </p>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-1">
+                <IconChip icon={IndianRupee} className="bg-amber-100 text-amber-700" />
+                UPI ID
+              </label>
+              <p className="text-gray-400 text-xs mb-2 ml-10">Used for payments.</p>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="yourname@upi"
+                  value={shopSettings.upiId}
+                  onChange={(e) =>
+                    setShopSettings({ ...shopSettings, upiId: e.target.value })
+                  }
+                  className="w-full border border-gray-200 rounded-xl
+                             px-4 pr-10 py-2.5 text-sm focus:outline-none
+                             focus:border-violet-500 focus:ring-2
+                             focus:ring-violet-100 transition"
+                />
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-emerald-500">
+                  <DrawCheck
+                    className="w-4 h-4"
+                    active={upiValue.length > 0 && upiLooksValid}
+                  />
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={handleSaveSettings}
+              disabled={saving || !isDirty}
+              title={!isDirty ? "No changes to save yet" : undefined}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-2xl
+                         text-sm font-semibold
+                         disabled:opacity-40 disabled:cursor-not-allowed
+                         disabled:shadow-none ${PRIMARY_BTN}`}
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" strokeWidth={2} />
+              )}
+              {saving ? "Saving..." : "Save Settings"}
+            </button>
           </div>
-
-          {settingsMsg && <InfoNote>{settingsMsg}</InfoNote>}
-
-          <button
-            onClick={saveShopSettings}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-full
-                        text-sm font-semibold ${PRIMARY_BTN}`}
-            style={PRIMARY_BTN_SHADOW}
-          >
-            <Save className="w-4 h-4" strokeWidth={2} />
-            Save Settings
-          </button>
         </div>
+      </div>
+
+      {/* Floating toast stack — fixed to the viewport so it works the
+          same whether this section is scrolled deep inside the Dashboard
+          layout or not. Auto-dismisses via the effects above; the X lets
+          the seller close it early. */}
+      <div
+        className="fixed bottom-6 right-6 z-50 flex flex-col gap-3
+                   items-end w-[calc(100%-3rem)] sm:w-auto"
+      >
+        {nameMsg && (
+          <Toast
+            message={nameMsg}
+            visible={nameToastVisible}
+            onClose={() => setNameToastVisible(false)}
+          />
+        )}
+        {settingsMsg && (
+          <Toast
+            message={settingsMsg}
+            visible={settingsToastVisible}
+            onClose={() => setSettingsToastVisible(false)}
+          />
+        )}
       </div>
     </div>
   );

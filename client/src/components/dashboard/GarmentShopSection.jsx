@@ -87,7 +87,7 @@ export default function GarmentShopSection({
                          shadow-sm hover:shadow-md hover:-translate-y-0.5
                          transition-all"
             >
-              <Plus className="w-4 h-4" strokeWidth={2.5} />
+              <Plus className="w-7 h-4" strokeWidth={2.5} />
               Add New Product
             </button>
           </div>
@@ -178,7 +178,7 @@ function ProductCard({ product, onEdit, onToggleStock, onDelete, onClone }) {
 
   return (
     <div className="border border-gray-100 rounded-2xl overflow-hidden group hover:shadow-md transition-all">
-      <div className="relative aspect-square bg-gray-50">
+      <div className="relative aspect-[3/4]  bg-gray-50">
         <DashboardImageSlider images={images} className="w-full h-full object-cover" />
         <span
           className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-1 rounded-full ${
@@ -245,7 +245,7 @@ function ProductRow({ product, onEdit, onToggleStock, onDelete, onClone }) {
           <img
             src={image}
             alt={product.name}
-            className="w-11 h-11 rounded-lg object-cover shrink-0 bg-gray-100"
+            className="w-14 h-20 rounded-lg object-cover shrink-0 bg-gray-100"
           />
           <div className="min-w-0">
             <p className="font-medium text-gray-800 truncate max-w-[160px]">

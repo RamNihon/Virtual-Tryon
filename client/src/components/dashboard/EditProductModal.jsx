@@ -222,7 +222,7 @@ export default function EditProductModal({ product, token, onClose, onSaved }) {
             <div className="grid grid-cols-4 gap-2 mb-2">
               {existingImages.map((url, i) => (
                 <div key={`existing-${i}`} className="relative aspect-square rounded-lg overflow-hidden group">
-                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <img src={url} alt="" className="w-full h-full object-cover object-top" />
                   <button
                     onClick={() => handleRemoveExisting(i)}
                     aria-label="Remove image"
@@ -237,7 +237,7 @@ export default function EditProductModal({ product, token, onClose, onSaved }) {
               ))}
               {newPreviews.map((url, i) => (
                 <div key={`new-${i}`} className="relative aspect-square rounded-lg overflow-hidden group">
-                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <img src={url} alt="" className="w-full h-full  object-contain" />
                   <span className="absolute bottom-1 left-1 bg-emerald-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
                     New
                   </span>

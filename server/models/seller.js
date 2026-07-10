@@ -39,6 +39,18 @@ const sellerSchema = new mongoose.Schema(
     // ─── Yeh 2 naye fields add karo ───────────
     resetPasswordToken: { type: String },
     resetPasswordExpiry: { type: Date },
+
+    // Email alert toggles — set via Settings, read/written by
+    // GET/PUT /api/seller/notification-preferences
+    notificationPreferences: {
+      newOrders: { type: Boolean, default: true },
+      lowCreditAlerts: { type: Boolean, default: true },
+      weeklySummary: { type: Boolean, default: true },
+    },
+
+    // Web Push subscriptions live in their own PushSubscription
+    // collection (a seller can have multiple devices/browsers
+    // subscribed at once) — see models/PushSubscription.js.
   },
   { timestamps: true },
 );

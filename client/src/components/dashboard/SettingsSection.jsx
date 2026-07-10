@@ -4,13 +4,22 @@ import {
   User,
   Lock,
   Bell,
+  // eslint-disable-next-line
+  BellRing,
   Trash2,
   AlertTriangle,
   Eye,
   EyeOff,
   Check,
+  Smartphone,
 } from "lucide-react";
 import API_URL from "../../api";
+import {
+  isPushSupported,
+  getPushStatus,
+  enablePushNotifications,
+  disablePushNotifications,
+} from "../../utils/pushNotifications";
 
 /*
   ─── SETTINGS SECTION ───────────────────────────────────────
@@ -45,6 +54,7 @@ export default function SettingsSection({
         updateName={updateName}
       />
       <PasswordCard token={token} />
+      <PushNotificationCard token={token} />
       <NotificationsCard token={token} />
       <DangerZoneCard token={token} onAccountDeleted={onAccountDeleted} />
     </div>
@@ -184,7 +194,7 @@ function PasswordCard({ token }) {
         </div>
       </div>
 
-      <div className="space-y-2.5">
+       <div className="space-y-2.5">
         <PasswordInput
           placeholder="Current password"
           value={form.current}
@@ -233,14 +243,7 @@ function PasswordCard({ token }) {
   );
 }
 
-function PasswordInput({
-  placeholder,
-  value,
-  onChange,
-  show,
-  onToggleShow,
-  onFocus,
-}) {
+function PasswordInput({ placeholder, value, onChange, show, onToggleShow, onFocus }) {
   return (
     <div className="relative">
       <input
@@ -248,7 +251,7 @@ function PasswordInput({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        onFocus={onFocus}
+         onFocus={onFocus}
         className="w-full border border-gray-200 rounded-xl px-4 py-2.5
                    pr-11 text-sm focus:outline-none focus:border-purple-500"
       />
@@ -266,6 +269,77 @@ function PasswordInput({
           )}
         </button>
       )}
+    </div>
+  );
+}
+
+/* ─── Browser Push Notifications ─────────────────────────── */
+function PushNotificationCard({ token }) {
+  const [status, setStatus] = useState({ supported: false });
+  const [loading, setLoading] = useState(true);
+  const [toggling, setToggling] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    getPushStatus()
+      .then(setStatus)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleToggle = async () => {
+    setError("");
+    setToggling(true);
+    try {
+      if (status.subscribed) {
+        await disablePushNotifications(token);
+        setStatus((s) => ({ ...s, subscribed: false }));
+      } else {
+        await enablePushNotifications(token);
+        setStatus((s) => ({ ...s, subscribed: true, permission: "granted" }));
+      }
+    } catch (err) {
+      setError(err.message || "Something went wrong.");
+    } finally {
+      setToggling(false);
+    }
+  };
+
+  if (!isPushSupported()) return null; // hide entirely on unsupported browsers
+
+  return (
+    <div className="bg-white rounded-2xl p-6 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center shrink-0">
+            <Smartphone className="w-5 h-5 text-purple-600" strokeWidth={2} />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-gray-800">
+              Push Notifications
+            </h2>
+            <p className="text-gray-400 text-xs mt-0.5 max-w-xs">
+              Get an instant alert on this device the moment a new order
+              comes in.
+            </p>
+          </div>
+        </div>
+
+        {!loading && (
+          <ToggleSwitch
+            checked={!!status.subscribed}
+            onChange={handleToggle}
+            disabled={toggling || status.permission === "denied"}
+          />
+        )}
+      </div>
+
+      {status.permission === "denied" && (
+        <p className="text-amber-600 text-xs mt-3 bg-amber-50 rounded-lg px-3 py-2">
+          Notifications are blocked for this site in your browser settings.
+          Enable them there, then refresh this page.
+        </p>
+      )}
+      {error && <p className="text-red-500 text-xs mt-3">{error}</p>}
     </div>
   );
 }
@@ -316,21 +390,9 @@ function NotificationsCard({ token }) {
   };
 
   const OPTIONS = [
-    {
-      key: "newOrders",
-      label: "New orders",
-      desc: "Get notified when a customer places an order.",
-    },
-    {
-      key: "lowCreditAlerts",
-      label: "Low credit alerts",
-      desc: "Warn me when credits are running low.",
-    },
-    {
-      key: "weeklySummary",
-      label: "Weekly summary",
-      desc: "A weekly email with your shop's activity.",
-    },
+    { key: "newOrders", label: "New orders", desc: "Get notified when a customer places an order." },
+    { key: "lowCreditAlerts", label: "Low credit alerts", desc: "Warn me when credits are running low." },
+    { key: "weeklySummary", label: "Weekly summary", desc: "A weekly email with your shop's activity." },
   ];
 
   return (
@@ -341,7 +403,7 @@ function NotificationsCard({ token }) {
             <Bell className="w-5 h-5 text-amber-600" strokeWidth={2} />
           </div>
           <div>
-            <h2 className="text-base font-bold text-gray-800">Notifications</h2>
+            <h2 className="text-base font-bold text-gray-800">Email Alerts</h2>
             <p className="text-gray-400 text-xs mt-0.5">
               Choose which email alerts you receive.
             </p>
@@ -386,7 +448,7 @@ function ToggleSwitch({ checked, onChange }) {
       onClick={onChange}
       role="switch"
       aria-checked={checked}
-      type="button"
+      type="button" // Form submit hone se rokne ke liye zaroori hai
       className={`w-11 h-6 rounded-full transition-colors duration-200 shrink-0 flex items-center p-0.5 focus:outline-none ${
         checked ? "bg-purple-600" : "bg-gray-200"
       }`}
@@ -400,6 +462,7 @@ function ToggleSwitch({ checked, onChange }) {
     </button>
   );
 }
+
 
 /* ─── Danger Zone ────────────────────────────────────────── */
 function DangerZoneCard({ token, onAccountDeleted }) {
@@ -462,8 +525,8 @@ function DangerZoneCard({ token, onAccountDeleted }) {
       ) : (
         <div className="bg-red-50 rounded-xl p-4 space-y-3">
           <p className="text-red-700 text-sm font-semibold">
-            This will permanently delete your shop, products, and account. This
-            cannot be undone.
+            This will permanently delete your shop, products, and account.
+            This cannot be undone.
           </p>
           <input
             type="password"

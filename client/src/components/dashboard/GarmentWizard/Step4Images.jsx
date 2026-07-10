@@ -114,9 +114,9 @@ export default function Step4Images({ form, setForm, errors }) {
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4">
             {previews.map((src, i) => (
               <div
-                key={i}
+                key={i}                               
                 {...getItemProps(i)}
-                className={`relative aspect-square rounded-xl overflow-hidden
+                className={`relative aspect-rectangle rounded-xl overflow-hidden
                             border-2 cursor-grab active:cursor-grabbing
                             select-none group transition ${
                               isActive(i)
@@ -124,7 +124,7 @@ export default function Step4Images({ form, setForm, errors }) {
                                 : "border-gray-100"
                             }`}
               >
-                <img src={src} alt="" className="w-full h-full object-cover pointer-events-none" />
+                <img src={src} alt="" className="w-full h-full object-cover object-top pointer-events-none" />
 
                 {i === 0 && (
                   <span

@@ -252,6 +252,22 @@ router.post("/orders", customerAuth, async (req, res) => {
     } catch (e) {
       console.log("Email error:", e.message);
     }
+
+    // Push notification — instant alert on the seller's device(s).
+    // Wrapped separately from the email above so a push failure
+    // (e.g. VAPID not configured yet) never blocks order creation
+    // or the email notification.
+    try {
+      const { sendPushToSeller } = require("../config/webpush");
+      sendPushToSeller(seller._id, {
+        title: "New Order Received! 🎉",
+        body: `${order.productName} — ₹${order.totalAmount}`,
+        url: "/dashboard",
+        tag: "new-order",
+      }).catch((e) => console.log("Push error:", e.message));
+    } catch (e) {
+      console.log("Push error:", e.message);
+    }
     res.json({
       success: true,
       order,

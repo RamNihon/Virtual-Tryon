@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import axios from "axios";
 import {
   BrowserRouter,
   Routes,
@@ -10,7 +12,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Shop from "./pages/Shop";
-import FabricShop from './pages/FabricShop'
+import FabricShop from "./pages/FabricShop";
 import Pricing from "./pages/Pricing";
 import Footer from "./components/Footer";
 import ShopFooter from "./components/ShopFooter";
@@ -27,7 +29,7 @@ import Navbar from "./components/Navbar";
 import { useAuth } from "./context/AuthContext";
 import ScrollToTop from "./components/ScrollToTop";
 import WidgetGuide from "./pages/WidgetGuide";
-import CreditHistory from './pages/CreditHistory'
+import CreditHistory from "./pages/CreditHistory";
 import ShopFAQ from "./pages/ShopFAQ";
 
 const RedirectIfLogin = ({ children }) => {
@@ -42,7 +44,40 @@ const ProtectedRoute = ({ children }) => {
 
 function AppContent() {
   const location = useLocation();
-  const isShopPage = location.pathname.startsWith("/shop/")||location.pathname.startsWith("/fabric/");
+  const isShopPage =
+    location.pathname.startsWith("/shop/") ||
+    location.pathname.startsWith("/fabric/");
+
+  const { logout } = useAuth();
+  useEffect(() => {
+    const axiosInterceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        // 👇 यहाँ हमने 403 हटा दिया है, अब यह सिर्फ 401 पर फोकस करेगा
+        if (error.response && error.response.status === 401) {
+          console.warn("Session Expired. Logging out...");
+          logout();
+        }
+        return Promise.reject(error);
+      },
+    );
+
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+      const response = await originalFetch(...args);
+      // 👇 यहाँ भी सिर्फ 401
+      if (response.status === 401) {
+        console.warn("Session Expired. Logging out...");
+        logout();
+      }
+      return response;
+    };
+
+    return () => {
+      axios.interceptors.response.eject(axiosInterceptor);
+      window.fetch = originalFetch;
+    };
+  }, [logout]);
 
   return (
     <div className="flex flex-col min-h-screen">

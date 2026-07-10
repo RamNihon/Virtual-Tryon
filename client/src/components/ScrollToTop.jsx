@@ -2,25 +2,24 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 
 export default function ScrollToTop() {
-  const { pathname,hash } = useLocation()
+  const { pathname, hash } = useLocation()
 
   useEffect(() => {
-
-     if (hash) {
+    if (hash) {
       setTimeout(() => {
         const element = document.getElementById(hash.slice(1))
         if (element) {
           element.scrollIntoView({ behavior: 'smooth' })
         }
       }, 100)
-      return
+    } else {
+      // Agar hash nahi hai, tabhi page ke top par scroll karein
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      })
     }
-
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    })
-  }, [pathname,hash])
+  }, [pathname, hash])
 
   return null
 }

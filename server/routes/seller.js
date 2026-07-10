@@ -436,115 +436,285 @@ router.post("/settings", authMiddleware, async (req, res) => {
 });
 
 // Analytics route - dashboard route ke baad add karo
-router.get('/analytics', authMiddleware, async (req, res) => {
+router.get("/analytics", authMiddleware, async (req, res) => {
   try {
-    const seller = await Seller.findById(req.sellerId)
-    const products = await Product.find({ seller: req.sellerId })
+    const seller = await Seller.findById(req.sellerId);
+    const products = await Product.find({ seller: req.sellerId, isActive: true });
 
-    const sevenDaysAgo = new Date()
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+    if (!seller) {
+      return res.status(404).json({
+        message: "Seller nahi mila!",
+      });
+    }
 
-    let recentTryons = []
-    let totalOrders = 0
-    let recentOrders = []
-    let fabricGenCount = 0
-    let fabricTryonCount = 0
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+    let recentTryons = [];
+    let previousTryons = [];
+    let totalOrders = 0;
+    let recentOrders = [];
+    let previousOrders = [];
+    let fabricGenCount = 0;
+    let fabricTryonCount = 0;
 
     try {
       recentTryons = await TryonHistory.find({
         seller: req.sellerId,
-        createdAt: { $gte: sevenDaysAgo }
-      })
-    } catch (e) { console.log('TryonHistory err:', e.message) }
+        createdAt: { $gte: sevenDaysAgo },
+      }).sort({ createdAt: -1 });
+    } catch (e) {
+      console.log("TryonHistory err:", e.message);
+    }
 
     try {
-      const OrderRequest = require('../models/OrderRequest')
+      previousTryons = await TryonHistory.find({
+        seller: req.sellerId,
+        createdAt: { $gte: fourteenDaysAgo, $lt: sevenDaysAgo },
+      });
+    } catch (e) {
+      console.log("Previous TryonHistory err:", e.message);
+    }
+
+    try {
+      const OrderRequest = require("../models/OrderRequest");
       totalOrders = await OrderRequest.countDocuments({
-        seller: req.sellerId
-      })
+        seller: req.sellerId,
+      });
+
       recentOrders = await OrderRequest.find({
         seller: req.sellerId,
-        createdAt: { $gte: sevenDaysAgo }
-      })
-    } catch (e) { console.log('OrderRequest err:', e.message) }
+        createdAt: { $gte: sevenDaysAgo },
+      }).sort({ createdAt: -1 });
+
+      previousOrders = await OrderRequest.find({
+        seller: req.sellerId,
+        createdAt: { $gte: fourteenDaysAgo, $lt: sevenDaysAgo },
+      });
+    } catch (e) {
+      console.log("OrderRequest err:", e.message);
+    }
 
     try {
-      const CreditTransaction = require('../models/CreditTransaction')
+      const CreditTransaction = require("../models/CreditTransaction");
       fabricGenCount = await CreditTransaction.countDocuments({
         seller: req.sellerId,
-        action: 'fabricGen'
-      })
+        action: "fabricGen",
+      });
       fabricTryonCount = await CreditTransaction.countDocuments({
         seller: req.sellerId,
-        action: 'fabricTryon'
-      })
-    } catch (e) { console.log('CreditTransaction err:', e.message) }
+        action: "fabricTryon",
+      });
+    } catch (e) {
+      console.log("CreditTransaction err:", e.message);
+    }
 
     // Daily data - SAHI LOOP
-    const dailyData = []
+    const dailyData = [];
     for (let i = 6; i >= 0; i--) {
-      const date = new Date()
-      date.setDate(date.getDate() - i)
-      date.setHours(0, 0, 0, 0)
-      const nextDate = new Date(date)
-      nextDate.setDate(nextDate.getDate() + 1)
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      date.setHours(0, 0, 0, 0);
 
-      let dayTryons = 0
-      let dayOrders = 0
+      const nextDate = new Date(date);
+      nextDate.setDate(nextDate.getDate() + 1);
+
+      let dayTryons = 0;
+      let dayOrders = 0;
 
       try {
         dayTryons = await TryonHistory.countDocuments({
           seller: req.sellerId,
-          createdAt: { $gte: date, $lt: nextDate }
-        })
-      } catch (e) { dayTryons = 0 }
+          createdAt: { $gte: date, $lt: nextDate },
+        });
+      } catch (e) {
+        dayTryons = 0;
+      }
 
       try {
-        const OrderRequest = require('../models/OrderRequest')
+        const OrderRequest = require("../models/OrderRequest");
         dayOrders = await OrderRequest.countDocuments({
           seller: req.sellerId,
-          createdAt: { $gte: date, $lt: nextDate }
-        })
-      } catch (e) { dayOrders = 0 }
+          createdAt: { $gte: date, $lt: nextDate },
+        });
+      } catch (e) {
+        dayOrders = 0;
+      }
 
       dailyData.push({
-        date: date.toLocaleDateString('en-IN', {
-          day: 'numeric',
-          month: 'short'
+        date: date.toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
         }),
         tryons: Number(dayTryons),
         orders: Number(dayOrders),
-        fabricGens: 0
-      })
+        fabricGens: 0,
+      });
     }
 
-    // console.log('Daily data:', JSON.stringify(dailyData))
+    const totalTryons = Number(seller.tryonCount || recentTryons.length || 0);
+    const recentTryonsCount = recentTryons.length || 0;
+    const previousTryonsCount = previousTryons.length || 0;
+    const recentOrdersCount = recentOrders.length || 0;
+    const previousOrdersCount = previousOrders.length || 0;
 
-    // EK HI RES.JSON - BILKUL END MEIN
+    const conversionRate =
+      totalTryons > 0 ? (totalOrders / totalTryons) * 100 : 0;
+
+    const tryonGrowth =
+      previousTryonsCount > 0
+        ? ((recentTryonsCount - previousTryonsCount) / previousTryonsCount) * 100
+        : recentTryonsCount > 0
+          ? 100
+          : 0;
+
+    const orderGrowth =
+      previousOrdersCount > 0
+        ? ((recentOrdersCount - previousOrdersCount) / previousOrdersCount) * 100
+        : recentOrdersCount > 0
+          ? 100
+          : 0;
+
+    const bestDay = [...dailyData].sort(
+      (a, b) => Number(b.tryons || 0) - Number(a.tryons || 0)
+    )[0];
+
+    const worstDay = [...dailyData].sort(
+      (a, b) => Number(a.tryons || 0) - Number(b.tryons || 0)
+    )[0];
+
+    const topProductDoc = await Product.findOne({
+      seller: req.sellerId,
+      isActive: true,
+    }).sort({ reviewCount: -1, avgRating: -1, createdAt: -1 });
+
+    const topProducts = await Product.aggregate([
+      { $match: { seller: req.sellerId, isActive: true } },
+      {
+        $lookup: {
+          from: "tryonhistories",
+          localField: "_id",
+          foreignField: "product",
+          as: "tryonDocs",
+        },
+      },
+      {
+        $addFields: {
+          tryonCount: { $size: "$tryonDocs" },
+        },
+      },
+      { $sort: { tryonCount: -1, createdAt: -1 } },
+      { $limit: 5 },
+      {
+        $project: {
+          name: 1,
+          brandName: 1,
+          imageUrl: 1,
+          tryonCount: 1,
+          price: 1,
+          category: 1,
+        },
+      },
+    ]);
+
+    const topProduct =
+      topProducts?.[0] || (topProductDoc
+        ? {
+            name: topProductDoc.name,
+            brandName: topProductDoc.brandName || "",
+            imageUrl: topProductDoc.imageUrl || "",
+            tryonCount: 0,
+            price: topProductDoc.price || 0,
+            category: topProductDoc.category || "",
+          }
+        : null);
+
+    let healthScore = 0;
+    healthScore += Math.min(30, totalTryons > 0 ? 15 : 0);
+    healthScore += Math.min(30, conversionRate * 3);
+    healthScore += Math.min(20, recentTryonsCount > 0 ? 15 : 0);
+    healthScore += Math.min(20, totalOrders > 0 ? 15 : 0);
+
+    healthScore = Math.max(0, Math.min(100, Math.round(healthScore)));
+
+    let grade = "C";
+    if (healthScore >= 90) grade = "A+";
+    else if (healthScore >= 80) grade = "A";
+    else if (healthScore >= 70) grade = "B+";
+    else if (healthScore >= 60) grade = "B";
+    else if (healthScore >= 50) grade = "C+";
+    else grade = "C";
+
+    const insights = [
+      totalTryons > 0
+        ? `Customers have completed ${totalTryons} try-ons so far.`
+        : "No try-ons recorded yet. Promote the try-on CTA more visibly.",
+      conversionRate >= 8
+        ? "Conversion looks strong. Keep the current product presentation."
+        : conversionRate >= 4
+          ? "Conversion is healthy but can improve with stronger product images."
+          : "Conversion is low. Try highlighting best-selling products first.",
+      topProduct?.name
+        ? `${topProduct.name} is your most important product right now.`
+        : "Top product data will appear after more try-ons are recorded.",
+      bestDay?.date
+        ? `${bestDay.date} was your best-performing day for try-ons.`
+        : "Best day insights will appear once more data is collected.",
+      recentTryonsCount > previousTryonsCount
+        ? "Try-on momentum is increasing compared to the previous week."
+        : recentTryonsCount < previousTryonsCount
+          ? "Try-on momentum is slightly lower than the previous week."
+          : "Try-on momentum is stable compared to the previous week.",
+    ];
+
     return res.json({
       success: true,
       stats: {
-        totalTryons: seller.tryonCount || 0,
+        totalTryons,
         totalProducts: products.length || 0,
-        recentTryons: recentTryons.length || 0,
+        recentTryons: recentTryonsCount,
+        previousTryons: previousTryonsCount,
         totalOrders: totalOrders || 0,
-        recentOrders: recentOrders.length || 0,
+        recentOrders: recentOrdersCount,
+        previousOrders: previousOrdersCount,
         fabricGenCount: fabricGenCount || 0,
         fabricTryonCount: fabricTryonCount || 0,
         plan: seller.plan,
         credits: seller.credits || 0,
         monthlyCreditsUsed: seller.monthlyCreditsUsed || 0,
-        monthlyCreditsLimit: seller.monthlyCreditsLimit || 100
+        monthlyCreditsLimit: seller.monthlyCreditsLimit || 100,
+        conversionRate: Number(conversionRate.toFixed(1)),
+        tryonGrowth: Number(tryonGrowth.toFixed(1)),
+        orderGrowth: Number(orderGrowth.toFixed(1)),
+        healthScore,
+        grade,
       },
       dailyData,
-      productTryons: []
-    })
-
+      productTryons: topProducts,
+      insights,
+      summary: {
+        bestDay: bestDay?.date || null,
+        worstDay: worstDay?.date || null,
+        topProduct: topProduct
+          ? {
+              name: topProduct.name,
+              brandName: topProduct.brandName || "",
+              imageUrl: topProduct.imageUrl || "",
+              tryonCount: topProduct.tryonCount || 0,
+              price: topProduct.price || 0,
+              category: topProduct.category || "",
+            }
+          : null,
+      },
+    });
   } catch (error) {
-    console.error('Analytics error:', error)
-    return res.status(500).json({ message: error.message })
+    console.error("Analytics error:", error);
+    return res.status(500).json({ message: error.message });
   }
-})
+});
 
 // Public route - koi bhi call kar sakta hai
 router.post("/track-order", async (req, res) => {

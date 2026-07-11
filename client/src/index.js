@@ -29,14 +29,17 @@ root.render(
         </CustomerProvider>
       </AuthProvider>
     </QueryClientProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
 
-// 4. PWA SERVICE WORKER REGISTRATION (Aapke line 15 ke ); ke niche wala code)
-if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(reg => console.log('Service Worker Registered Successfully!', reg.scope))
-      .catch(err => console.log('Service Worker Registration Failed:', err));
+// 4. PWA SERVICE WORKER REGISTRATION
+if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then((reg) =>
+        console.log("Service Worker Registered Successfully!", reg.scope),
+      )
+      .catch((err) => console.log("Service Worker Registration Failed:", err));
   });
 }

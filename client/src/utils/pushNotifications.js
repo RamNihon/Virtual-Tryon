@@ -13,6 +13,15 @@ import API_URL from "../api";
   has partial support; the `isPushSupported()` check lets the UI
   hide the toggle gracefully on unsupported browsers instead of
   showing something that silently fails.
+
+  IMPORTANT: the service worker only registers in production
+  builds (see index.js — it's gated behind
+  process.env.NODE_ENV === 'production'). Running `npm start`
+  locally means `navigator.serviceWorker.ready` never resolves,
+  which is why the toggle could look like "nothing happens" when
+  clicked — it wasn't broken, it was waiting forever. The
+  waitForServiceWorker() helper below times that out with a
+  clear error instead of hanging silently.
 --------------------------------------------------------------*/
 
 export function isPushSupported() {
@@ -26,19 +35,48 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
 }
 
+/* Wraps navigator.serviceWorker.ready with a timeout so the UI
+   can show a real error ("not available in dev mode", etc.)
+   instead of a button that spins forever. */
+function waitForServiceWorker(timeoutMs = 5000) {
+  return Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise((_, reject) =>
+      setTimeout(
+        () =>
+          reject(
+            new Error(
+              process.env.NODE_ENV !== "production"
+                ? "Push notifications only work in the production build, not in development mode."
+                : "Couldn't reach the service worker. Try refreshing the page.",
+            ),
+          ),
+        timeoutMs,
+      ),
+    ),
+  ]);
+}
+
 /* Returns the current permission + subscription state so the
    Settings UI can show the right toggle position on load. */
 export async function getPushStatus() {
   if (!isPushSupported()) return { supported: false };
 
-  const registration = await navigator.serviceWorker.ready;
-  const subscription = await registration.pushManager.getSubscription();
+  try {
+    const registration = await waitForServiceWorker();
+    const subscription = await registration.pushManager.getSubscription();
 
-  return {
-    supported: true,
-    permission: Notification.permission, // "default" | "granted" | "denied"
-    subscribed: !!subscription,
-  };
+    return {
+      supported: true,
+      permission: Notification.permission, // "default" | "granted" | "denied"
+      subscribed: !!subscription,
+    };
+  } catch (err) {
+    // Service worker not ready (e.g. dev mode) — treat as
+    // "supported by the browser, but not usable right now"
+    // rather than crashing the Settings page.
+    return { supported: true, unavailable: true, reason: err.message };
+  }
 }
 
 /* Asks the browser for permission, creates a subscription, and
@@ -54,7 +92,7 @@ export async function enablePushNotifications(token) {
   }
 
   const { data } = await axios.get(`${API_URL}/api/push/vapid-public-key`);
-  const registration = await navigator.serviceWorker.ready;
+  const registration = await waitForServiceWorker();
 
   const subscription = await registration.pushManager.subscribe({
     userVisibleOnly: true,
@@ -73,7 +111,7 @@ export async function enablePushNotifications(token) {
 export async function disablePushNotifications(token) {
   if (!isPushSupported()) return;
 
-  const registration = await navigator.serviceWorker.ready;
+  const registration = await waitForServiceWorker();
   const subscription = await registration.pushManager.getSubscription();
 
   if (subscription) {

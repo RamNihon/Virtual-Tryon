@@ -279,13 +279,13 @@ function PushNotificationCard({ token }) {
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
   const [error, setError] = useState("");
-
+ 
   useEffect(() => {
     getPushStatus()
       .then(setStatus)
       .finally(() => setLoading(false));
   }, []);
-
+ 
   const handleToggle = async () => {
     setError("");
     setToggling(true);
@@ -303,9 +303,9 @@ function PushNotificationCard({ token }) {
       setToggling(false);
     }
   };
-
+ 
   if (!isPushSupported()) return null; // hide entirely on unsupported browsers
-
+ 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm">
       <div className="flex items-start justify-between gap-3">
@@ -323,16 +323,23 @@ function PushNotificationCard({ token }) {
             </p>
           </div>
         </div>
-
+ 
         {!loading && (
           <ToggleSwitch
             checked={!!status.subscribed}
             onChange={handleToggle}
-            disabled={toggling || status.permission === "denied"}
+            disabled={
+              toggling || status.permission === "denied" || status.unavailable
+            }
           />
         )}
       </div>
-
+ 
+      {status.unavailable && (
+        <p className="text-gray-500 text-xs mt-3 bg-gray-50 rounded-lg px-3 py-2">
+          {status.reason || "Push notifications aren't available right now."}
+        </p>
+      )}
       {status.permission === "denied" && (
         <p className="text-amber-600 text-xs mt-3 bg-amber-50 rounded-lg px-3 py-2">
           Notifications are blocked for this site in your browser settings.
@@ -343,6 +350,7 @@ function PushNotificationCard({ token }) {
     </div>
   );
 }
+
 
 /* ─── Notifications ──────────────────────────────────────── */
 function NotificationsCard({ token }) {

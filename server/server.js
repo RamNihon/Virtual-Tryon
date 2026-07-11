@@ -33,6 +33,7 @@ app.use('/api/support', require('./routes/support'));
 app.use('/api/fabric', require('./routes/fabric'))
 app.use("/api/customer", require("./routes/customer").router);
 app.use("/api/push", require("./routes/push"));
+app.use("/api/admin", require("./routes/admin-push"));
 app.use("/widget.js", express.static("./widget/widget.js"));
 
 // Test route

@@ -258,4 +258,38 @@ async function sendPushToSeller(sellerId, payload) {
   return results;
 }
 
-module.exports = { sendPushNotification, sendPushToSeller, VAPID_PUBLIC_KEY };
+/*
+  ─── LOW-CREDIT PUSH CHECK ───────────────────────────────────
+  Called after any action that deducts credits (tryon, fabric
+  generation, etc.) — checks whether the seller just crossed
+  below the low-credit threshold and, if so, sends one push.
+
+  Why "just crossed" and not "is currently below": if this ran
+  on every single credit-consuming action while the seller sits
+  at 20 credits, they'd get a push every single try-on until
+  they top up — extremely annoying. Comparing the balance
+  before and after the deduction means exactly one push fires,
+  right when they cross the line.
+--------------------------------------------------------------*/
+async function checkAndSendLowCreditPush(seller, creditsBefore, creditsAfter, threshold = 50) {
+  const justCrossedThreshold = creditsBefore >= threshold && creditsAfter < threshold;
+  if (!justCrossedThreshold) return;
+
+  try {
+    await sendPushToSeller(seller._id, {
+      title: "Running Low on Credits ⚡",
+      body: `Only ${creditsAfter} credits left — top up to keep try-ons running.`,
+      url: "/dashboard",
+      tag: "low-credits",
+    });
+  } catch (e) {
+    console.log("Low-credit push failed:", e.message);
+  }
+}
+
+module.exports = {
+  sendPushNotification,
+  sendPushToSeller,
+  checkAndSendLowCreditPush,
+  VAPID_PUBLIC_KEY,
+};

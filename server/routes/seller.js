@@ -453,104 +453,137 @@ router.get("/analytics", authMiddleware, async (req, res) => {
     const fourteenDaysAgo = new Date();
     fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
 
-    let recentTryons = [];
-    let previousTryons = [];
-    let totalOrders = 0;
-    let recentOrders = [];
-    let previousOrders = [];
-    let fabricGenCount = 0;
-    let fabricTryonCount = 0;
-
-    try {
-      recentTryons = await TryonHistory.find({
+    // These 7 queries are all independent of each other, so
+    // there's no reason to await them one at a time — running
+    // them in parallel cuts this section's total wait time down
+    // to whichever single query is slowest, instead of the sum
+    // of all of them.
+    const [
+      recentTryons,
+      previousTryons,
+      orderStats,
+      fabricGenCount,
+      fabricTryonCount,
+    ] = await Promise.all([
+      TryonHistory.find({
         seller: req.sellerId,
         createdAt: { $gte: sevenDaysAgo },
-      }).sort({ createdAt: -1 });
-    } catch (e) {
-      console.log("TryonHistory err:", e.message);
-    }
-
-    try {
-      previousTryons = await TryonHistory.find({
+      })
+        .sort({ createdAt: -1 })
+        .catch((e) => {
+          console.log("TryonHistory err:", e.message);
+          return [];
+        }),
+      TryonHistory.find({
         seller: req.sellerId,
         createdAt: { $gte: fourteenDaysAgo, $lt: sevenDaysAgo },
-      });
-    } catch (e) {
-      console.log("Previous TryonHistory err:", e.message);
-    }
+      }).catch((e) => {
+        console.log("Previous TryonHistory err:", e.message);
+        return [];
+      }),
+      (async () => {
+        try {
+          const OrderRequest = require("../models/OrderRequest");
+          const [total, recent, previous] = await Promise.all([
+            OrderRequest.countDocuments({ seller: req.sellerId }),
+            OrderRequest.find({
+              seller: req.sellerId,
+              createdAt: { $gte: sevenDaysAgo },
+            }).sort({ createdAt: -1 }),
+            OrderRequest.find({
+              seller: req.sellerId,
+              createdAt: { $gte: fourteenDaysAgo, $lt: sevenDaysAgo },
+            }),
+          ]);
+          return { total, recent, previous };
+        } catch (e) {
+          console.log("OrderRequest err:", e.message);
+          return { total: 0, recent: [], previous: [] };
+        }
+      })(),
+      (async () => {
+        try {
+          const CreditTransaction = require("../models/CreditTransaction");
+          return await CreditTransaction.countDocuments({
+            seller: req.sellerId,
+            action: "fabricGen",
+          });
+        } catch (e) {
+          return 0;
+        }
+      })(),
+      (async () => {
+        try {
+          const CreditTransaction = require("../models/CreditTransaction");
+          return await CreditTransaction.countDocuments({
+            seller: req.sellerId,
+            action: "fabricTryon",
+          });
+        } catch (e) {
+          return 0;
+        }
+      })(),
+    ]);
 
-    try {
-      const OrderRequest = require("../models/OrderRequest");
-      totalOrders = await OrderRequest.countDocuments({
-        seller: req.sellerId,
-      });
+    const totalOrders = orderStats.total;
+    const recentOrders = orderStats.recent;
+    const previousOrders = orderStats.previous;
 
-      recentOrders = await OrderRequest.find({
-        seller: req.sellerId,
-        createdAt: { $gte: sevenDaysAgo },
-      }).sort({ createdAt: -1 });
-
-      previousOrders = await OrderRequest.find({
-        seller: req.sellerId,
-        createdAt: { $gte: fourteenDaysAgo, $lt: sevenDaysAgo },
-      });
-    } catch (e) {
-      console.log("OrderRequest err:", e.message);
-    }
-
-    try {
-      const CreditTransaction = require("../models/CreditTransaction");
-      fabricGenCount = await CreditTransaction.countDocuments({
-        seller: req.sellerId,
-        action: "fabricGen",
-      });
-      fabricTryonCount = await CreditTransaction.countDocuments({
-        seller: req.sellerId,
-        action: "fabricTryon",
-      });
-    } catch (e) {
-      console.log("CreditTransaction err:", e.message);
-    }
-
-    // Daily data - SAHI LOOP
+    // Daily data — previously ran 14 sequential awaited queries (2
+    // per day, one at a time: TryonHistory.countDocuments then
+    // OrderRequest.countDocuments, repeated for each of 7 days).
+    // On a slow/cold-starting DB connection that easily took
+    // 15-25+ seconds, which is what was actually causing the
+    // frontend to time out and fall back to all-zero stats — not
+    // a frontend bug. Replaced with 2 bulk queries total (one for
+    // all 7 days of try-ons, one for all 7 days of orders), then
+    // grouped by day in memory.
     const dailyData = [];
+    const dayRanges = [];
     for (let i = 6; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       date.setHours(0, 0, 0, 0);
-
       const nextDate = new Date(date);
       nextDate.setDate(nextDate.getDate() + 1);
+      dayRanges.push({ date, nextDate });
+    }
 
-      let dayTryons = 0;
-      let dayOrders = 0;
+    const [weekTryons, weekOrders] = await Promise.all([
+      TryonHistory.find({
+        seller: req.sellerId,
+        createdAt: { $gte: dayRanges[0].date },
+      })
+        .select("createdAt")
+        .catch(() => []),
+      (async () => {
+        try {
+          const OrderRequest = require("../models/OrderRequest");
+          return await OrderRequest.find({
+            seller: req.sellerId,
+            createdAt: { $gte: dayRanges[0].date },
+          }).select("createdAt");
+        } catch (e) {
+          return [];
+        }
+      })(),
+    ]);
 
-      try {
-        dayTryons = await TryonHistory.countDocuments({
-          seller: req.sellerId,
-          createdAt: { $gte: date, $lt: nextDate },
-        });
-      } catch (e) {
-        dayTryons = 0;
-      }
-
-      try {
-        const OrderRequest = require("../models/OrderRequest");
-        dayOrders = await OrderRequest.countDocuments({
-          seller: req.sellerId,
-          createdAt: { $gte: date, $lt: nextDate },
-        });
-      } catch (e) {
-        dayOrders = 0;
-      }
+    for (const { date, nextDate } of dayRanges) {
+      const dayTryons = weekTryons.filter(
+        (t) => t.createdAt >= date && t.createdAt < nextDate,
+      ).length;
+      const dayOrders = weekOrders.filter(
+        (o) => o.createdAt >= date && o.createdAt < nextDate,
+      ).length;
 
       dailyData.push({
         date: date.toLocaleDateString("en-IN", {
           day: "numeric",
           month: "short",
         }),
-        tryons: Number(dayTryons),
-        orders: Number(dayOrders),
+        tryons: dayTryons,
+        orders: dayOrders,
         fabricGens: 0,
       });
     }

@@ -8,7 +8,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import { MoonStar, SunMedium } from "lucide-react";
-
+import AdminPush from "./pages/AdminPush";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -184,6 +184,7 @@ function AppContent() {
           <Route path="/order/:orderId" element={<OrderDetail />} />
           <Route path="/credits" element={<CreditHistory />} />
           <Route path="/faq" element={<ShopFAQ />} />
+          <Route path="/ops-push-panel" element={<AdminPush />} />
         </Routes>
       </main>
 

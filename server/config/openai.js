@@ -63,6 +63,19 @@ const useCredits = async (Seller, sellerId, action, metadata = {}) => {
     },
   });
 
+  const balanceAfter = balanceBefore - cost;
+
+  // Low-credit push — fires exactly once, the moment the seller
+  // crosses below the threshold (not on every action while
+  // already below it). Wrapped so a push failure never blocks
+  // the actual credit deduction this function exists for.
+  try {
+    const { checkAndSendLowCreditPush } = require("./webpush");
+    checkAndSendLowCreditPush(seller, balanceBefore, balanceAfter);
+  } catch (e) {
+    console.log("Low-credit push check error:", e.message);
+  }
+
   // Transaction save karo
   try {
     const CreditTransaction = require("../models/CreditTransaction");
@@ -72,7 +85,7 @@ const useCredits = async (Seller, sellerId, action, metadata = {}) => {
       action,
       credits: cost,
       balanceBefore,
-      balanceAfter: balanceBefore - cost,
+      balanceAfter,
       description: getActionDescription(action),
       metadata,
     });
@@ -80,7 +93,7 @@ const useCredits = async (Seller, sellerId, action, metadata = {}) => {
     console.log("Transaction log error:", e.message);
   }
 
-  return { success: true, cost, remaining: balanceBefore - cost };
+  return { success: true, cost, remaining: balanceAfter };
 };
 
 const getActionDescription = (action) => {

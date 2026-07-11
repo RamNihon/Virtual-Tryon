@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import {
   BrowserRouter,
@@ -7,6 +7,8 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
+import { MoonStar, SunMedium } from "lucide-react";
+
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -42,13 +44,61 @@ const ProtectedRoute = ({ children }) => {
   return token ? children : <Navigate to="/login" replace />;
 };
 
+function ThemeToggle({ theme, setTheme }) {
+  const isDark = theme === "dark";
+
+  return (
+    <button
+      type="button"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      aria-label="Toggle theme"
+      className="group inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white/85 px-3 pr-4 text-slate-700 shadow-sm backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:shadow-md dark:border-white/10 dark:bg-slate-900/75 dark:text-slate-100"
+    >
+      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-lg shadow-violet-500/25">
+        {isDark ? (
+          <MoonStar className="h-4 w-4 transition-transform duration-300" />
+        ) : (
+          <SunMedium className="h-4 w-4 transition-transform duration-300" />
+        )}
+      </span>
+      <span className="text-xs font-semibold">{isDark ? "Dark" : "Light"}</span>
+    </button>
+  );
+}
+
 function AppContent() {
   const location = useLocation();
   const isShopPage =
     location.pathname.startsWith("/shop/") ||
     location.pathname.startsWith("/fabric/");
 
+  const isAnalyticsPage = location.pathname.startsWith("/analytics");
   const { logout } = useAuth();
+
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem("analytics-theme");
+    if (saved === "dark" || saved === "light") return saved;
+
+    if (window.matchMedia?.("(prefers-color-scheme: dark)")?.matches) {
+      return "dark";
+    }
+    return "light";
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+
+    if (isAnalyticsPage && theme === "dark") {
+      root.classList.add("dark");
+      root.style.colorScheme = "dark";
+    } else {
+      root.classList.remove("dark");
+      root.style.colorScheme = "light";
+    }
+
+    localStorage.setItem("analytics-theme", theme);
+  }, [theme, isAnalyticsPage]);
+
   useEffect(() => {
     const axiosInterceptor = axios.interceptors.response.use(
       (response) => response,
@@ -67,7 +117,7 @@ function AppContent() {
       const response = await originalFetch(...args);
       // 👇 यहाँ भी सिर्फ 401
       if (response.status === 401) {
-        console.warn("Session Expired. Logging out...");
+        console.warn("Session Expired. Logging out.");
         logout();
       }
       return response;
@@ -80,9 +130,17 @@ function AppContent() {
   }, [logout]);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex min-h-screen flex-col bg-white text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
       <ScrollToTop />
       <Navbar />
+
+      {/* Theme toggle sirf Analytics page par */}
+      {isAnalyticsPage ? (
+        <div className="fixed right-4 top-4 z-[60] sm:right-6 sm:top-6">
+          <ThemeToggle theme={theme} setTheme={setTheme} />
+        </div>
+      ) : null}
+
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Home />} />

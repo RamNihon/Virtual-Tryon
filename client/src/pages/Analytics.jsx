@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
@@ -87,6 +87,29 @@ function getHealthTone(score) {
   return "rose";
 }
 
+function MiniPill({ children, tone = "slate" }) {
+  const tones = {
+    slate:
+      "border-slate-200 bg-slate-50 text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300",
+    violet:
+      "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-200",
+    emerald:
+      "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200",
+    amber:
+      "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200",
+    blue: "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-200",
+    rose: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-200",
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${tones[tone]}`}
+    >
+      {children}
+    </span>
+  );
+}
+
 function StatCard({
   icon: Icon,
   label,
@@ -97,20 +120,20 @@ function StatCard({
   trendText,
 }) {
   return (
-    <div className="group relative overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_14px_40px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
+    <div className="group relative overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_14px_40px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-slate-900 dark:shadow-[0_18px_55px_rgba(0,0,0,0.25)]">
       <div className={`absolute inset-x-0 top-0 h-1 ${accent}`} />
       <div className="flex items-start justify-between gap-4">
-        <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50 text-slate-900 ring-1 ring-slate-200 transition group-hover:scale-105">
+        <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50 text-slate-900 ring-1 ring-slate-200 transition group-hover:scale-105 dark:bg-white/5 dark:text-slate-100 dark:ring-white/10">
           <Icon className="h-5 w-5" />
         </div>
 
         <div
           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
             trend === "up"
-              ? "bg-emerald-50 text-emerald-700"
+              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200"
               : trend === "down"
-                ? "bg-rose-50 text-rose-700"
-                : "bg-slate-50 text-slate-600"
+                ? "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-200"
+                : "bg-slate-50 text-slate-600 dark:bg-white/5 dark:text-slate-300"
           }`}
         >
           {trend === "up" ? (
@@ -124,12 +147,16 @@ function StatCard({
         </div>
       </div>
 
-      <p className="mt-4 text-sm font-medium text-slate-500">{label}</p>
-      <p className="mt-2 text-3xl font-black tracking-tight text-slate-950">
+      <p className="mt-4 text-sm font-medium text-slate-500 dark:text-slate-400">
+        {label}
+      </p>
+      <p className="mt-2 text-3xl font-black tracking-tight text-slate-950 dark:text-slate-50">
         {value}
       </p>
       {note ? (
-        <p className="mt-2 text-xs leading-5 text-slate-500">{note}</p>
+        <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+          {note}
+        </p>
       ) : null}
     </div>
   );
@@ -137,42 +164,25 @@ function StatCard({
 
 function SectionCard({ icon: Icon, title, subtitle, children, rightCta }) {
   return (
-    <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.06)]">
-      <div className="flex flex-col gap-4 border-b border-slate-200/80 px-6 py-5 md:flex-row md:items-center md:justify-between">
+    <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-slate-900 dark:shadow-[0_18px_55px_rgba(0,0,0,0.25)]">
+      <div className="flex flex-col gap-4 border-b border-slate-200/80 px-6 py-5 md:flex-row md:items-center md:justify-between dark:border-white/10">
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white shadow-lg shadow-violet-500/20">
             <Icon className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-xl font-black tracking-tight text-slate-950">
+            <h2 className="text-xl font-black tracking-tight text-slate-950 dark:text-slate-50">
               {title}
             </h2>
-            <p className="mt-1 text-sm leading-6 text-slate-500">{subtitle}</p>
+            <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
+              {subtitle}
+            </p>
           </div>
         </div>
         {rightCta ? <div>{rightCta}</div> : null}
       </div>
       <div className="px-6 py-6">{children}</div>
     </section>
-  );
-}
-
-function MiniPill({ children, tone = "slate" }) {
-  const tones = {
-    slate: "border-slate-200 bg-slate-50 text-slate-600",
-    violet: "border-violet-200 bg-violet-50 text-violet-700",
-    emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    amber: "border-amber-200 bg-amber-50 text-amber-700",
-    blue: "border-blue-200 bg-blue-50 text-blue-700",
-    rose: "border-rose-200 bg-rose-50 text-rose-700",
-  };
-
-  return (
-    <span
-      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${tones[tone]}`}
-    >
-      {children}
-    </span>
   );
 }
 
@@ -198,7 +208,7 @@ export default function Analytics() {
       try {
         const res = await axios.get(`${API_URL}/api/seller/analytics`, {
           headers: { Authorization: `Bearer ${token}` },
-          timeout: 95000,
+          timeout: 25000,
         });
 
         if (res.data?.success) {
@@ -242,39 +252,26 @@ export default function Analytics() {
     };
   }, [fetchAnalytics, navigate, seller, token]);
 
-  const stats = analytics?.stats || buildFallbackAnalytics(seller).stats;
-  const insights = Array.isArray(analytics?.insights) ? analytics.insights : [];
-  const summary = analytics?.summary || buildFallbackAnalytics(seller).summary;
+  if (!seller || !token) {
+    return null;
+  }
 
-  const dailyData = useMemo(() => {
-    const dailyDataRaw = Array.isArray(analytics?.dailyData)
-      ? analytics.dailyData
-      : [];
-    return dailyDataRaw.map((item) => ({
-      ...item,
-      tryons: Number(item.tryons || 0),
-      orders: Number(item.orders || 0),
-      fabricGens: Number(item.fabricGens || 0),
-    }));
-  }, [analytics?.dailyData]);
+  const fallback = buildFallbackAnalytics(seller);
 
-  const topProducts = useMemo(() => {
-    const productTryonsRaw = Array.isArray(analytics?.productTryons)
-      ? analytics.productTryons
-      : [];
-    return productTryonsRaw
-      .map((item, idx) => ({
-        name:
-          item.name || item.productName || item.title || `Product ${idx + 1}`,
-        count: Number(item.tryonCount ?? item.count ?? item.tryons ?? 0),
-        brandName: item.brandName || "",
-        imageUrl: item.imageUrl || "",
-        price: Number(item.price || 0),
-        category: item.category || "",
+  const stats = analytics?.stats || fallback.stats;
+  const dailyData = Array.isArray(analytics?.dailyData)
+    ? analytics.dailyData.map((item) => ({
+        ...item,
+        tryons: Number(item.tryons || 0),
+        orders: Number(item.orders || 0),
+        fabricGens: Number(item.fabricGens || 0),
       }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-  }, [analytics?.productTryons]);
+    : [];
+  const productTryons = Array.isArray(analytics?.productTryons)
+    ? analytics.productTryons
+    : [];
+  const insights = Array.isArray(analytics?.insights) ? analytics.insights : [];
+  const summary = analytics?.summary || fallback.summary;
 
   const totalTryons = Number(stats.totalTryons || 0);
   const totalOrders = Number(stats.totalOrders || 0);
@@ -293,34 +290,41 @@ export default function Analytics() {
   const grade = stats.grade || "C";
   const healthTone = getHealthTone(healthScore);
 
+  const topProducts = productTryons
+    .map((item, idx) => ({
+      name: item.name || item.productName || item.title || `Product ${idx + 1}`,
+      count: Number(item.tryonCount ?? item.count ?? item.tryons ?? 0),
+      brandName: item.brandName || "",
+      imageUrl: item.imageUrl || "",
+      price: Number(item.price || 0),
+      category: item.category || "",
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
   const topProduct = summary?.topProduct || topProducts[0] || null;
 
-  const trendLabel = useMemo(() => {
-    if (dailyData.length < 4) return "Not enough data";
-    if (tryonGrowth > 0) return `${Math.round(tryonGrowth)}% growth`;
-    if (tryonGrowth < 0) return `${Math.abs(Math.round(tryonGrowth))}% dip`;
-    return "Stable momentum";
-  }, [dailyData.length, tryonGrowth]);
+  const trendLabel =
+    dailyData.length < 4
+      ? "Not enough data"
+      : tryonGrowth > 0
+        ? `${Math.round(tryonGrowth)}% growth`
+        : tryonGrowth < 0
+          ? `${Math.abs(Math.round(tryonGrowth))}% dip`
+          : "Stable momentum";
 
-  const trendDescription = useMemo(() => {
-    if (dailyData.length < 4) {
-      return "Collect a few more days of activity to unlock trend insights.";
-    }
-    if (tryonGrowth > 0) {
-      return `Try-on volume is rising, and orders are changing by ${
-        orderGrowth > 0 ? "+" : ""
-      }${Math.round(orderGrowth)}% compared to the earlier period.`;
-    }
-    if (tryonGrowth < 0) {
-      return "Try-on volume is slightly lower. Highlight best-selling products and promote them more visibly.";
-    }
-    return "Your activity is steady. A stronger CTA on the shop page can improve engagement.";
-  }, [dailyData.length, orderGrowth, tryonGrowth]);
+  const trendDescription =
+    dailyData.length < 4
+      ? "Collect a few more days of activity to unlock trend insights."
+      : tryonGrowth > 0
+        ? `Try-on volume is rising, and orders are changing by ${
+            orderGrowth > 0 ? "+" : ""
+          }${Math.round(orderGrowth)}% compared to the earlier period.`
+        : tryonGrowth < 0
+          ? "Try-on volume is slightly lower. Highlight best-selling products and promote them more visibly."
+          : "Your activity is steady. A stronger CTA on the shop page can improve engagement.";
 
   const handleCopySummary = async () => {
-    const bestDay = summary?.bestDay || null;
-    const worstDay = summary?.worstDay || null;
-
     const text = [
       `VirtualTryOn Analytics Summary`,
       `Seller: ${seller?.name || "Store"}`,
@@ -331,8 +335,8 @@ export default function Analytics() {
       `Conversion Rate: ${conversionRate.toFixed(1)}%`,
       `Recent Try-Ons: ${formatNumber(recentTryons)}`,
       `Recent Orders: ${formatNumber(recentOrders)}`,
-      bestDay ? `Best Day: ${bestDay}` : "",
-      worstDay ? `Lowest Day: ${worstDay}` : "",
+      summary?.bestDay ? `Best Day: ${summary.bestDay}` : "",
+      summary?.worstDay ? `Lowest Day: ${summary.worstDay}` : "",
       topProduct
         ? `Top Product: ${topProduct.name} (${formatNumber(topProduct.count)})`
         : "",
@@ -353,30 +357,36 @@ export default function Analytics() {
     await fetchAnalytics();
   };
 
-  const openUpgrade = () => {
-    navigate("/pricing");
-  };
+  const healthToneClass =
+    healthTone === "emerald"
+      ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-200"
+      : healthTone === "blue"
+        ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-200"
+        : healthTone === "violet"
+          ? "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-200"
+          : healthTone === "amber"
+            ? "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-200"
+            : "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-200";
 
-  if (!seller || !token) {
-    return null;
-  }
+  const pageTone =
+    "min-h-screen bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100";
 
   if (!loading && isFreePlan) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] px-4 py-10 text-slate-900">
-        <div className="mx-auto flex min-h-[calc(100vh-80px)] max-w-2xl items-center justify-center">
-          <div className="w-full overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
-            <div className="bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.15),transparent_35%),linear-gradient(to_right,#ffffff,#faf5ff)] px-6 py-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-xs font-semibold text-violet-700">
+      <div className={pageTone}>
+        <div className="mx-auto flex min-h-[calc(100vh-80px)] max-w-2xl items-center justify-center px-4 py-10">
+          <div className="w-full overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-slate-900 dark:shadow-[0_24px_70px_rgba(0,0,0,0.28)]">
+            <div className="bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.15),transparent_35%),linear-gradient(to_right,#ffffff,#faf5ff)] px-6 py-6 dark:bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.20),transparent_35%),linear-gradient(to_right,#0f172a,#111827)]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-xs font-semibold text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-200">
                 <ShieldCheck className="h-4 w-4" />
                 Premium analytics
               </div>
 
-              <h2 className="mt-5 text-3xl font-black tracking-tight text-slate-950">
+              <h2 className="mt-5 text-3xl font-black tracking-tight text-slate-950 dark:text-slate-50">
                 Unlock detailed store analytics
               </h2>
 
-              <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600">
+              <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600 dark:text-slate-400">
                 Upgrade to Basic, Pro, or Elite to view conversion charts,
                 product performance, activity trends, and business insights in
                 real time.
@@ -395,13 +405,13 @@ export default function Analytics() {
                   return (
                     <div
                       key={item.text}
-                      className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                      className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-violet-600 ring-1 ring-slate-200">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-violet-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-violet-200 dark:ring-white/10">
                           <Icon className="h-4 w-4" />
                         </div>
-                        <p className="text-sm font-semibold text-slate-700">
+                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                           {item.text}
                         </p>
                       </div>
@@ -412,7 +422,7 @@ export default function Analytics() {
 
               <div className="mt-6 flex flex-wrap gap-3">
                 <button
-                  onClick={openUpgrade}
+                  onClick={() => navigate("/pricing")}
                   className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-violet-500/20 transition hover:-translate-y-0.5"
                 >
                   <Rocket className="h-4 w-4" />
@@ -421,14 +431,14 @@ export default function Analytics() {
 
                 <Link
                   to="/dashboard"
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-bold text-slate-900 transition hover:bg-slate-50"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-bold text-slate-900 transition hover:bg-slate-50 dark:border-white/10 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-white/5"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Return to Dashboard
                 </Link>
               </div>
 
-              <p className="mt-5 text-center text-xs text-slate-500">
+              <p className="mt-5 text-center text-xs text-slate-500 dark:text-slate-400">
                 Premium analytics are available on paid plans only.
               </p>
             </div>
@@ -440,63 +450,64 @@ export default function Analytics() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] px-4 py-8 text-slate-900">
-        <div className="mx-auto max-w-7xl">
+      <div className={pageTone}>
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="animate-pulse space-y-6">
-            <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,0.06)]">
-              <div className="h-4 w-24 rounded-full bg-slate-200" />
-              <div className="mt-4 h-8 w-72 rounded-full bg-slate-200" />
-              <div className="mt-3 h-4 w-96 max-w-full rounded-full bg-slate-100" />
+            <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-slate-900 dark:shadow-[0_18px_55px_rgba(0,0,0,0.25)]">
+              <div className="h-4 w-24 rounded-full bg-slate-200 dark:bg-white/10" />
+              <div className="mt-4 h-8 w-72 rounded-full bg-slate-200 dark:bg-white/10" />
+              <div className="mt-3 h-4 w-96 max-w-full rounded-full bg-slate-100 dark:bg-white/5" />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-32 rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.04)]"
+                  className="h-32 rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.04)] dark:border-white/10 dark:bg-slate-900"
                 />
               ))}
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
-              <div className="h-[360px] rounded-[2rem] border border-slate-200 bg-white" />
-              <div className="h-[360px] rounded-[2rem] border border-slate-200 bg-white" />
+              <div className="h-[360px] rounded-[2rem] border border-slate-200 bg-white dark:border-white/10 dark:bg-slate-900" />
+              <div className="h-[360px] rounded-[2rem] border border-slate-200 bg-white dark:border-white/10 dark:bg-slate-900" />
             </div>
 
-            <div className="h-[220px] rounded-[2rem] border border-slate-200 bg-white" />
+            <div className="h-[220px] rounded-[2rem] border border-slate-200 bg-white dark:border-white/10 dark:bg-slate-900" />
           </div>
         </div>
       </div>
     );
   }
 
-  const healthToneClass =
+  const healthLabel =
     healthTone === "emerald"
-      ? "bg-emerald-50 text-emerald-600"
+      ? "Healthy"
       : healthTone === "blue"
-        ? "bg-blue-50 text-blue-600"
+        ? "Strong"
         : healthTone === "violet"
-          ? "bg-violet-50 text-violet-600"
+          ? "Very Good"
           : healthTone === "amber"
-            ? "bg-amber-50 text-amber-600"
-            : "bg-rose-50 text-rose-600";
+            ? "Needs Attention"
+            : "Low";
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900">
-      {/* Toast */}
+    <div className={pageTone}>
       {toast ? (
         <div className="fixed right-4 top-4 z-50">
           <div
             className={`max-w-md rounded-2xl border px-4 py-3 shadow-[0_18px_55px_rgba(15,23,42,0.12)] backdrop-blur-xl ${
               toast.type === "success"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                : "border-rose-200 bg-rose-50 text-rose-800"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200"
+                : "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-200"
             }`}
           >
             <div className="flex items-start gap-3">
               <div
                 className={`mt-0.5 flex h-8 w-8 items-center justify-center rounded-full ${
-                  toast.type === "success" ? "bg-emerald-100" : "bg-rose-100"
+                  toast.type === "success"
+                    ? "bg-emerald-100 dark:bg-emerald-500/15"
+                    : "bg-rose-100 dark:bg-rose-500/15"
                 }`}
               >
                 {toast.type === "success" ? (
@@ -516,12 +527,11 @@ export default function Analytics() {
         </div>
       ) : null}
 
-      {/* Header */}
-      <div className="border-b border-slate-200 bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.12),transparent_30%),linear-gradient(to_bottom,#ffffff,#f8fafc)]">
+      <div className="border-b border-slate-200 bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.12),transparent_30%),linear-gradient(to_bottom,#ffffff,#f8fafc)] dark:border-white/10 dark:bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.10),transparent_30%),linear-gradient(to_bottom,#020617,#0f172a)]">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <Link
             to="/dashboard"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-violet-700 transition hover:text-violet-900"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-violet-700 transition hover:text-violet-900 dark:text-violet-300 dark:hover:text-violet-200"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Dashboard
@@ -529,16 +539,16 @@ export default function Analytics() {
 
           <div className="mt-5 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-violet-700">
+              <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-200">
                 <BarChart3 className="h-3.5 w-3.5" />
                 Analytics Dashboard
               </div>
 
-              <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
+              <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-950 dark:text-slate-50 sm:text-5xl">
                 Seller performance at a glance
               </h1>
 
-              <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">
+              <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600 dark:text-slate-400">
                 {seller?.name ? `${seller.name}'s` : "Your"} store analytics,
                 trend signals, product insights, and conversion metrics in one
                 clean view.
@@ -568,14 +578,14 @@ export default function Analytics() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-[0_16px_45px_rgba(15,23,42,0.06)]">
+            <div className="flex flex-col gap-3 rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-[0_16px_45px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-slate-900 dark:shadow-[0_16px_45px_rgba(0,0,0,0.25)]">
               <div className="flex items-center justify-between gap-10">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
                     Business Health
                   </p>
-                  <p className="mt-1 text-2xl font-black text-slate-950">
-                    {grade} • {healthScore}
+                  <p className="mt-1 text-2xl font-black text-slate-950 dark:text-slate-50">
+                    {healthLabel} • {healthScore}
                   </p>
                 </div>
                 <div
@@ -584,7 +594,7 @@ export default function Analytics() {
                   <Gauge className="h-6 w-6" />
                 </div>
               </div>
-              <p className="text-sm leading-6 text-slate-600">
+              <p className="text-sm leading-6 text-slate-600 dark:text-slate-400">
                 {healthTone === "emerald"
                   ? "Healthy conversion and good buyer interest."
                   : healthTone === "blue"
@@ -596,15 +606,17 @@ export default function Analytics() {
                         : "Business needs attention. Focus on product visibility."}
               </p>
               <div className="grid grid-cols-2 gap-3 pt-2 text-sm">
-                <div className="rounded-2xl bg-slate-50 p-3">
-                  <p className="text-slate-500">Last refreshed</p>
-                  <p className="mt-1 font-semibold text-slate-900">
+                <div className="rounded-2xl bg-slate-50 p-3 dark:bg-white/5">
+                  <p className="text-slate-500 dark:text-slate-400">
+                    Last refreshed
+                  </p>
+                  <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
                     {loading ? "Updating..." : "Live"}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-3">
-                  <p className="text-slate-500">Products</p>
-                  <p className="mt-1 font-semibold text-slate-900">
+                <div className="rounded-2xl bg-slate-50 p-3 dark:bg-white/5">
+                  <p className="text-slate-500 dark:text-slate-400">Products</p>
+                  <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
                     {formatNumber(totalProducts)}
                   </p>
                 </div>
@@ -616,16 +628,16 @@ export default function Analytics() {
 
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
-          <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
-            <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+            <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-white/10 dark:bg-slate-900">
               <ShieldCheck className="h-4 w-4 text-emerald-500" />
               Secure seller data
             </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
+            <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-white/10 dark:bg-slate-900">
               <PieChart className="h-4 w-4 text-violet-500" />
               Daily activity insights
             </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
+            <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-white/10 dark:bg-slate-900">
               <Sparkles className="h-4 w-4 text-fuchsia-500" />
               AI-ready summaries
             </span>
@@ -634,7 +646,7 @@ export default function Analytics() {
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handleRefresh}
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-white/5"
             >
               <RefreshCw className="h-4 w-4" />
               Refresh
@@ -642,7 +654,7 @@ export default function Analytics() {
 
             <button
               onClick={handleCopySummary}
-              className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-700 transition hover:bg-violet-100"
+              className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-700 transition hover:bg-violet-100 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-200"
             >
               <Copy className="h-4 w-4" />
               Copy Summary
@@ -658,7 +670,6 @@ export default function Analytics() {
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <StatCard
             icon={ShoppingBag}
@@ -742,21 +753,20 @@ export default function Analytics() {
           />
         </div>
 
-        {/* Charts */}
         <div className="grid gap-6 lg:grid-cols-[1.4fr_0.9fr]">
           <SectionCard
             icon={TrendingUp}
             title="Last 7 Days Activity"
             subtitle="Daily try-ons and orders tracked in a premium, easy-to-read chart."
             rightCta={
-              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
-                <Activity className="h-3.5 w-3.5 text-violet-600" />
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+                <Activity className="h-3.5 w-3.5 text-violet-600 dark:text-violet-300" />
                 Trend-driven activity
               </div>
             }
           >
             <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-              <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4">
+              <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-slate-900">
                 <ResponsiveContainer
                   width="100%"
                   height={320}
@@ -806,6 +816,7 @@ export default function Analytics() {
                         borderRadius: "16px",
                         border: "1px solid #e2e8f0",
                         boxShadow: "0 10px 30px rgba(15,23,42,0.08)",
+                        background: "white",
                       }}
                     />
                     <Legend />
@@ -834,22 +845,22 @@ export default function Analytics() {
               </div>
 
               <div className="space-y-4">
-                <div className="rounded-[1.5rem] border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-5">
+                <div className="rounded-[1.5rem] border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-5 dark:border-white/10 dark:from-white/5 dark:to-white/[0.03]">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
                         Conversion
                       </p>
-                      <p className="mt-1 text-3xl font-black text-slate-950">
+                      <p className="mt-1 text-3xl font-black text-slate-950 dark:text-slate-50">
                         {conversionRate.toFixed(1)}%
                       </p>
                     </div>
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-200">
                       <Target className="h-6 w-6" />
                     </div>
                   </div>
 
-                  <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
+                  <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-violet-600 to-emerald-500 transition-all duration-700"
                       style={{
@@ -857,31 +868,31 @@ export default function Analytics() {
                       }}
                     />
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-slate-600">
+                  <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
                     Orders generated from your total try-on activity.
                   </p>
                 </div>
 
-                <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-slate-900">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
                     Momentum
                   </p>
-                  <p className="mt-2 text-xl font-black text-slate-950">
+                  <p className="mt-2 text-xl font-black text-slate-950 dark:text-slate-50">
                     {trendLabel}
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                  <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
                     {trendDescription}
                   </p>
                 </div>
 
-                <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-slate-900">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
                     Best performing product
                   </p>
-                  <p className="mt-2 text-xl font-black text-slate-950">
+                  <p className="mt-2 text-xl font-black text-slate-950 dark:text-slate-50">
                     {topProduct?.name || "No product data yet"}
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                  <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
                     {topProduct
                       ? `${formatNumber(topProduct.count)} try-ons recorded for this item.`
                       : "Add more products to unlock product-level insights."}
@@ -896,7 +907,7 @@ export default function Analytics() {
             title="Try-Ons vs Orders"
             subtitle="A quick comparison of how engagement turns into sales."
           >
-            <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4">
+            <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-slate-900">
               <ResponsiveContainer
                 width="100%"
                 height={320}
@@ -934,6 +945,7 @@ export default function Analytics() {
                       borderRadius: "16px",
                       border: "1px solid #e2e8f0",
                       boxShadow: "0 10px 30px rgba(15,23,42,0.08)",
+                      background: "white",
                     }}
                   />
                   <Legend />
@@ -956,29 +968,29 @@ export default function Analytics() {
             </div>
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
                   Try-on intensity
                 </p>
-                <p className="mt-2 text-3xl font-black text-slate-950">
+                <p className="mt-2 text-3xl font-black text-slate-950 dark:text-slate-50">
                   {totalProducts > 0
                     ? formatNumber(Math.round(totalTryons / totalProducts))
                     : 0}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
                   Average try-ons per product. More products usually create more
                   discovery.
                 </p>
               </div>
 
-              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
                   Recent orders
                 </p>
-                <p className="mt-2 text-3xl font-black text-slate-950">
+                <p className="mt-2 text-3xl font-black text-slate-950 dark:text-slate-50">
                   {formatNumber(recentOrders)}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
                   Latest order activity in the current reporting window.
                 </p>
               </div>
@@ -1001,22 +1013,22 @@ export default function Analytics() {
                   return (
                     <div
                       key={`${item.name}-${index}`}
-                      className="rounded-[1.25rem] border border-slate-200 bg-white p-4"
+                      className="rounded-[1.25rem] border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-slate-900"
                     >
                       <div className="flex items-center justify-between gap-4">
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-slate-950">
+                          <p className="truncate text-sm font-semibold text-slate-950 dark:text-slate-50">
                             {index + 1}. {item.name}
                           </p>
-                          <p className="mt-1 text-xs text-slate-500">
+                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                             {formatNumber(item.count)} try-ons
                           </p>
                         </div>
-                        <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
+                        <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700 dark:bg-violet-500/10 dark:text-violet-200">
                           #{index + 1}
                         </span>
                       </div>
-                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
                         <div
                           className="h-full rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 transition-all duration-700"
                           style={{ width: `${pct}%` }}
@@ -1027,14 +1039,14 @@ export default function Analytics() {
                 })}
               </div>
             ) : (
-              <div className="rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-violet-600 ring-1 ring-slate-200">
+              <div className="rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50 p-8 text-center dark:border-white/10 dark:bg-white/5">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-violet-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-violet-200 dark:ring-white/10">
                   <Package className="h-5 w-5" />
                 </div>
-                <h3 className="mt-4 text-lg font-bold text-slate-950">
+                <h3 className="mt-4 text-lg font-bold text-slate-950 dark:text-slate-50">
                   No product analytics yet
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
                   Publish more products and customers will start generating
                   try-on insights here.
                 </p>
@@ -1047,21 +1059,21 @@ export default function Analytics() {
             title="Executive Insight"
             subtitle="A compact summary that helps you take action faster."
             rightCta={
-              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
-                <Sparkles className="h-3.5 w-3.5 text-violet-600" />
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+                <Sparkles className="h-3.5 w-3.5 text-violet-600 dark:text-violet-300" />
                 Auto-generated
               </div>
             }
           >
             <div className="space-y-4">
-              <div className="rounded-[1.5rem] border border-slate-200 bg-gradient-to-br from-violet-50 to-white p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+              <div className="rounded-[1.5rem] border border-slate-200 bg-gradient-to-br from-violet-50 to-white p-5 dark:border-white/10 dark:from-violet-500/10 dark:to-white/[0.03]">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
                   Performance summary
                 </p>
-                <h3 className="mt-2 text-2xl font-black text-slate-950">
+                <h3 className="mt-2 text-2xl font-black text-slate-950 dark:text-slate-50">
                   {grade} • {healthScore}/100
                 </h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600">
+                <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
                   {healthTone === "emerald"
                     ? "Healthy conversion and good buyer interest."
                     : healthTone === "blue"
@@ -1074,11 +1086,11 @@ export default function Analytics() {
                 </p>
               </div>
 
-              <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+              <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-slate-900">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
                   Recommended action
                 </p>
-                <p className="mt-2 text-sm leading-6 text-slate-700">
+                <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">
                   {conversionRate < 4
                     ? "Highlight best-selling products and improve the first image in each product card."
                     : recentTryons < recentOrders
@@ -1088,48 +1100,48 @@ export default function Analytics() {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
                     Credits balance
                   </p>
-                  <p className="mt-2 text-2xl font-black text-slate-950">
+                  <p className="mt-2 text-2xl font-black text-slate-950 dark:text-slate-50">
                     {formatNumber(credits)}
                   </p>
-                  <p className="mt-2 text-sm text-slate-600">
+                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
                     {credits < 50 ? "Low balance" : "Healthy balance"}
                   </p>
                 </div>
 
-                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
                     Momentum
                   </p>
-                  <p className="mt-2 text-2xl font-black text-slate-950">
+                  <p className="mt-2 text-2xl font-black text-slate-950 dark:text-slate-50">
                     {trendLabel}
                   </p>
-                  <p className="mt-2 text-sm text-slate-600">
+                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
                     Activity signal for this reporting period.
                   </p>
                 </div>
               </div>
 
-              <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+              <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-slate-900">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
                   Next best step
                 </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {isFreePlan
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                  {String(seller?.plan || "").toLowerCase() === "free"
                     ? "Upgrade to access detailed analytics and product-level performance."
                     : "Refresh the dashboard after adding new products to see fresh engagement signals."}
                 </p>
               </div>
 
               {insights.length > 0 ? (
-                <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-slate-900">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
                     AI insights
                   </p>
-                  <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
+                  <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
                     {insights.slice(0, 4).map((item, idx) => (
                       <li key={`${item}-${idx}`} className="flex gap-2">
                         <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-violet-500" />
@@ -1148,99 +1160,99 @@ export default function Analytics() {
           title="Conversion Rate"
           subtitle="A simple performance meter showing how try-ons turn into orders."
           rightCta={
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
-              <BadgeCheck className="h-3.5 w-3.5 text-emerald-600" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+              <BadgeCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-300" />
               Live KPI
             </div>
           }
         >
           <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-            <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
+            <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-slate-900">
               <div className="flex items-end justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
                     Try-on to order conversion
                   </p>
-                  <p className="mt-2 text-4xl font-black text-slate-950">
+                  <p className="mt-2 text-4xl font-black text-slate-950 dark:text-slate-50">
                     {conversionRate.toFixed(1)}%
                   </p>
                 </div>
                 <div
                   className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ${
                     healthTone === "emerald"
-                      ? "bg-emerald-50 text-emerald-700"
+                      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200"
                       : healthTone === "blue"
-                        ? "bg-blue-50 text-blue-700"
+                        ? "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-200"
                         : healthTone === "violet"
-                          ? "bg-violet-50 text-violet-700"
+                          ? "bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-200"
                           : healthTone === "amber"
-                            ? "bg-amber-50 text-amber-700"
-                            : "bg-rose-50 text-rose-700"
+                            ? "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-200"
+                            : "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-200"
                   }`}
                 >
                   {grade} grade
                 </div>
               </div>
 
-              <div className="mt-5 h-4 overflow-hidden rounded-full bg-slate-100">
+              <div className="mt-5 h-4 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-emerald-500 transition-all duration-700"
                   style={{ width: `${Math.min(conversionRate * 10, 100)}%` }}
                 />
               </div>
 
-              <p className="mt-3 text-sm leading-6 text-slate-600">
+              <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
                 Conversion rate is one of the clearest indicators of how well
                 your shop is turning attention into sales.
               </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
                   Most active day
                 </p>
-                <p className="mt-2 text-xl font-black text-slate-950">
+                <p className="mt-2 text-xl font-black text-slate-950 dark:text-slate-50">
                   {summary?.bestDay || "N/A"}
                 </p>
-                <p className="mt-2 text-sm text-slate-600">
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
                   The day with the highest try-on activity.
                 </p>
               </div>
 
-              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
                   Orders this period
                 </p>
-                <p className="mt-2 text-xl font-black text-slate-950">
+                <p className="mt-2 text-xl font-black text-slate-950 dark:text-slate-50">
                   {formatNumber(totalOrders)}
                 </p>
-                <p className="mt-2 text-sm text-slate-600">
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
                   Combined orders from all tracked customer interactions.
                 </p>
               </div>
 
-              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
                   Recent try-ons
                 </p>
-                <p className="mt-2 text-xl font-black text-slate-950">
+                <p className="mt-2 text-xl font-black text-slate-950 dark:text-slate-50">
                   {formatNumber(recentTryons)}
                 </p>
-                <p className="mt-2 text-sm text-slate-600">
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
                   Try-on activity in the latest reporting window.
                 </p>
               </div>
 
-              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
                   Previous period
                 </p>
-                <p className="mt-2 text-xl font-black text-slate-950">
+                <p className="mt-2 text-xl font-black text-slate-950 dark:text-slate-50">
                   {formatNumber(previousTryons)} /{" "}
                   {formatNumber(previousOrders)}
                 </p>
-                <p className="mt-2 text-sm text-slate-600">
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
                   Try-ons / orders from the earlier comparison window.
                 </p>
               </div>
@@ -1248,19 +1260,18 @@ export default function Analytics() {
           </div>
         </SectionCard>
 
-        {/* Premium CTA */}
-        <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.12),transparent_32%),linear-gradient(to_right,#ffffff,#faf5ff)] shadow-[0_18px_55px_rgba(15,23,42,0.06)]">
+        <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.12),transparent_32%),linear-gradient(to_right,#ffffff,#faf5ff)] shadow-[0_18px_55px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.10),transparent_32%),linear-gradient(to_right,#0f172a,#111827)] dark:shadow-[0_18px_55px_rgba(0,0,0,0.25)]">
           <div className="px-6 py-8 sm:px-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div className="max-w-3xl">
-                <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-xs font-semibold text-violet-700">
+                <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-xs font-semibold text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-200">
                   <Sparkles className="h-4 w-4" />
                   Premium seller insights
                 </div>
-                <h3 className="mt-4 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+                <h3 className="mt-4 text-2xl font-black tracking-tight text-slate-950 dark:text-slate-50 sm:text-3xl">
                   Turn analytics into faster decisions
                 </h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
+                <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-400">
                   Use this dashboard to understand which products attract
                   attention, where conversions are strongest, and what to
                   improve next.
@@ -1270,7 +1281,7 @@ export default function Analytics() {
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={handleRefresh}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-white/5"
                 >
                   <RefreshCw className="h-4 w-4" />
                   Refresh data
@@ -1278,7 +1289,7 @@ export default function Analytics() {
 
                 <button
                   onClick={handleCopySummary}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-violet-50 px-5 py-3.5 text-sm font-semibold text-violet-700 transition hover:bg-violet-100"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-violet-50 px-5 py-3.5 text-sm font-semibold text-violet-700 transition hover:bg-violet-100 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-200"
                 >
                   <Copy className="h-4 w-4" />
                   Copy summary

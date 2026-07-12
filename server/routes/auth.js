@@ -11,6 +11,50 @@ const {
   sendEmail,
 } = require("../config/email");
 
+/*
+  ─── SIMPLE RATE LIMITER (no external package) ──────────────
+  Prevents forgot-password spam (repeatedly triggering reset
+  emails to the same address, or hammering the endpoint from one
+  IP). Keyed by IP + email together so it can't be used to lock
+  a specific seller out of requesting their own reset — only
+  the same (attacker IP, target email) pair gets throttled.
+
+  In-memory is fine for a single-instance deployment; if this
+  app ever runs multiple server instances behind a load balancer,
+  this would need to move to Redis or similar shared storage —
+  worth remembering if that becomes the deployment setup later.
+--------------------------------------------------------------*/
+const rateLimitStore = new Map();
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const RATE_LIMIT_MAX = 3; // 3 requests per window
+
+function isRateLimited(key) {
+  const now = Date.now();
+  const entry = rateLimitStore.get(key);
+
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+    rateLimitStore.set(key, { count: 1, windowStart: now });
+    return false;
+  }
+
+  entry.count += 1;
+  return entry.count > RATE_LIMIT_MAX;
+}
+
+// Periodic cleanup so this Map doesn't grow unbounded over the
+// server's lifetime — old entries are harmless but pointless to keep.
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [key, entry] of rateLimitStore.entries()) {
+      if (now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+        rateLimitStore.delete(key);
+      }
+    }
+  },
+  30 * 60 * 1000,
+).unref();
+
 // ─── Forgot Password ──────────────────────
 router.post("/forgot-password", async (req, res) => {
   try {
@@ -19,6 +63,17 @@ router.post("/forgot-password", async (req, res) => {
     if (!email) {
       return res.status(400).json({
         message: "Enter email!",
+      });
+    }
+
+    const rateLimitKey = `${req.ip}:${email.toLowerCase()}`;
+    if (isRateLimited(rateLimitKey)) {
+      // Same generic message as the "not found" case below — no
+      // reason to reveal that rate limiting specifically triggered,
+      // that's an implementation detail an attacker doesn't need.
+      return res.status(429).json({
+        success: true,
+        message: "If the email is registered, a reset link will be sent!",
       });
     }
 
@@ -143,7 +198,8 @@ router.post("/contact", async (req, res) => {
       </div>
     `;
 
-    // 💡 आपके इम्पोर्टेड ईमेल हेल्पर को कॉल किया: यह सीधा एडमिन (EMAIL_USER) को मेल भेज देगा!
+    // Calls the shared email helper — sends straight to the
+    // admin inbox (EMAIL_USER)
     await sendEmail(
       process.env.EMAIL_USER,
       `📩 Contact Form: ${subject} - ${name}`,
@@ -173,10 +229,24 @@ router.get(
 // Google callback
 router.get(
   "/google/callback",
-  passport.authenticate("google", {
-    session: false,
-    failureRedirect: `${process.env.FRONTEND_URL}/login?error=google_failed`,
-  }),
+  (req, res, next) => {
+    passport.authenticate("google", { session: false }, (err, user, info) => {
+      if (err || !user) {
+        // info.message comes from the specific done(null, false, {...})
+        // case in passport.js (e.g. "email already registered without
+        // Google"), so the frontend can show that instead of a generic
+        // failure. Falls back to the old generic error if none given.
+        const reason = info?.message
+          ? encodeURIComponent(info.message)
+          : "google_failed";
+        return res.redirect(
+          `${process.env.FRONTEND_URL}/login?error=${reason}`,
+        );
+      }
+      req.user = user;
+      next();
+    })(req, res, next);
+  },
   async (req, res) => {
     try {
       // JWT token banao
@@ -186,15 +256,22 @@ router.get(
         { expiresIn: "7d" },
       );
 
-      // Seller data
+      // Seller data — matches the credit-based system (see
+      // models/seller.js). The previous version sent
+      // tryonCount/tryonLimit here; tryonLimit was never actually
+      // a field on the schema at all, so Google-login sellers were
+      // always getting `tryonLimit: undefined` in this response,
+      // while sellers who registered/logged in normally via
+      // /api/seller routes got the correct credits-based fields.
       const sellerData = {
         name: req.user.name,
         email: req.user.email,
         sellerId: req.user.sellerId,
         apiKey: req.user.apiKey,
         plan: req.user.plan,
-        tryonCount: req.user.tryonCount,
-        tryonLimit: req.user.tryonLimit,
+        credits: req.user.credits,
+        monthlyCreditsUsed: req.user.monthlyCreditsUsed,
+        monthlyCreditsLimit: req.user.monthlyCreditsLimit,
       };
 
       // Frontend par redirect karo

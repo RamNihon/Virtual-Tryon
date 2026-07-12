@@ -62,6 +62,9 @@ router.post("/register", async (req, res) => {
 });
 
 // ─── LOGIN ───────────────────────────────
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -73,10 +76,43 @@ router.post("/login", async (req, res) => {
       });
     }
 
+    // Locked out? Tell them how long is left rather than a generic
+    // error, so a real owner isn't left guessing what happened.
+    if (seller.lockUntil && seller.lockUntil > Date.now()) {
+      const minutesLeft = Math.ceil((seller.lockUntil - Date.now()) / 60000);
+      return res.status(423).json({
+        message: `Too many failed attempts. Try again in ${minutesLeft} minute(s).`,
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, seller.password);
     if (!isMatch) {
+      const attempts = (seller.loginAttempts || 0) + 1;
+      const update = { loginAttempts: attempts };
+
+      // Lock only once the threshold is crossed — earlier attempts
+      // just increment the counter without any user-visible change,
+      // so a genuine typo doesn't feel punished immediately.
+      if (attempts >= MAX_LOGIN_ATTEMPTS) {
+        update.lockUntil = new Date(Date.now() + LOCK_DURATION_MS);
+      }
+
+      await Seller.findByIdAndUpdate(seller._id, update);
+
+      const attemptsLeft = Math.max(MAX_LOGIN_ATTEMPTS - attempts, 0);
       return res.status(400).json({
-        message: "Password galat hai!",
+        message:
+          attemptsLeft > 0
+            ? `Password galat hai! ${attemptsLeft} attempt(s) left before your account locks temporarily.`
+            : "Too many failed attempts. Your account is locked for 15 minutes.",
+      });
+    }
+
+    // Successful login clears any prior failed-attempt count/lock.
+    if (seller.loginAttempts > 0 || seller.lockUntil) {
+      await Seller.findByIdAndUpdate(seller._id, {
+        loginAttempts: 0,
+        lockUntil: undefined,
       });
     }
 

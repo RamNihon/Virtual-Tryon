@@ -84,7 +84,8 @@ const sendWelcomeEmail = async (seller) => {
                     padding: 16px; margin: 20px 0;">
           <p style="color: #065f46; margin: 0; font-size: 14px;">
             🎁 <strong>Free Plan:</strong> 
-            You have 50 free try-ons this month!
+            You start with 100 free credits — enough for
+            around 100 virtual try-ons!
           </p>
         </div>
 
@@ -102,7 +103,7 @@ const sendWelcomeEmail = async (seller) => {
                    text-align: center; margin-top: 30px;
                    border-top: 1px solid #f3f4f6;
                    padding-top: 20px;">
-          © 2025 VirtualTryOn · 
+          © ${new Date().getFullYear()} VirtualTryOn · 
           Made with ❤️ for Indian Sellers
         </p>
       </div>
@@ -191,7 +192,7 @@ const sendResetPasswordEmail = async (seller, resetUrl) => {
                    text-align: center; margin-top: 30px;
                    border-top: 1px solid #f3f4f6;
                    padding-top: 20px;">
-          © 2025 VirtualTryOn · Security Email
+          © ${new Date().getFullYear()} VirtualTryOn · Security Email
         </p>
       </div>
     </body>
@@ -202,15 +203,28 @@ const sendResetPasswordEmail = async (seller, resetUrl) => {
 
 // ─── 3. Payment Success Email ──────────────
 const sendPaymentSuccessEmail = async (seller, plan) => {
+  // Matches the actual plan tiers the app uses (free/basic/pro/elite,
+  // credit-based) — the earlier version only had starter/pro with a
+  // tryon-count limit, which no longer matches how plans work.
   const planDetails = {
-    starter: {
-      name: "Starter",
-      limit: "500 try-ons/month",
-      price: "₹1,999",
+    free: {
+      name: "Free",
+      limit: "100 credits/month",
+      price: "₹0",
+    },
+    basic: {
+      name: "Basic",
+      limit: "1,500 credits/month",
+      price: "₹999",
     },
     pro: {
       name: "Pro",
-      limit: "Unlimited try-ons",
+      limit: "3,000 credits/month + Fabric Shop",
+      price: "₹2,499",
+    },
+    elite: {
+      name: "Elite",
+      limit: "10,000 credits/month + Fabric Shop",
       price: "₹4,999",
     },
   };
@@ -268,7 +282,7 @@ const sendPaymentSuccessEmail = async (seller, plan) => {
             </tr>
             <tr style="border-bottom: 1px solid #e5e7eb;">
               <td style="padding: 10px 0; color: #6b7280;">
-                Try-ons
+                Credits
               </td>
               <td style="padding: 10px 0; font-weight: bold;
                          color: #1f2937; text-align: right;">
@@ -302,7 +316,7 @@ const sendPaymentSuccessEmail = async (seller, plan) => {
                    text-align: center; margin-top: 30px;
                    border-top: 1px solid #f3f4f6;
                    padding-top: 20px;">
-          © 2025 VirtualTryOn · Payment Receipt
+          © ${new Date().getFullYear()} VirtualTryOn · Payment Receipt
         </p>
       </div>
     </body>
@@ -311,7 +325,12 @@ const sendPaymentSuccessEmail = async (seller, plan) => {
   return sendEmail(seller.email, "🎉 Payment Successful - VirtualTryOn", html);
 };
 
-// ─── 4. Limit Warning Email ────────────────
+// ─── 4. Low Credits Warning Email ──────────
+// Renamed from "Limit Warning" to "Low Credits" to match what
+// it actually reports now — the old tryonCount/tryonLimit fields
+// don't exist anywhere in the credit-based system this app uses;
+// `seller.credits` and `seller.monthlyCreditsLimit` are the real
+// fields (see models/seller.js).
 const sendLimitWarningEmail = async (seller) => {
   const html = `
     <!DOCTYPE html>
@@ -341,34 +360,37 @@ const sendLimitWarningEmail = async (seller) => {
         <div style="text-align: center; margin-bottom: 24px;">
           <div style="font-size: 52px;">⚠️</div>
           <h2 style="color: #1f2937;">
-            Try-On Limit Reached!
+            Running Low on Credits
           </h2>
         </div>
 
         <p style="color: #6b7280; line-height: 1.6;">
           Hi <strong>${seller.name}</strong>,
           <br><br>
-          Your monthly try-on limit has been reached. 
-          Customers are currently unable to use the 
-          virtual try-on feature on your shop.
+          Your credit balance is running low. Once your
+          credits reach zero, customers won't be able to
+          use virtual try-on on your shop until you top up
+          or your next billing cycle begins.
         </p>
 
         <div style="background: #fef3c7; border-radius: 12px;
                     padding: 16px; margin: 20px 0;
                     border-left: 4px solid #f59e0b;">
           <p style="color: #92400e; margin: 0; font-size: 15px;">
-            📊 Usage: 
+            💳 Credits remaining:
+            <strong>${seller.credits ?? 0}</strong>
+            <br>
+            📊 Used this month:
             <strong>
-              ${seller.tryonCount}/${seller.tryonLimit}
-            </strong> 
-            try-ons used this month
+              ${seller.monthlyCreditsUsed ?? 0}/${seller.monthlyCreditsLimit ?? 100}
+            </strong>
           </p>
         </div>
 
         <p style="color: #6b7280; line-height: 1.6;">
-          Upgrade your plan to continue offering 
-          virtual try-on to your customers and 
-          boost your sales!
+          Top up your credits or upgrade your plan to keep
+          offering virtual try-on to your customers and
+          avoid any interruption to your sales.
         </p>
 
         <div style="text-align: center; margin: 30px 0;">
@@ -377,7 +399,7 @@ const sendLimitWarningEmail = async (seller) => {
                     padding: 14px 36px; border-radius: 50px;
                     text-decoration: none; font-weight: bold;
                     font-size: 16px; display: inline-block;">
-            Upgrade Plan →
+            Top Up / Upgrade Plan →
           </a>
         </div>
 
@@ -385,7 +407,7 @@ const sendLimitWarningEmail = async (seller) => {
                    text-align: center; margin-top: 30px;
                    border-top: 1px solid #f3f4f6;
                    padding-top: 20px;">
-          © 2025 VirtualTryOn
+          © ${new Date().getFullYear()} VirtualTryOn
         </p>
       </div>
     </body>
@@ -393,7 +415,7 @@ const sendLimitWarningEmail = async (seller) => {
   `;
   return sendEmail(
     seller.email,
-    "⚠️ Try-On Limit Reached - VirtualTryOn",
+    "⚠️ Running Low on Credits - VirtualTryOn",
     html,
   );
 };
@@ -503,7 +525,7 @@ const sendLoginAlertEmail = async (seller, loginInfo) => {
                    text-align: center; margin-top: 30px;
                    border-top: 1px solid #f3f4f6;
                    padding-top: 20px;">
-          © 2025 VirtualTryOn · Security Alert
+          © ${new Date().getFullYear()} VirtualTryOn · Security Alert
           <br>
           If you have concerns, contact us immediately.
         </p>
@@ -641,9 +663,9 @@ const sendOrderNotificationEmail = async (order, seller) => {
           <div style="background:#f0fdf4;border-radius:12px;
                       padding:16px;margin:16px 0;">
             <p style="color:#065f46;margin:0;font-size:14px;">
-              ✅ Seller ko pay karna hai:
+              ✅ Amount to pay the seller:
               <strong>₹${order.productPrice}</strong>
-              (delivery fee excluding)
+              (delivery fee excluded)
             </p>
           </div>
         </div>

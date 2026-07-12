@@ -1,7 +1,6 @@
 // import { useState, useEffect, useCallback } from "react";
 import { useState, useEffect } from "react";
-// eslint-disable-next-line
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import SupportBot from "../components/SupportBot";
@@ -14,6 +13,7 @@ import DashboardHome from "../components/dashboard/DashboardHome";
 import StoreSection from "../components/dashboard/StoreSection";
 import GarmentShopSection from "../components/dashboard/GarmentShopSection";
 import EditProductModal from "../components/dashboard/EditProductModal";
+import NotificationPermissionModal from "../components/NotificationPermissionModal";
 import GarmentWizard from "../components/dashboard/GarmentWizard/GarmentWizard";
 import OrdersSection from "../components/dashboard/Orders/OrdersSection";
 import FabricShopSection from "../components/dashboard/FabricShop/FabricShopSection";
@@ -21,7 +21,6 @@ import FabricWizard from "../components/dashboard/FabricShop/FabricWizard/Fabric
 import IntegrationSection from "../components/dashboard/IntegrationSection";
 import BillingSection from "../components/dashboard/BillingSection";
 import SettingsSection from "../components/dashboard/SettingsSection";
-
 
 // eslint-disable-next-line
 function DashboardImageSlider({ images, className = "" }) {
@@ -205,17 +204,45 @@ export default function Dashboard() {
   const fabricProducts = fabricProductsData || [];
 
 
-  const saveShopSettings = async () => {
-    try {
-      await axios.post(`${API_URL}/api/seller/settings`, shopSettings, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setSettingsMsg("✅ It is saved!");
-      queryClient.invalidateQueries({ queryKey: ["sellerDashboard"] });
-    } catch (err) {
-      setSettingsMsg("❌ Error found!");
-    }
-  };
+ const saveShopSettings = async () => {
+  // 1. API call se pehle hi check karein ki WhatsApp number sahi hai ya nahi
+  // Agar input me text (letters) hoga, toh ye error block chal jayega
+  if (shopSettings.whatsapp && isNaN(shopSettings.whatsapp)) {
+    setSettingsMsg("❌ Please enter a valid WhatsApp number (numbers only).");
+    
+    // 4 second baad is error ko bhi gayab kar dete hain
+    setTimeout(() => {
+      setSettingsMsg("");
+    }, 4000);
+    
+    return; // API call ko yahin rok dega, server par request nahi jayegi
+  }
+
+  try {
+    // 2. Agar number sahi hai, toh request server par jayegi
+    await axios.post(`${API_URL}/api/seller/settings`, shopSettings, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    
+    setSettingsMsg("✔️ It is saved!");
+    queryClient.invalidateQueries({ queryKey: ["sellerDashboard"] });
+    
+    setTimeout(() => {
+      setSettingsMsg("");
+    }, 3000);
+
+  } catch (err) {
+    // 3. Agar backend se koi aur error aata hai (jaise duplicate shop name)
+    const exactErrorMessage = err.response?.data?.message || "Something went wrong. Please try again.";
+    
+    setSettingsMsg(`❌ ${exactErrorMessage}`);
+    
+    setTimeout(() => {
+      setSettingsMsg("");
+    }, 4000);
+  }
+};
+
 
   const copyToClipboard = (text, key = "default") => {
     if (!text) return;
@@ -468,6 +495,10 @@ export default function Dashboard() {
           )}
       </DashboardLayout>
 
+      {/* Notification soft-ask — shows once per week at most,
+          only when the browser has never been asked before */}
+      <NotificationPermissionModal seller={seller} token={token} />
+
       {/* Edit Product Modal — Phase 3B */}
       {editingProduct && (
         <EditProductModal
@@ -482,7 +513,7 @@ export default function Dashboard() {
       )}
 
       {/* Support Bot */}
-      {activeTab === "dashboard" && <SupportBot />}
+      <SupportBot />
     </>
   );
-} 
+}

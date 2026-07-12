@@ -1,6 +1,7 @@
 const passport = require('passport')
 const GoogleStrategy = require('passport-google-oauth20').Strategy
 const Seller = require('../models/seller')
+const { sendWelcomeEmail } = require('../config/email')
 
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
@@ -15,7 +16,22 @@ async (accessToken, refreshToken, profile, done) => {
     })
 
     if (seller) {
-      // Pehle se registered hai - login!
+      // If this email was registered the normal way (password)
+      // and was never linked to a Google account, don't silently
+      // log them in via Google — that would let anyone who can
+      // create a Google account with a matching email address
+      // access someone else's seller account without ever knowing
+      // their password. Require them to link it explicitly first
+      // (e.g. by logging in with the password once, from a
+      // "Connect Google" flow) rather than merging automatically.
+      if (!seller.googleId) {
+        return done(null, false, {
+          message:
+            'An account with this email already exists. Please log in with your password first.',
+        })
+      }
+
+      // Pehle se Google-linked hai - login!
       return done(null, seller)
     }
 
@@ -25,6 +41,14 @@ async (accessToken, refreshToken, profile, done) => {
       email: profile.emails[0].value,
       password: 'google_auth_' + Date.now(),
       googleId: profile.id
+    })
+
+    // Same welcome email a regular email/password signup gets —
+    // without this, Google sellers silently missed onboarding
+    // (no info about their 100 free credits, dashboard link, etc).
+    // Non-blocking: a failed email should never break Google login.
+    sendWelcomeEmail(seller).catch((err) => {
+      console.log('Welcome email error (Google signup):', err.message)
     })
 
     return done(null, seller)

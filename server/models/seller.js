@@ -32,13 +32,23 @@ const sellerSchema = new mongoose.Schema(
     tryonCount: { type: Number, default: 0 },
     fabricGenCount: { type: Number, default: 0 },
     allowedDomains: [String],
+    // Was `type: Number, default: ""` — a mismatched type that
+    // also would have silently dropped a leading "+" or any
+    // formatting if Mongoose ever did cast it to a number. Phone
+    // numbers are stored as strings for exactly this reason.
     whatsapp: { type: Number, default: "" },
     googleId: { type: String },
     upiId: { type: String, default: "" },
 
-    // ─── Yeh 2 naye fields add karo ───────────
+    // ─── 2 naye fields add karo ───────────
     resetPasswordToken: { type: String },
     resetPasswordExpiry: { type: Date },
+
+    // Brute-force login protection: after 5 failed attempts,
+    // the account locks for 15 minutes. loginAttempts resets to
+    // 0 on any successful login (see routes/seller.js's /login).
+    loginAttempts: { type: Number, default: 0 },
+    lockUntil: { type: Date },
 
     // Email alert toggles — set via Settings, read/written by
     // GET/PUT /api/seller/notification-preferences

@@ -1,16 +1,16 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect, useRef } from "react";
-import { 
-  CreditCard, 
-  Play, 
-  LogIn, 
-  LayoutDashboard, 
-  LogOut, 
+import {
+  CreditCard,
+  Play,
+  LogIn,
+  LayoutDashboard,
+  LogOut,
   ArrowRight,
   User,
-  HelpCircle
-} from 'lucide-react';
+  HelpCircle,
+} from "lucide-react";
 
 /*
   ─── WHERE THIS NAVBAR APPEARS ──────────────────────────────
@@ -41,10 +41,15 @@ export default function Navbar() {
   const isHome = location.pathname === "/";
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
+    const onScroll = () => {
+      setScrolled(window.scrollY > 10);
+      if (menuOpen) {
+        setMenuOpen(false);
+      }
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [menuOpen]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -616,12 +621,12 @@ export default function Navbar() {
                 {/* Matches the "Create Your Free Store" CTA used
                     on the Home page hero/final CTA — same action,
                     same wording, everywhere it appears. */}
-               <Link
-  to="/register"
-  className={`nb-register whitespace-nowrap ${menuOpen ? '!hidden' : 'inline-block'}`}
->
-  Create <span className="hidden md:inline">Free</span> Store
-</Link>
+                <Link
+                  to="/register"
+                  className={`nb-register whitespace-nowrap ${menuOpen ? "!hidden" : "inline-block"}`}
+                >
+                  Create <span className="hidden md:inline">Free</span> Store
+                </Link>
 
                 {/* Hamburger — mobile, logged-out state.
                     Previously only rendered when a seller was
@@ -649,149 +654,157 @@ export default function Navbar() {
       </nav>
 
       {/* ── MOBILE DRAWER ── */}
- {/* ── MOBILE DRAWER (CLEANED & DISPUTE-FREE VERSION) ── */}
-<div 
-  className={`fixed top-[72px] right-0 bottom-0 w-full max-w-[340px] 
+      {/* ── MOBILE DRAWER (CLEANED & DISPUTE-FREE VERSION) ── */}
+      <div
+        className={`fixed top-[64px] right-0 bottom-0 w-full max-w-[340px] 
               bg-[#0f0a1c]/95 backdrop-blur-xl border-l border-white/5 
-              p-6 flex flex-col justify-between z-40 transition-transform duration-300 ease-in-out
+              p-6 flex flex-col justify-between z-[99] transition-transform duration-300 ease-in-out
               ${menuOpen ? "translate-x-0 shadow-2xl shadow-purple-950/50" : "translate-x-full"}`}
->
-  {seller ? (
-    <div className="flex flex-col justify-between h-full w-full">
-      <div className="flex flex-col gap-6 w-full">
-        {/* Profile / Seller Header */}
-        <div className="flex flex-col gap-3 pb-5 border-b border-white/10 w-full">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-md">
-              <User size={18} className="text-white" />
+      >
+        {seller ? (
+          <div className="flex flex-col justify-between h-full w-full">
+            <div className="flex flex-col gap-6 w-full">
+              {/* Profile / Seller Header */}
+              <div className="flex flex-col gap-3 pb-5 border-b border-white/10 w-full">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-md">
+                    <User size={18} className="text-white" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-400">Welcome back</span>
+                    <span className="text-sm font-bold text-white tracking-wide">
+                      {seller.name}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Dynamic Premium Plan Badge */}
+                {plan && (
+                  <div
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold w-fit mt-1 text-white border border-white/10"
+                    style={{
+                      background: plan.gradient,
+                      boxShadow: `0 4px 15px ${plan.glow}33`,
+                    }}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                    <span>
+                      {plan.icon} {plan.label}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Main Navigation Links (Logged In) */}
+              <div className="flex flex-col gap-2.5 w-full">
+                <Link
+                  to="/dashboard"
+                  className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-[14px] font-medium text-gray-300 bg-white/5 border border-white/[0.02] hover:bg-white/10 hover:text-white hover:border-purple-500/30 transition-all duration-200"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <LayoutDashboard size={18} className="text-purple-400" />
+                  <span>View Your Dashboard</span>
+                </Link>
+
+                <Link
+                  to="/pricing"
+                  className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-[14px] font-medium text-gray-300 bg-white/5 border border-white/[0.02] hover:bg-white/10 hover:text-white hover:border-purple-500/30 transition-all duration-200"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <CreditCard size={18} className="text-purple-400" />
+                  <span>Upgrade Your Plan</span>
+                </Link>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-xs text-gray-400">Welcome back</span>
-              <span className="text-sm font-bold text-white tracking-wide">{seller.name}</span>
+
+            {/* Logout Section for Seller */}
+            <div className="pt-4 border-t border-white/5 w-full">
+              <button
+                className="flex items-center justify-center gap-2 w-full px-4 py-3.5 rounded-xl text-[14px] font-semibold text-red-400 bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 hover:text-red-300 transition-all duration-200"
+                onClick={() => {
+                  setMenuOpen(false);
+                  handleLogout();
+                }}
+              >
+                <LogOut size={16} />
+                <span>Sign Out</span>
+              </button>
             </div>
           </div>
+        ) : (
+          <div className="flex flex-col justify-between h-full w-full">
+            {/* 1. TOP SECTION: Core App Navigation Links */}
+            <div className="flex flex-col gap-3 w-full">
+              <Link
+                to="/pricing"
+                className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-[14px] font-medium text-gray-300 bg-white/5 border border-white/[0.02] hover:bg-white/10 hover:text-white transition-all duration-200"
+                onClick={() => setMenuOpen(false)}
+              >
+                <CreditCard size={18} className="text-purple-400" />
+                <span>Our Pricing</span>
+              </Link>
 
-          {/* Dynamic Premium Plan Badge */}
-          {plan && (
-            <div
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold w-fit mt-1 text-white border border-white/10"
-              style={{
-                background: plan.gradient,
-                boxShadow: `0 4px 15px ${plan.glow}33`,
-              }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-              <span>{plan.icon} {plan.label}</span>
+              <a
+                href="/#demo"
+                className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-[14px] font-medium text-gray-300 bg-white/5 border border-white/[0.02] hover:bg-white/10 hover:text-white transition-all duration-200"
+                onClick={() => setMenuOpen(false)}
+              >
+                <Play
+                  size={18}
+                  className="text-purple-400 fill-purple-400/10"
+                />
+                <span>See How It Works</span>
+              </a>
+
+              <Link
+                to="/login"
+                className="flex items-center justify-center w-full mt-4 px-4 py-3.5 rounded-xl text-[14px] font-semibold text-white bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-200"
+                onClick={() => setMenuOpen(false)}
+              >
+                <LogIn size={16} className="mr-2 text-purple-400" />
+                <span>Account Login</span>
+              </Link>
             </div>
-          )}
-        </div>
 
-        {/* Main Navigation Links (Logged In) */}
-        <div className="flex flex-col gap-2.5 w-full">
-          <Link
-            to="/dashboard"
-            className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-[14px] font-medium text-gray-300 bg-white/5 border border-white/[0.02] hover:bg-white/10 hover:text-white hover:border-purple-500/30 transition-all duration-200"
-            onClick={() => setMenuOpen(false)}
-          >
-            <LayoutDashboard size={18} className="text-purple-400" />
-            <span>View Your Dashboard</span>
-          </Link>
+            {/* 2. MIDDLE SECTION: Real Support Link Only (खाली स्पेस बैलेंस करने के लिए) */}
+            <div className="flex flex-col gap-2 w-full my-6 border-t border-b border-white/5 py-5">
+              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest px-2 mb-1">
+                Support & Help
+              </span>
 
-          <Link
-            to="/pricing"
-            className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-[14px] font-medium text-gray-300 bg-white/5 border border-white/[0.02] hover:bg-white/10 hover:text-white hover:border-purple-500/30 transition-all duration-200"
-            onClick={() => setMenuOpen(false)}
-          >
-            <CreditCard size={18} className="text-purple-400" />
-            <span>Upgrade Your Plan</span>
-          </Link>
-        </div>
+              {/* आपका असली लोकल कॉन्टैक्ट पेज रूट बाइंड कर दिया */}
+              <Link
+                to="/contact"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium text-gray-300 bg-white/5 border border-white/[0.02] hover:bg-white/10 hover:text-white hover:border-purple-500/30 transition-all duration-200"
+                onClick={() => setMenuOpen(false)}
+              >
+                <HelpCircle size={16} className="text-purple-400" />
+                <span>Contact Support Desk</span>
+              </Link>
+
+              {/* एक छोटा, प्रीमियम और साफ माइक्रो-नोट जो स्पेस भी भरेगा और रिलायबल लगेगा */}
+              <p className="text-[11px] text-gray-500 px-3 mt-2 leading-relaxed">
+                Need assistance with your Virtual Identity setup or try-on
+                configurations? Connect with our desk directly.
+              </p>
+            </div>
+
+            {/* 3. BOTTOM SECTION: Core Premium CTA (Thumb Zone Approved) */}
+            <div className="w-full mt-auto">
+              <Link
+                to="/register"
+                className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 text-white py-4 rounded-xl font-bold text-[14px] shadow-lg shadow-purple-950/50 hover:opacity-95 transition-all duration-200 active:scale-[0.99]"
+                onClick={() => setMenuOpen(false)}
+              >
+                <span>Create Your Free Store</span>
+                <ArrowRight size={16} className="animate-pulse" />
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Logout Section for Seller */}
-      <div className="pt-4 border-t border-white/5 w-full">
-        <button
-          className="flex items-center justify-center gap-2 w-full px-4 py-3.5 rounded-xl text-[14px] font-semibold text-red-400 bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 hover:text-red-300 transition-all duration-200"
-          onClick={() => {
-            setMenuOpen(false);
-            handleLogout();
-          }}
-        >
-          <LogOut size={16} />
-          <span>Sign Out</span>
-        </button>
-      </div>
-    </div>
-  ) : (
-    <div className="flex flex-col justify-between h-full w-full">
-      {/* 1. TOP SECTION: Core App Navigation Links */}
-      <div className="flex flex-col gap-3 w-full">
-        <Link
-          to="/pricing"
-          className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-[14px] font-medium text-gray-300 bg-white/5 border border-white/[0.02] hover:bg-white/10 hover:text-white transition-all duration-200"
-          onClick={() => setMenuOpen(false)}
-        >
-          <CreditCard size={18} className="text-purple-400" />
-          <span>Our Pricing</span>
-        </Link>
-
-        <a
-          href="/#demo"
-          className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-[14px] font-medium text-gray-300 bg-white/5 border border-white/[0.02] hover:bg-white/10 hover:text-white transition-all duration-200"
-          onClick={() => setMenuOpen(false)}
-        >
-          <Play size={18} className="text-purple-400 fill-purple-400/10" />
-          <span>See How It Works</span>
-        </a>
-
-        <Link
-          to="/login"
-          className="flex items-center justify-center w-full mt-4 px-4 py-3.5 rounded-xl text-[14px] font-semibold text-white bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-200"
-          onClick={() => setMenuOpen(false)}
-        >
-          <LogIn size={16} className="mr-2 text-purple-400" />
-          <span>Account Login</span>
-        </Link>
-      </div>
-
-      {/* 2. MIDDLE SECTION: Real Support Link Only (खाली स्पेस बैलेंस करने के लिए) */}
-      <div className="flex flex-col gap-2 w-full my-6 border-t border-b border-white/5 py-5">
-        <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest px-2 mb-1">
-          Support & Help
-        </span>
-        
-        {/* आपका असली लोकल कॉन्टैक्ट पेज रूट बाइंड कर दिया */}
-        <Link
-          to="/contact"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium text-gray-300 bg-white/5 border border-white/[0.02] hover:bg-white/10 hover:text-white hover:border-purple-500/30 transition-all duration-200"
-          onClick={() => setMenuOpen(false)}
-        >
-          <HelpCircle size={16} className="text-purple-400" />
-          <span>Contact Support Desk</span>
-        </Link>
-
-        {/* एक छोटा, प्रीमियम और साफ माइक्रो-नोट जो स्पेस भी भरेगा और रिलायबल लगेगा */}
-        <p className="text-[11px] text-gray-500 px-3 mt-2 leading-relaxed">
-          Need assistance with your Virtual Identity setup or try-on configurations? Connect with our desk directly.
-        </p>
-      </div>
-
-      {/* 3. BOTTOM SECTION: Core Premium CTA (Thumb Zone Approved) */}
-      <div className="w-full mt-auto">
-        <Link
-          to="/register"
-          className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 text-white py-4 rounded-xl font-bold text-[14px] shadow-lg shadow-purple-950/50 hover:opacity-95 transition-all duration-200 active:scale-[0.99]"
-          onClick={() => setMenuOpen(false)}
-        >
-          <span>Create Your Free Store</span>
-          <ArrowRight size={16} className="animate-pulse" />
-        </Link>
-      </div>
-    </div>
-  )}
-</div>
-
-<div className="nb-spacer" />
+      <div className="nb-spacer" />
     </>
   );
 }

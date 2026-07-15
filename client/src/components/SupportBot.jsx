@@ -176,33 +176,48 @@ export default function SupportBot() {
           setIsOpen(next);
           if (next && !chatId) startChat();
         }}
-        className={`fixed bottom-5 right-5 z-50
-                   w-16 h-16 rounded-full shadow-2xl
-                   flex items-center justify-center
-                   text-white transition-all duration-500
-                   ${
-                     isOpen
-                       ? "bg-red-500 rotate-[360deg] scale-105"
-                       : "bg-gradient-to-br from-green-500 to-emerald-600 hover:scale-110"
-                   }`}
+        className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center text-white transition-all duration-500 shadow-xl group border border-white/20 active:scale-95
+    ${
+      isOpen
+        ? "bg-gradient-to-r from-red-500 to-rose-600 rotate-[360deg] scale-105"
+        : "bg-gradient-to-tr from-purple-600 via-indigo-600 to-pink-500 hover:scale-110"
+    }`}
         style={{
           boxShadow: isOpen
-            ? "0 8px 30px rgba(239,68,68,0.5)"
-            : "0 8px 30px rgba(16,185,129,0.5)",
+            ? "0 10px 30px rgba(244, 63, 94, 0.4), inset 0 1.5px 3px rgba(255,255,255,0.25)"
+            : "0 12px 35px rgba(99, 102, 241, 0.4), inset 0 1.5px 3px rgba(255,255,255,0.25)",
         }}
       >
         {isOpen ? (
-          <span className="text-2xl font-light">✕</span>
-        ) : (
-          <div className="relative">
-            <span className="text-2xl">🤖</span>
-            <span
-              className="absolute -top-1 -right-1 w-3 h-3
-                             bg-yellow-300 rounded-full animate-ping"
+          /* चैट ओपन होने पर: एकदम साफ और मिनिमल क्रॉस */
+          <svg
+            xmlns="http://w3.org"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2.5}
+            stroke="currentColor"
+            className="w-5 h-5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6 18L18 6M6 6l12 12"
             />
-            <span
-              className="absolute -top-1 -right-1 w-3 h-3
-                             bg-yellow-400 rounded-full"
+          </svg>
+        ) : (
+          /* चैट क्लोज होने पर: असली रियलिस्टिक एजेंट इमेज (SaaS Standard) */
+          <div className="relative w-full h-full flex items-center justify-center p-0.5 overflow-hidden rounded-full">
+            {/* इमेज के पीछे का हल्का आंतरिक नियॉन ग्लो इफेक्ट */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-purple-950/40 z-0 pointer-events-none" />
+
+            <img
+              src="/support-agent.avif" // public फोल्डर से सीधे लोड होगी
+              alt="Support Agent"
+              className="w-full h-full object-cover rounded-full transition-transform duration-300 group-hover:scale-105 z-10"
+              onError={(e) => {
+                // यदि किसी वजह से इमेज लोड न हो, तो यह बैकअप आइकॉन दिखाएगा (ताकि UI टूटे नहीं)
+                e.target.style.display = "none";
+              }}
             />
           </div>
         )}

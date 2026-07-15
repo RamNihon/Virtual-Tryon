@@ -19,9 +19,14 @@ import Pricing from "./pages/Pricing";
 import Footer from "./components/Footer";
 import ShopFooter from "./components/ShopFooter";
 import OrderDetail from "./pages/OrderDetail";
-import Privacy from "./pages/Privacy";
-import Terms from "./pages/Terms";
-import Refund from "./pages/Refund";
+import Privacy from "./pages/seller/Privacy";
+import Terms from "./pages/seller/Terms";
+import Refund from "./pages/seller/Refund";
+
+import CustomerPrivacy from "./pages/customer//Privacy";
+import CustomerTerms from "./pages/customer/Terms";
+import CustomerRefund from "./pages/customer/Refund";
+
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Contact from "./pages/Contact";
@@ -171,9 +176,15 @@ function AppContent() {
           <Route path="/shop/:sellerId" element={<Shop />} />
           <Route path="/fabric/:sellerId" element={<FabricShop />} />
           <Route path="/pricing" element={<Pricing />} />
+
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/refund" element={<Refund />} />
+
+          <Route path="/shop/privacy" element={<CustomerPrivacy />} />
+          <Route path="/shop/terms" element={<CustomerTerms />} />
+          <Route path="/shop/refund" element={<CustomerRefund />} />
+
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/contact" element={<Contact />} />

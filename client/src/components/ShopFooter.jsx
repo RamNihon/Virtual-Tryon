@@ -32,9 +32,9 @@ export default function ShopFooter() {
   ];
 
   const quickLinks = [
-    { label: "Privacy Policy", to: "/privacy" },
-    { label: "Terms of Service", to: "/terms" },
-    { label: "Refund Policy", to: "/refund" },
+    { label: "Privacy Policy", to: "/shop/privacy" },
+    { label: "Terms of Service", to: "/shop/terms" },
+    { label: "Refund Policy", to: "/shop/refund" },
     { label: "FAQ", to: "/faq" },
   ];
 

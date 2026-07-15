@@ -175,7 +175,7 @@ export default function AuthModal({ mode = "login", onClose, onSuccess }) {
       setLoading(false);
     }
   };
-
+ 
   return (
     <div
       className="fixed inset-0 z-[210] flex items-center justify-center p-4"

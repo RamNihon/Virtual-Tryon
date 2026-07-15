@@ -5,6 +5,7 @@ import API_URL from "../api";
 import { useCustomer } from "../context/CustomerContext";
 import VoiceAssistant, { speakText } from "../components/VoiceAssistant";
 import TryOnGallery from "../components/TryOnGallery";
+import { Eye, EyeOff } from "lucide-react";
 
 // Shared status color classes (used for badges across the page)
 const STATUS_COLORS = {
@@ -656,6 +657,9 @@ function CustomerAuthModal({ mode, onClose, onSuccess }) {
       setLoading(false);
     }
   };
+    const handleKeyPress = (e) => {
+    if (e.key === "Enter") handleSubmit();
+  };
   return (
     <div
       className="fixed inset-0 bg-black bg-opacity-60
@@ -748,6 +752,7 @@ function CustomerAuthModal({ mode, onClose, onSuccess }) {
                     name: e.target.value,
                   })
                 }
+                onKeyPress={handleKeyPress}
                 className="w-full border border-gray-200
                            rounded-xl px-4 py-3 text-sm
                            focus:outline-none
@@ -764,6 +769,7 @@ function CustomerAuthModal({ mode, onClose, onSuccess }) {
                   email: e.target.value,
                 })
               }
+              onKeyPress={handleKeyPress}
               className="w-full border border-gray-200
                          rounded-xl px-4 py-3 text-sm
                          focus:outline-none
@@ -772,7 +778,7 @@ function CustomerAuthModal({ mode, onClose, onSuccess }) {
             {activeMode === "register" && (
               <input
                 type="tel"
-                placeholder="Mobile number"
+                placeholder="Mobile number(optional)"
                 value={form.mobile}
                 onChange={(e) =>
                   setForm({
@@ -780,6 +786,7 @@ function CustomerAuthModal({ mode, onClose, onSuccess }) {
                     mobile: e.target.value,
                   })
                 }
+                onKeyPress={handleKeyPress}
                 className="w-full border border-gray-200
                            rounded-xl px-4 py-3 text-sm
                            focus:outline-none
@@ -795,6 +802,7 @@ function CustomerAuthModal({ mode, onClose, onSuccess }) {
                   setForm({ ...form, password: e.target.value });
                   setPwdTouched(true);
                 }}
+                onKeyPress={handleKeyPress}
                 className="w-full border border-gray-200
                rounded-xl px-4 py-3 pr-10 text-sm
                focus:outline-none
@@ -804,10 +812,10 @@ function CustomerAuthModal({ mode, onClose, onSuccess }) {
                 type="button"
                 onClick={() => setShowPwd(!showPwd)}
                 className="absolute right-3 top-1/2
-               -translate-y-1/2 text-gray-400
+               -translate-y-1/2 text-gray-400 hover:text-gray-600 transition
                text-xl"
               >
-                {showPwd ? "🙈" : "👁️"}
+                {showPwd ? <EyeOff size={19} /> : <Eye size={19} />}
               </button>
             </div>
 

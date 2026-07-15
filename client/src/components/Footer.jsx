@@ -25,17 +25,17 @@ const footerLinks = {
 export default function Footer() {
   const location = useLocation();
 
-  if (location.pathname.startsWith("/privacy")) {
-    return null;
-  }
+  // if (location.pathname.startsWith("/privacy")) {
+  //   return null;
+  // }
 
-  if (location.pathname.startsWith("/terms")) {
-    return null;
-  }
+  // if (location.pathname.startsWith("/terms")) {
+  //   return null;
+  // }
 
-  if (location.pathname.startsWith("/refund")) {
-    return null;
-  }
+  // if (location.pathname.startsWith("/refund")) {
+  //   return null;
+  // }
    if (location.pathname.startsWith("/order")) {
     return null;
   }

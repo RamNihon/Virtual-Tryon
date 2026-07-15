@@ -5,14 +5,26 @@ export default function Refund() {
                       rounded-2xl shadow-sm p-8 md:p-12">
 
         <h1 className="text-3xl font-bold text-gray-800 mb-2">
-          Refund Policy
+          Refund Policy — For Sellers
         </h1>
         <p className="text-gray-400 text-sm mb-8">
-          Last updated: January 2025
+          Last updated: July 2026
         </p>
 
         <div className="space-y-8 text-gray-600 
                         leading-relaxed">
+
+          <section>
+            <p className="text-sm bg-blue-50 border border-blue-100
+                          rounded-xl px-4 py-3">
+              This policy covers refunds for VirtualTryOn
+              subscription and credit purchases. If you're a
+              customer with a question about a product order, refer
+              to the seller you purchased from — VirtualTryOn does
+              not process product payments or refunds for orders
+              placed on a seller's shop.
+            </p>
+          </section>
 
           <section>
             <h2 className="text-xl font-semibold 
@@ -21,19 +33,18 @@ export default function Refund() {
             </h2>
             <ul className="list-disc pl-6 space-y-2 text-sm">
               <li>
-                Refund requests within 
-                <strong> 7 days </strong> 
+                Refund requests within
+                <strong> 7 days </strong>
                 of payment are eligible
               </li>
               <li>
-                Service must not have been 
-                significantly used (less than 
-                10 try-ons used)
+                Fewer than 50 credits from the purchased plan or
+                top-up must have been used
               </li>
               <li>
-                Technical issues caused by 
-                our platform qualify for 
-                full refund
+                Technical issues caused by our platform (e.g. a paid
+                feature not working as described) qualify for a
+                full refund, regardless of usage
               </li>
             </ul>
           </section>
@@ -44,10 +55,10 @@ export default function Refund() {
               2. Non-Refundable Cases
             </h2>
             <ul className="list-disc pl-6 space-y-2 text-sm">
-              <li>After 7 days of purchase</li>
-              <li>If plan limits were significantly used</li>
-              <li>Dissatisfaction with AI result quality</li>
-              <li>Change of mind after extensive use</li>
+              <li>Requests made after 7 days of purchase</li>
+              <li>Plans or credit top-ups where 50 or more credits have already been used</li>
+              <li>Dissatisfaction with AI try-on or fabric generation result quality — see our Terms for accuracy limitations</li>
+              <li>Change of mind after extensive use of the plan</li>
             </ul>
           </section>
 
@@ -58,12 +69,12 @@ export default function Refund() {
             </h2>
             <ol className="list-decimal pl-6 
                            space-y-2 text-sm">
-              <li>Email us at refund@virtualtryon.com</li>
-              <li>Include your registered email and order ID</li>
-              <li>We review within 2 business days</li>
+              <li>Email us at the address below from your registered email</li>
+              <li>Include your registered email and payment/order ID (visible in Billing → Credit History)</li>
+              <li>We review requests within 2 business days</li>
               <li>
-                Approved refunds credited within 
-                5-7 business days
+                Approved refunds are credited to your original
+                payment method within 5-7 business days
               </li>
             </ol>
           </section>
@@ -74,8 +85,8 @@ export default function Refund() {
               4. Free Plan
             </h2>
             <p className="text-sm">
-              Free plan users are not eligible for 
-              refunds as no payment is involved.
+              The Free plan does not involve any payment, so it is
+              not eligible for refunds.
             </p>
           </section>
 
@@ -86,20 +97,14 @@ export default function Refund() {
             </h2>
             <p className="text-sm">
               Email:
-              <a href="mailto:virtualtryon.service+refund@gmail.com"
+              <a href="mailto:virtualtryon.service@gmail.com"
                 className="text-purple-600 
                            hover:underline ml-1">
-                refund@virtualtryon.com
+                virtualtryon.service@gmail.com
               </a>
               <br />
-              {/* WhatsApp:
-              <a href="https://wa.me/91XXXXXXXXXX"
-                target="_blank"
-                rel="noreferrer"
-                className="text-purple-600 
-                           hover:underline ml-1">
-                +91 XXXXXXXXXX
-              </a> */}
+              Please use the subject line "Refund Request" so we
+              can route it quickly.
             </p>
           </section>
 

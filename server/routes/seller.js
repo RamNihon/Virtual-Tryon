@@ -35,6 +35,24 @@ router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
+    // Server-side validation — the frontend already checks these, but a
+    // direct API call (Postman, curl, etc.) skips the frontend entirely,
+    // so the backend needs its own checks too.
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "All fields are required!" });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Enter a valid email!" });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        message: "Password must be at least 6 characters!",
+      });
+    }
+
     const exists = await Seller.findOne({ email });
     if (exists) {
       return res.status(400).json({
@@ -49,7 +67,11 @@ router.post("/register", async (req, res) => {
       email,
       password: hashedPassword,
     });
-    sendWelcomeEmail(seller);
+    // Fire-and-forget, but still caught — an unhandled rejection here
+    // could otherwise crash the process on some Node versions.
+    sendWelcomeEmail(seller).catch((err) => {
+      console.log("Welcome email error:", err.message);
+    });
     res.json({
       success: true,
       message: "Registration successful!",
@@ -57,7 +79,7 @@ router.post("/register", async (req, res) => {
       apiKey: seller.apiKey,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 
@@ -145,7 +167,7 @@ router.post("/login", async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 
@@ -261,7 +283,7 @@ router.post(
 
       res.json({ success: true, product });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   },
 );
@@ -275,7 +297,7 @@ router.get("/products", authMiddleware, async (req, res) => {
     });
     res.json({ success: true, products });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 
@@ -402,7 +424,7 @@ router.put(
 
       res.json({ success: true, product });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   },
 );
@@ -440,7 +462,7 @@ router.get("/dashboard", authMiddleware, async (req, res) => {
       widgetCode: `<script src="${process.env.WIDGET_URL}/widget.js" data-seller-id="${seller.sellerId}" data-api-key="${seller.apiKey}"></script>`,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 // SETTINGS SAVE KARNE KE LIYE POST ROUTE
@@ -467,7 +489,7 @@ router.post("/settings", authMiddleware, async (req, res) => {
       seller: updatedSeller,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: "Something went wrong. Please try again." });
   }
 });
 
@@ -781,7 +803,7 @@ router.get("/analytics", authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error("Analytics error:", error);
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 
@@ -811,7 +833,7 @@ router.post("/track-order", async (req, res) => {
 
     res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 
@@ -830,7 +852,7 @@ router.delete("/products/:productId", authMiddleware, async (req, res) => {
       message: "Product delete ho gaya!",
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 
@@ -865,7 +887,7 @@ router.put("/update-profile", authMiddleware, async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 
@@ -902,7 +924,7 @@ router.put("/change-password", authMiddleware, async (req, res) => {
 
     res.json({ success: true, message: "Password badal gaya!" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 
@@ -924,7 +946,7 @@ router.get("/notification-preferences", authMiddleware, async (req, res) => {
       preferences: { ...defaults, ...(seller.notificationPreferences || {}) },
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 
@@ -950,7 +972,7 @@ router.put("/notification-preferences", authMiddleware, async (req, res) => {
       preferences: seller.notificationPreferences,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 
@@ -995,7 +1017,7 @@ router.delete("/delete-account", authMiddleware, async (req, res) => {
 
     res.json({ success: true, message: "Account deleted." });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 
@@ -1032,7 +1054,7 @@ router.get("/shop/:sellerId", async (req, res) => {
       products,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 
@@ -1063,7 +1085,7 @@ router.patch("/products/:productId/stock", authMiddleware, async (req, res) => {
       product,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 // Seller ke orders
@@ -1077,7 +1099,7 @@ router.get("/orders", authMiddleware, async (req, res) => {
 
     res.json({ success: true, orders });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 
@@ -1146,7 +1168,7 @@ router.patch("/orders/:orderId/status", authMiddleware, async (req, res) => {
     await Order.findByIdAndUpdate(order._id, updateData);
     res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 
@@ -1166,7 +1188,7 @@ router.get("/credit-history", authMiddleware, async (req, res) => {
       plan: seller.plan,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 
@@ -1183,7 +1205,7 @@ router.get("/credit-transactions", authMiddleware, async (req, res) => {
 
     res.json({ success: true, transactions });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 

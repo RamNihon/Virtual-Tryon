@@ -160,7 +160,7 @@ export default function Home() {
                                flex items-center gap-2"
                   >
                     <BarChart3 className="w-5 h-5" strokeWidth={2.25} />
-                    Open Dashboard
+                    Go to Dashboard
                   </Link>
                 ) : (
                   <>

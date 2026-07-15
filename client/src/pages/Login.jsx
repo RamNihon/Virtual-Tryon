@@ -158,8 +158,8 @@ export default function Login() {
           {/* Quick Stats */}
           <div className="grid grid-cols-2 gap-4 max-w-sm">
             {[
-              { icon: "🛍️", value: "500+", label: "Sellers" },
-              { icon: "👗", value: "10K+", label: "Try-Ons" },
+              { icon: "🛍️", value: "100+", label: "Sellers" },
+              { icon: "👗", value: "5K+", label: "Try-Ons" },
               { icon: "⭐", value: "4.9", label: "Rating" },
               { icon: "⌛", value: "24/7", label: "Support" },
             ].map((stat, i) => (

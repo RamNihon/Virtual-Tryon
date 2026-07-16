@@ -23,14 +23,19 @@
   longer dependent on a build step this file never goes through.
 --------------------------------------------------------------*/
 
-const CACHE_NAME = "virtualtryon-static-v1";
+// v2: cache name bumped on purpose. This forces every browser that
+// still has the old (broken) cache to wipe it out in the activate
+// handler below, the moment this new sw.js is picked up — no need
+// to tell users to manually clear site data.
+const CACHE_NAME = "virtualtryon-static-v2";
 
-// Only the guaranteed-to-exist app shell files are pre-cached.
-// Hashed build assets (main.[hash].js etc.) can't be listed here
-// by name since this file isn't processed at build time to know
-// those hashes — they're cached on first visit instead, via the
-// fetch handler below.
-const APP_SHELL = ["/", "/index.html", "/logo192.png", "/manifest.json"];
+// index.html and "/" are deliberately NOT in this list anymore.
+// Precaching the HTML shell + serving it cache-first (old behaviour)
+// is exactly what caused the white-screen bug: the HTML got frozen
+// at whatever build was live on first visit, forever pointing at
+// hashed JS/CSS filenames that a later deploy had already deleted
+// from Vercel. Only genuinely static, non-HTML shell files go here.
+const APP_SHELL = ["/logo192.png", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -57,20 +62,47 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Cache-first for same-origin GET requests, network fallback —
-// covers hashed JS/CSS bundles after their first successful load.
 self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
-  if (!event.request.url.startsWith(self.location.origin)) return;
+  const { request } = event;
+  if (request.method !== "GET") return;
+  if (!request.url.startsWith(self.location.origin)) return;
 
+  const url = new URL(request.url);
+  const isHtmlOrShell =
+    request.mode === "navigate" ||
+    url.pathname === "/" ||
+    url.pathname === "/index.html" ||
+    url.pathname === "/sw.js";
+
+  if (isHtmlOrShell) {
+    // NETWORK-FIRST: always try to get the latest HTML/sw.js from
+    // Vercel first. Cache is only a fallback for when the user is
+    // genuinely offline — never used just because a cached copy
+    // happens to exist, which is what caused the stale-forever bug.
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          return response;
+        })
+        .catch(() => caches.match(request)),
+    );
+    return;
+  }
+
+  // CACHE-FIRST for everything else: hashed build assets
+  // (main.[hash].js / main.[hash].css). Safe here specifically
+  // because a new deploy always ships a NEW hash, so a cache hit
+  // can only ever mean "this exact immutable file", never stale.
   event.respondWith(
-    caches.match(event.request).then((cached) => {
+    caches.match(request).then((cached) => {
       if (cached) return cached;
-      return fetch(event.request)
+      return fetch(request)
         .then((response) => {
           if (response.ok) {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           }
           return response;
         })

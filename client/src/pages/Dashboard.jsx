@@ -512,8 +512,8 @@ export default function Dashboard() {
         />
       )}
 
-      {/* Support Bot */}
-      <SupportBot />
+      {/* Support Bot — Dashboard (home) tab only */}
+{activeTab === "dashboard" && <SupportBot />}
     </>
   );
 }

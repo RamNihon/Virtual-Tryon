@@ -36,5 +36,19 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+
+        <script>
+      // ─── SaaS Anti-Chunk Crash Handler ───
+      window.addEventListener('error', (e) => {
+        const isChunkError = e.message?.includes('Loading chunk') || 
+                             e.target?.src?.includes('/static/js/') || 
+                             e.target?.href?.includes('/static/css/');
+        if (isChunkError) {
+          console.log('New deployment chunk detected! Auto-refreshing...');
+          window.location.reload(true);
+        }
+      }, true);
+    </script>
+
   </body>
 </html>

@@ -51,12 +51,12 @@ export default function Footer() {
     if (location.pathname.startsWith("/analytics")) {
     return null;
   }
-  //  if (location.pathname.startsWith("/fabric")) {
-  //   return null;
-  // }
-  //  if (location.pathname.startsWith("/shop")) {
-  //   return null;
-  // }
+   if (location.pathname.startsWith("/login")) {
+     return null;
+   }
+    if (location.pathname.startsWith("/register")) {
+     return null;
+   }
 
   return (
       

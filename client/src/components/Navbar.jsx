@@ -28,7 +28,7 @@ import {
   hidden by default. Adding a new authenticated page later means
   it's hidden automatically, which is the safer default.
 --------------------------------------------------------------*/
-const VISIBLE_ON = ["/", "/pricing", "/login", "/register", "/faq"];
+const VISIBLE_ON = ["/", "/pricing"];
 
 export default function Navbar() {
   const { seller, logout } = useAuth();
